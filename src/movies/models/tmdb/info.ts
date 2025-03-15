@@ -1,4 +1,4 @@
-export type RequiredInfo = {
+export type TMDB_RequiredInfo = {
   title: string;
   publishYear: string;
   duration: string;
@@ -9,13 +9,13 @@ export type RequiredInfo = {
   genres: string[];
 };
 
-export type Info = {
+export type TMDB_Info = {
   id: number;
   adult: boolean;
   backdrop_path: string;
-  belongs_to_collection: BelongsToCollection;
+  belongs_to_collection: TMDB_BelongsToCollection;
   budget: number;
-  genres: Genre[];
+  genres: TMDB_Genre[];
   homepage: string;
   imdb_id: string;
   origin_country: string[];
@@ -24,53 +24,53 @@ export type Info = {
   overview: string;
   popularity: number;
   poster_path: string;
-  production_companies: ProductionCompany[];
-  production_countries: ProductionCountry[];
+  production_companies: TMDB_ProductionCompany[];
+  production_countries: TMDB_ProductionCountry[];
   release_date: string;
   revenue: number;
   runtime: number;
-  spoken_languages: SpokenLanguage[];
+  spoken_languages: TMDB_SpokenLanguage[];
   status: string;
   tagline: string;
   title: string;
   video: boolean;
   vote_average: number;
   vote_count: number;
-  videos: Videos;
-  release_dates: ReleaseDates;
+  videos: TMDB_Videos;
+  release_dates: TMDB_ReleaseDates;
 };
 
-export type BelongsToCollection = {
+type TMDB_BelongsToCollection = {
   id: number;
   name: string;
   poster_path: string;
   backdrop_path: string;
 };
 
-export type Genre = {
+type TMDB_Genre = {
   id: number;
   name: string;
 };
 
-export type ProductionCompany = {
+type TMDB_ProductionCompany = {
   id: number;
   logo_path?: string;
   name: string;
   origin_country: string;
 };
 
-export type ProductionCountry = {
+type TMDB_ProductionCountry = {
   iso_3166_1: string;
   name: string;
 };
 
-export type SpokenLanguage = {
+type TMDB_SpokenLanguage = {
   english_name: string;
   iso_639_1: string;
   name: string;
 };
 
-export type Videos = {
+export type TMDB_Videos = {
   results: {
     iso_639_1: string;
     iso_3166_1: string;
@@ -85,15 +85,15 @@ export type Videos = {
   }[];
 };
 
-export interface ReleaseDates {
-  results: { iso_3166_1: string; release_dates: ReleaseDate[] }[];
-}
+type TMDB_ReleaseDates = {
+  results: { iso_3166_1: string; release_dates: TMDB_ReleaseDate[] }[];
+};
 
-export interface ReleaseDate {
+type TMDB_ReleaseDate = {
   certification: string;
   descriptors: any[];
   iso_639_1: string;
   note: string;
   release_date: string;
   type: number;
-}
+};
