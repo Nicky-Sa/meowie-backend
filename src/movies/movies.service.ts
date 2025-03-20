@@ -3,12 +3,9 @@ import { EnvService } from 'src/env/env.service';
 import { Injectable } from '@nestjs/common';
 import { TMDB_MoviesList } from 'src/movies/models/tmdb/moviesList';
 import { TMDB_Info, TMDB_RequiredInfo } from 'src/movies/models/tmdb/info';
-import {
-  OMDB_Info,
-  OMDB_RequiredInfo,
-  OMDB_Source,
-} from 'src/movies/models/omdb/info';
+import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
 import { findTrailerKey, formatDuration } from 'src/movies/utils';
+import { AllRatings } from './models/ratings';
 
 @Injectable()
 export class MoviesService {
@@ -87,7 +84,7 @@ export class MoviesService {
       }
 
       if (tmdbResult.data) {
-        const data: TMDB_RequiredInfo & OMDB_RequiredInfo = {
+        const data: TMDB_RequiredInfo & AllRatings = {
           // tmdb
           title: tmdbResult.data.title || '😾',
           publishYear: new Date(tmdbResult.data.release_date ?? 0)
@@ -107,11 +104,17 @@ export class MoviesService {
             'N/A',
           trailerKey: findTrailerKey(tmdbResult.data.videos),
           genres: tmdbResult.data.genres.map((genre) => genre.name),
-          // omdb
-          ratings: omdbRatings.map((rating) => ({
-            source: rating.Source,
-            value: rating.Value,
-          })),
+          ratings: [
+            // omdb
+            ...omdbRatings.map((rating) => ({
+              source: rating.Source,
+              value: rating.Value.split('/')[0].trim(),
+            })),
+            {
+              source: 'The Movie Database',
+              value: tmdbResult.data.vote_average.toFixed(1).toString(),
+            },
+          ],
         };
 
         return {
