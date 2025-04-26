@@ -6,6 +6,7 @@ import { TMDB_Info, TMDB_RequiredInfo } from 'src/movies/models/tmdb/info';
 import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
 import { findTrailerKey, formatDuration } from 'src/movies/utils';
 import { AllRatings } from './models/ratings';
+import { QueryParams } from './models/query';
 
 @Injectable()
 export class MoviesService {
@@ -19,7 +20,7 @@ export class MoviesService {
     this.OMDB_API_KEY = this.envService.get('OMDB_API_KEY');
   }
 
-  async getMovieIds(page: number): Promise<TMDB_MoviesList> {
+  async getMovieIds(query: QueryParams): Promise<TMDB_MoviesList> {
     try {
       const response = await axios.get<TMDB_MoviesList>(
         `${this.TMDB_BASE_URL}/3/discover/movie`,
@@ -28,8 +29,21 @@ export class MoviesService {
             include_adult: false,
             sort_by: 'popularity.desc',
             api_key: this.TMDB_API_KEY,
-            'vote_average.gte': 7,
-            page,
+            ...(query.genres && {
+              with_genres: query.genres.replaceAll(',', '|'),
+            }),
+            ...(query.languages && {
+              with_original_language: query.languages.replaceAll(',', '|'),
+            }),
+            ...(query.decade && {
+              'release_date.gte': `${query.decade}-01-01`,
+              'release_date.lte': `${Number(query.decade) + 9}-12-31`,
+            }),
+            ...(query.tmdbRatings && {
+              'vote_average.gte': query.tmdbRatings.split(',')[0],
+              'vote_average.lte': query.tmdbRatings.split(',')[1],
+            }),
+            page: query.page ?? 1,
           },
         },
       );
