@@ -1,4 +1,5 @@
 import { TMDB_Videos } from 'src/movies/models/tmdb/info';
+import { filterKeys, QueryParams } from './models/query';
 
 export const formatDuration = (minutes?: number) => {
   if (typeof minutes !== 'number') return 'N/A';
@@ -32,4 +33,11 @@ export const findTrailerKey = (videoList: TMDB_Videos): string => {
 
   // 3. Return the first video in the list (if any)
   return youtubeVideos.length > 0 ? youtubeVideos[0].key : '';
+};
+
+export const hasFilters = (query: QueryParams): boolean => {
+  const queryKeys = Object.keys(query);
+  return queryKeys.some((key) => {
+    return filterKeys.includes(key);
+  });
 };

@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { TMDB_MoviesList } from 'src/movies/models/tmdb/moviesList';
 import { TMDB_Info, TMDB_RequiredInfo } from 'src/movies/models/tmdb/info';
 import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
-import { findTrailerKey, formatDuration } from 'src/movies/utils';
+import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
 import { AllRatings } from './models/ratings';
 import { QueryParams } from './models/query';
 
@@ -39,10 +39,12 @@ export class MoviesService {
               'release_date.gte': `${query.decade}-01-01`,
               'release_date.lte': `${Number(query.decade) + 9}-12-31`,
             }),
-            ...(query.tmdbRatings && {
-              'vote_average.gte': query.tmdbRatings.split(',')[0],
-              'vote_average.lte': query.tmdbRatings.split(',')[1],
-            }),
+            'vote_average.gte': hasFilters(query)
+              ? (query.tmdbRatings?.split(',')[0] ?? 0)
+              : 7,
+            'vote_average.lte': hasFilters(query)
+              ? (query.tmdbRatings?.split(',')[1] ?? 10)
+              : 10,
             page: query.page ?? 1,
           },
         },
@@ -107,8 +109,7 @@ export class MoviesService {
           overview: tmdbResult.data.overview || omdbResult?.data?.Plot || '🐈',
           posterPath: tmdbResult.data.poster_path
             ? `https://image.tmdb.org/t/p/original${tmdbResult.data.poster_path}`
-            : omdbResult?.data?.Poster ||
-              'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png',
+            : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png',
           duration: formatDuration(tmdbResult.data.runtime),
           certification:
             (tmdbResult.data.release_dates.results.find(
