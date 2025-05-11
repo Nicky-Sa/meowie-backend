@@ -35,5 +35,5 @@ jobs:
           application_name: MeowieBackend
           environment_name: MeowieBackend-preview
           version_label: ${{ github.run_number }}
-          region: ${{ var.AWS_REGION }}
+          region: ${{ vars.AWS_REGION }}
           deployment_package: deploy.zip
