@@ -3,11 +3,13 @@ name: Deploy to AWS Elastic Beanstalk (Nest.js)
 on:
   push:
     branches:
-      - main
+      - preview
+      - production
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -38,7 +40,7 @@ jobs:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: MeowieBackend
-          environment_name: MeowieBackend-preview
-          version_label: ${{ github.run_number }}
+          environment_name: MeowieBackend-${{ vars.EBS_ENVIRONMENT }}
+          version_label: ${{ vars.EBS_ENVIRONMENT }}-${{ github.run_number }}
           region: ${{ vars.AWS_REGION }}
           deployment_package: deploy.zip
