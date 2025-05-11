@@ -21,6 +21,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Making Sentry token available
+        run: rm -rf .sentryclirc \
+          ${{ secrets.SENTRY_AUTH_TOKEN }} >> .sentryclirc
+
+
       - name: Build Application
         run: npm run build
 
