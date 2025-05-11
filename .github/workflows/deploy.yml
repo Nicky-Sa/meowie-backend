@@ -1,0 +1,39 @@
+name: Deploy to AWS Elastic Beanstalk (Nest.js)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Prepare Deployment Package
+        run: zip -r deploy.zip dist package.json package-lock.json Procfile
+
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: MeowieBackend
+          environment_name: MeowieBackend-preview
+          version_label: ${{ github.run_number }}
+          region: ${{ var.AWS_REGION }}
+          deployment_package: deploy.zip
