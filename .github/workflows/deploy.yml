@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: debug
+        run: echo ${{ github.ref_name }}; echo ${{ vars.EBS_ENVIRONMENT }}
+
       - name: Install Dependencies
         run: npm ci
 
