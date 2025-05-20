@@ -7,6 +7,7 @@ import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
 import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
 import { AllRatings } from './models/ratings';
 import { QueryParams } from './models/query';
+import { min } from 'lodash';
 
 @Injectable()
 export class MoviesService {
@@ -21,6 +22,12 @@ export class MoviesService {
   }
 
   async getMovieIds(query: QueryParams): Promise<TMDB_MoviesList> {
+    const maxDate = min([
+      new Date(`${Number(query.decade) + 9}-12-31`),
+      new Date(),
+    ])
+      ?.toISOString()
+      .split('T')[0];
     try {
       const response = await axios.get<TMDB_MoviesList>(
         `${this.TMDB_BASE_URL}/3/discover/movie`,
@@ -37,7 +44,7 @@ export class MoviesService {
             }),
             ...(query.decade && {
               'release_date.gte': `${query.decade}-01-01`,
-              'release_date.lte': `${Number(query.decade) + 9}-12-31`,
+              'release_date.lte': maxDate,
             }),
             'vote_average.gte': hasFilters(query)
               ? (query.tmdbRatings?.split(',')[0] ?? 0)
