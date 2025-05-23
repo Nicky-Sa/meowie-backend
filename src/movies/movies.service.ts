@@ -46,8 +46,8 @@ export class MoviesService {
               ? query.languages.replaceAll(',', '|')
               : 'en|fr|de|es',
             ...(query.decade && {
-              'release_date.gte': `${query.decade}-01-01`,
-              'release_date.lte': maxDate,
+              'primary_release_date.gte': `${query.decade}-01-01`,
+              'primary_release_date.lte': maxDate,
             }),
             'vote_average.gte': hasFilters(query)
               ? (query.tmdbRatings?.split(',')[0] ?? 0)
