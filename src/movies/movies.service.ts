@@ -1,7 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 import { EnvService } from 'src/env/env.service';
 import { Injectable } from '@nestjs/common';
-import { TMDB_MoviesList } from 'src/movies/models/tmdb/moviesList';
+import {
+  TMDB_MoviesList,
+  TMDB_MoviesListResult,
+} from 'src/movies/models/tmdb/moviesList';
 import { TMDB_Info, TMDB_RequiredInfo } from 'src/movies/models/tmdb/info';
 import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
 import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
@@ -39,9 +42,9 @@ export class MoviesService {
             ...(query.genres && {
               with_genres: query.genres.replaceAll(',', '|'),
             }),
-            ...(query.languages && {
-              with_original_language: query.languages.replaceAll(',', '|'),
-            }),
+            with_original_language: query.languages
+              ? query.languages.replaceAll(',', '|')
+              : 'en|fr|de|es',
             ...(query.decade && {
               'release_date.gte': `${query.decade}-01-01`,
               'release_date.lte': maxDate,
@@ -55,6 +58,9 @@ export class MoviesService {
             page: query.page ?? 1,
           },
         },
+      );
+      response.data.results = response.data.results.filter((movie) =>
+        this.isMovieValid(movie),
       );
       return response.data;
     } catch (error) {
@@ -109,11 +115,11 @@ export class MoviesService {
       if (tmdbResult.data) {
         const data: TMDB_RequiredInfo & AllRatings = {
           // tmdb
-          title: tmdbResult.data.title || '😾',
+          title: tmdbResult.data.title,
           publishYear: new Date(tmdbResult.data.release_date ?? 0)
             .getFullYear()
             .toString(),
-          overview: tmdbResult.data.overview || omdbResult?.data?.Plot || '🐈',
+          overview: tmdbResult.data.overview,
           posterPath: tmdbResult.data.poster_path
             ? `https://image.tmdb.org/t/p/original${tmdbResult.data.poster_path}`
             : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png',
@@ -146,5 +152,9 @@ export class MoviesService {
     } catch (error) {
       throw new Error(`Error fetching movie info: ${error}`);
     }
+  }
+
+  private isMovieValid(movie: TMDB_MoviesListResult): boolean {
+    return Boolean(movie.title && movie.overview);
   }
 }
