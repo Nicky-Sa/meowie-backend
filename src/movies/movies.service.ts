@@ -11,6 +11,8 @@ import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
 import { AllRatings } from './models/ratings';
 import { QueryParams } from './models/query';
 import { min } from 'lodash';
+import { Vibrant } from 'node-vibrant/node';
+import { PrimaryColor } from './models/color';
 
 @Injectable()
 export class MoviesService {
@@ -68,7 +70,9 @@ export class MoviesService {
     }
   }
 
-  async getMovieInfo(id: number) {
+  async getMovieInfo(
+    id: number,
+  ): Promise<(TMDB_RequiredInfo & AllRatings & PrimaryColor) | undefined> {
     try {
       // TMDB API
       const tmdbResult = await axios.get<TMDB_Info>(
@@ -83,7 +87,7 @@ export class MoviesService {
 
       // OMDB API
       const imdbId = tmdbResult.data?.imdb_id;
-      let omdbResult: AxiosResponse<OMDB_Info, any> | null = null;
+      let omdbResult: AxiosResponse<OMDB_Info> | null = null;
       let omdbRatings: {
         Source: OMDB_Source;
         Value: string;
@@ -113,16 +117,19 @@ export class MoviesService {
       }
 
       if (tmdbResult.data) {
-        const data: TMDB_RequiredInfo & AllRatings = {
+        const posterPath = tmdbResult.data.poster_path
+          ? `https://image.tmdb.org/t/p/original${tmdbResult.data.poster_path}`
+          : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png';
+        const primaryColorHex = await this.extractPrimaryColor(posterPath);
+
+        const data: TMDB_RequiredInfo & AllRatings & PrimaryColor = {
           // tmdb
           title: tmdbResult.data.title,
           publishYear: new Date(tmdbResult.data.release_date ?? 0)
             .getFullYear()
             .toString(),
           overview: tmdbResult.data.overview,
-          posterPath: tmdbResult.data.poster_path
-            ? `https://image.tmdb.org/t/p/original${tmdbResult.data.poster_path}`
-            : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png',
+          posterPath,
           duration: formatDuration(tmdbResult.data.runtime),
           certification:
             (tmdbResult.data.release_dates.results.find(
@@ -143,6 +150,7 @@ export class MoviesService {
               value: tmdbResult.data.vote_average.toFixed(1).toString(),
             },
           ],
+          primaryColorHex,
         };
 
         return {
@@ -156,5 +164,14 @@ export class MoviesService {
 
   private isMovieValid(movie: TMDB_MoviesListResult): boolean {
     return Boolean(movie.title && movie.overview);
+  }
+
+  private async extractPrimaryColor(url: string): Promise<string> {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const buffer = Buffer.from(response.data, 'binary');
+
+    const palette = await Vibrant.from(buffer).getPalette();
+
+    return palette.LightVibrant?.hex ?? '#1F3854';
   }
 }
