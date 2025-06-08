@@ -1,18 +1,20 @@
 import axios, { AxiosResponse } from 'axios';
 import { EnvService } from 'src/env/env.service';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   TMDB_MoviesList,
   TMDB_MoviesListResult,
 } from 'src/movies/models/tmdb/moviesList';
-import { TMDB_Info, TMDB_RequiredInfo } from 'src/movies/models/tmdb/info';
+import { TMDB_Info } from 'src/movies/models/tmdb/info';
 import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
 import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
-import { AllRatings } from './models/ratings';
 import { QueryParams } from './models/query';
 import { min } from 'lodash';
 import { Vibrant } from 'node-vibrant/node';
-import { PrimaryColor } from './models/color';
+import { PosterProps } from './models/image';
+import sharp from 'sharp';
+import { encode } from 'blurhash';
+import { MovieIdsDTO, MoviesDTO } from './models/movies.dto';
 
 @Injectable()
 export class MoviesService {
@@ -26,7 +28,7 @@ export class MoviesService {
     this.OMDB_API_KEY = this.envService.get('OMDB_API_KEY');
   }
 
-  async getMovieIds(query: QueryParams): Promise<TMDB_MoviesList> {
+  async getMovieIds(query: QueryParams): Promise<MovieIdsDTO> {
     const maxDate = min([
       new Date(`${Number(query.decade) + 9}-12-31`),
       new Date(),
@@ -70,9 +72,7 @@ export class MoviesService {
     }
   }
 
-  async getMovieInfo(
-    id: number,
-  ): Promise<(TMDB_RequiredInfo & AllRatings & PrimaryColor) | undefined> {
+  async getMovieInfo(id: number): Promise<MoviesDTO> {
     try {
       // TMDB API
       const tmdbResult = await axios.get<TMDB_Info>(
@@ -120,9 +120,9 @@ export class MoviesService {
         const posterPath = tmdbResult.data.poster_path
           ? `https://image.tmdb.org/t/p/original${tmdbResult.data.poster_path}`
           : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png';
-        const primaryColorHex = await this.extractPrimaryColor(posterPath);
+        const posterProps = await this.generatePosterProps(posterPath);
 
-        const data: TMDB_RequiredInfo & AllRatings & PrimaryColor = {
+        const data: MoviesDTO = {
           // tmdb
           title: tmdbResult.data.title,
           publishYear: new Date(tmdbResult.data.release_date ?? 0)
@@ -150,12 +150,14 @@ export class MoviesService {
               value: tmdbResult.data.vote_average.toFixed(1).toString(),
             },
           ],
-          primaryColorHex,
+          posterProps,
         };
 
         return {
           ...data,
         };
+      } else {
+        throw new HttpException('Movie not found', HttpStatus.NOT_FOUND);
       }
     } catch (error) {
       throw new Error(`Error fetching movie info: ${error}`);
@@ -166,12 +168,30 @@ export class MoviesService {
     return Boolean(movie.title && movie.overview);
   }
 
-  private async extractPrimaryColor(url: string): Promise<string> {
+  private async generatePosterProps(url: string): Promise<PosterProps> {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const buffer = Buffer.from(response.data, 'binary');
 
     const palette = await Vibrant.from(buffer).getPalette();
 
-    return palette.LightVibrant?.hex ?? '#1F3854';
+    // Generate blurhash
+    const { data, info } = await sharp(buffer)
+      .raw()
+      .ensureAlpha()
+      .resize(32, 32, { fit: 'inside' })
+      .toBuffer({ resolveWithObject: true });
+
+    const blurhash = encode(
+      new Uint8ClampedArray(data),
+      info.width,
+      info.height,
+      4,
+      4,
+    );
+
+    return {
+      primaryColorHex: palette.LightVibrant?.hex ?? '#1F3854',
+      blurhash,
+    };
   }
 }
