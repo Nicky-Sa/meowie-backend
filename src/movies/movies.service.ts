@@ -169,28 +169,40 @@ export class MoviesService {
   }
 
   private async generatePosterProps(url: string): Promise<PosterProps> {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data, 'binary');
+    let primaryColorHex = '#1F3854';
+    let blurhash = 'U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xs';
 
-    const palette = await Vibrant.from(buffer).getPalette();
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(response.data, 'binary');
 
-    // Generate blurhash
-    const { data, info } = await sharp(buffer)
-      .raw()
-      .ensureAlpha()
-      .resize(32, 32, { fit: 'inside' })
-      .toBuffer({ resolveWithObject: true });
+      const palette = await Vibrant.from(buffer).getPalette();
 
-    const blurhash = encode(
-      new Uint8ClampedArray(data),
-      info.width,
-      info.height,
-      4,
-      4,
-    );
+      // Generate blurhash
+      const { data, info } = await sharp(buffer)
+        .raw()
+        .ensureAlpha()
+        .resize(32, 32, { fit: 'inside' })
+        .toBuffer({ resolveWithObject: true });
 
+      const encodedBlurhash = encode(
+        new Uint8ClampedArray(data),
+        info.width,
+        info.height,
+        4,
+        4,
+      );
+      if (palette.LightVibrant?.hex) {
+        primaryColorHex = palette.LightVibrant.hex;
+      }
+      if (encodedBlurhash) {
+        blurhash = encodedBlurhash;
+      }
+    } catch (error) {
+      console.error(`Error generating poster props: ${error}`);
+    }
     return {
-      primaryColorHex: palette.LightVibrant?.hex ?? '#1F3854',
+      primaryColorHex,
       blurhash,
     };
   }
