@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import pkg from '../package.json';
 
 @Injectable()
 export class AppService {
   getInfo(): Record<string, string> {
     return {
-      app: 'meowie-backend',
-      version: '0.0.1',
+      app: pkg.name,
+      version: pkg.version,
     };
   }
 }
