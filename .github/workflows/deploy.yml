@@ -43,8 +43,9 @@ jobs:
           echo "${{ secrets.SENTRY_AUTH_TOKEN }}" > sentry_token.txt
 
           docker build \
+          --platform linux/arm64 \
           --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
-           --secret id=sentry_token,src=sentry_token.txt \
+          --secret id=sentry_token,src=sentry_token.txt \
             -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
             .
           
@@ -53,15 +54,14 @@ jobs:
           rm -rf sentry_token.txt
 
       - name: Trigger EC2 Deploy via SSM
-        uses: peterkimzz/aws-ssm-send-command@master
+        uses: thomasvjoseph/aws-ssm-send@v1.0.0
         id: ssm-send
         with:
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          working-directory: /home/ubuntu/meowie-backend
-          instance-ids: ${{ secrets.EC2_INSTANCE_ID }}
-          command: |
+          region: ${{ vars.AWS_REGION }}
+          instance-id: ${{ secrets.EC2_INSTANCE_ID }}
+          commands: |
+            cp .env.${{ env.BUILD_ENV }} .env.local
+            echo "\n" >> .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
             echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
@@ -74,14 +74,5 @@ jobs:
             docker rm meowie-${{ env.BUILD_ENV }} || true
             docker run -d --name meowie-${{ env.BUILD_ENV }} \
             --env-file .env.local \
+            -p ${{ vars.PORT }}:${{ vars.PORT }} \
             $IMAGE
-
-      - name: Show SSM command stdout
-        run: |
-          echo "==== STDOUT ===="
-          aws ssm get-command-invocation \
-            --command-id ${{ steps.ssm-send.outputs.command-id }} \
-            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
-            --region ${{ vars.AWS_REGION }} \
-            --query 'StandardOutputContent' \
-            --output text
