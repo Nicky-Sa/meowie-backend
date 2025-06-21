@@ -21,10 +21,10 @@ jobs:
 
       - name: Populate local envs
         run: |
-          cp .env.${{ env.BUILD_ENV }} .env.local
-          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
-          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
-          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
+          echo "\n" >> .env.${{ env.BUILD_ENV }}
+          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
+          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
+          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.${{ env.BUILD_ENV }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -46,17 +46,12 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          echo "${{ secrets.SENTRY_AUTH_TOKEN }}" > sentry_token.txt
-
           docker build \
           --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
-           --secret id=sentry_token,src=sentry_token.txt \
-            -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
-            .
+          -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
+          .
           
           docker push ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
-          
-          rm -rf sentry_token.txt
 
       - name: Trigger EC2 Deploy via SSM
         uses: thomasvjoseph/aws-ssm-send@v1.0.0
@@ -71,6 +66,4 @@ jobs:
             docker stop meowie-${{ env.BUILD_ENV }} || true
             docker rm meowie-${{ env.BUILD_ENV }} || true
             docker run -d --name meowie-${{ env.BUILD_ENV }} \
-              --env-file .env.local \
-              -p $PORT:$PORT \
-              $IMAGE
+            $IMAGE
