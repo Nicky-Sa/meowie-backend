@@ -64,10 +64,11 @@ jobs:
           region: ${{ vars.AWS_REGION }}
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
-            aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${{ env.ECR_BASE_URL }}
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
-            docker pull $IMAGE && \
-            docker stop meowie-${{ env.BUILD_ENV }} || true && docker rm meowie-${{ env.BUILD_ENV }} || true && \
+            docker pull $IMAGE
+            docker stop meowie-${{ env.BUILD_ENV }} || true
+            docker rm meowie-${{ env.BUILD_ENV }} || true
             docker run -d --name meowie-${{ env.BUILD_ENV }} \
-            --env-file .env.local \
-            -p \$PORT:\$PORT $IMAGE" \
+              --env-file .env.local \
+              -p $PORT:$PORT \
+              $IMAGE
