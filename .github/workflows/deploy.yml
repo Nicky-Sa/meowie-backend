@@ -9,6 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
     env:
       DOCKER_BUILDKIT: 1
       BUILD_ENV: ${{ github.ref_name }}
@@ -19,22 +20,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Populate local envs
-        run: |
-          echo "\n" >> .env.${{ env.BUILD_ENV }}
-          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
-          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
-          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.${{ env.BUILD_ENV }}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to Amazon ECR
         id: login-ecr
@@ -59,17 +46,20 @@ jobs:
           rm -rf sentry_token.txt
 
       - name: Trigger EC2 Deploy via SSM
-        uses: thomasvjoseph/aws-ssm-send@v1.0.0
+        uses: peterkimzz/aws-ssm-send-command@master
         id: ssm-send
         with:
-          region: ${{ vars.AWS_REGION }}
-          instance-id: ${{ secrets.EC2_INSTANCE_ID }}
-          commands: |
-            cp .env.${{ env.BUILD_ENV }} .env.local
-            echo "\n" >> .env.local
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          working-directory: /home/ubuntu/meowie-backend
+          instance-ids: ${{ secrets.INSTANCE_ID }}
+          command: |
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
             echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
+            echo "PORT=${{ vars.PORT }}" >> .env.local
+            
             
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
             docker pull $IMAGE
