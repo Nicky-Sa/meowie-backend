@@ -14,6 +14,7 @@ jobs:
       BUILD_ENV: ${{ github.ref_name }}
       IMAGE_TAG: ${{ github.ref_name }}-${{ github.run_number }}
       ECR_BASE_URL: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+      IMAGE: ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
 
     steps:
       - name: Checkout code
@@ -22,6 +23,9 @@ jobs:
       - name: Populate local envs
         run: |
           cp .env.${{ env.BUILD_ENV }} .env.local
+          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
+          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
+          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -56,18 +60,16 @@ jobs:
           rm -rf sentry_token.txt
 
       - name: Trigger EC2 Deploy via SSM
-        run: |
-          IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
-          aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
-            --parameters commands="\
-              docker login --username AWS --password $(aws ecr get-login-password --region ${{ vars.AWS_REGION }}) ${{ env.ECR_BASE_URL }} && \
-              docker pull $IMAGE && \
-              docker stop meowie-${{ env.BUILD_ENV }} || true && docker rm meowie-${{ env.BUILD_ENV }} || true && \
-              docker run -d --name meowie-${{ env.BUILD_ENV }} \
-              --env "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" \
-              --env "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" \
-              --env "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" \
-              -p \$PORT:\$PORT $IMAGE" \
-            --region ${{ vars.AWS_REGION }}
+        uses: debugger24/action-aws-ssm-run-command@v1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          instance-ids: ${{ secrets.EC2_INSTANCE_ID }}
+          working-directory: /home/ubuntu
+          comment: "Deploy meowie backend - ${{ env.BUILD_ENV }}"
+          commands: |
+            IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
+            docker pull $IMAGE && \
+            docker stop meowie-${{ env.BUILD_ENV }} || true && docker rm meowie-${{ env.BUILD_ENV }} || true && \
+            docker run -d --name meowie-${{ env.BUILD_ENV }} \
+            --env-file .env.local \
+            -p \$PORT:\$PORT $IMAGE" \
