@@ -40,6 +40,7 @@ jobs:
           echo "\n" >> .env.${{ env.BUILD_ENV }}
           echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
           echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
+          echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.${{ env.BUILD_ENV }}
 
       - name: Build and Push Docker image
         run: |
