@@ -1,4 +1,4 @@
-name: Deploy to AWS Elastic Beanstalk (Nest.js)
+name: Deploy to EC2 using ECR + SSM
 
 on:
   push:
@@ -9,38 +9,56 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    env:
+      BUILD_ENV: ${{ github.ref_name }}
+      IMAGE_TAG: ${{ github.ref_name }}-${{ github.run_number }}
+      ECR_BASE_URL: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: '22'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Making Sentry token available
+      - name: Log in to Amazon ECR
+        id: login-ecr
         run: |
-          rm -rf .sentryclirc
-          echo "[auth]\ntoken=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .sentryclirc
+          aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
+            | docker login --username AWS --password-stdin \
+              ${{ env.ECR_BASE_URL }}
 
-      - name: Build Application
-        run: npm run build
+      - name: Populate secret envs
+        run: |
+          echo "\n" >> .env.${{ env.BUILD_ENV }}
+          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
+          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.${{ env.BUILD_ENV }}
 
-      - name: Prepare Deployment Package
-        run: zip -r deploy.zip dist package.json package-lock.json Procfile
+      - name: Build and Push Docker image
+        run: |
+          docker build \
+            --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
+            -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
+            .
 
-      - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v22
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: MeowieBackend
-          environment_name: MeowieBackend-${{ vars.EBS_ENVIRONMENT }}
-          version_label: ${{ vars.EBS_ENVIRONMENT }}-${{ github.run_number }}
-          region: ${{ vars.AWS_REGION }}
-          deployment_package: deploy.zip
+          docker push ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
+
+      - name: Trigger EC2 Deploy via SSM
+        run: |
+          IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --parameters commands="\
+              docker login --username AWS --password $(aws ecr get-login-password --region ${{ vars.AWS_REGION }}) ${{ env.ECR_BASE_URL }} && \
+              docker pull $IMAGE && \
+              docker stop meowie || true && docker rm meowie || true && \
+              docker run -d --name meowie --env-file .env.${{ env.BUILD_ENV }} -p \$PORT:\$PORT $IMAGE" \
+            --region ${{ vars.AWS_REGION }}
