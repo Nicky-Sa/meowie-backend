@@ -60,7 +60,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           working-directory: /home/ubuntu/meowie-backend
-          instance-ids: ${{ secrets.INSTANCE_ID }}
+          instance-ids: ${{ secrets.EC2_INSTANCE_ID }}
           command: |
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
             echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
