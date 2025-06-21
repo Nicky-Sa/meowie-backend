@@ -64,6 +64,7 @@ jobs:
           region: ${{ vars.AWS_REGION }}
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
+            ls -a
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
             PORT=$(grep ^PORT= .env.local | cut -d '=' -f2)
             docker pull $IMAGE
