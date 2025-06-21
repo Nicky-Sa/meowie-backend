@@ -55,15 +55,25 @@ jobs:
 
       - name: Trigger EC2 Deploy via SSM
         uses: thomasvjoseph/aws-ssm-send@v1.0.0
+        id: ssm-send
         with:
           region: ${{ vars.AWS_REGION }}
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
             ls -a
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
-            PORT=$(grep ^PORT= .env.local | cut -d '=' -f2)
             docker pull $IMAGE
             docker stop meowie-${{ env.BUILD_ENV }} || true
             docker rm meowie-${{ env.BUILD_ENV }} || true
             docker run -d --name meowie-${{ env.BUILD_ENV }} \
             $IMAGE
+
+      - name: Show SSM command stdout
+        run: |
+          echo "==== STDOUT ===="
+          aws ssm get-command-invocation \
+            --command-id ${{ steps.ssm-send.outputs.command-id }} \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'StandardOutputContent' \
+            --output text
