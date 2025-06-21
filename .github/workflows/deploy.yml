@@ -66,8 +66,6 @@ jobs:
             pwd
             cd meowie-backend/${{ env.BUILD_ENV }}
             rm -rf .env.local
-            cp .env.${{ env.BUILD_ENV }} .env.local
-            echo "\n" >> .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
             echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
