@@ -59,12 +59,10 @@ jobs:
           rm -rf sentry_token.txt
 
       - name: Trigger EC2 Deploy via SSM
-        uses: debugger24/action-aws-ssm-run-command@v1
+        uses: thomasvjoseph/aws-ssm-send@v1.0.0
         with:
-          aws-region: ${{ vars.AWS_REGION }}
-          instance-ids: ${{ secrets.EC2_INSTANCE_ID }}
-          working-directory: /home/ubuntu
-          comment: "Deploy meowie backend - ${{ env.BUILD_ENV }}"
+          region: ${{ vars.AWS_REGION }}
+          instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
             docker pull $IMAGE && \
