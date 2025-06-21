@@ -63,12 +63,16 @@ jobs:
           region: ${{ vars.AWS_REGION }}
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
+            pwd
+            cd meowie-backend/${{ env.BUILD_ENV }}
+            rm -rf .env.local
             cp .env.${{ env.BUILD_ENV }} .env.local
             echo "\n" >> .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
             echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
             echo "PORT=${{ vars.PORT }}" >> .env.local
+            echo "BUILD_ENV=${{ env.BUILD_ENV }}" >> .env.local
             
             
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
