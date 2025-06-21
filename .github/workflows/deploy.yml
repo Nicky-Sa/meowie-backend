@@ -14,7 +14,6 @@ jobs:
       BUILD_ENV: ${{ github.ref_name }}
       IMAGE_TAG: ${{ github.ref_name }}-${{ github.run_number }}
       ECR_BASE_URL: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
-      IMAGE: ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
 
     steps:
       - name: Checkout code
