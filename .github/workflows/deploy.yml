@@ -71,6 +71,9 @@ jobs:
             echo "PORT=${{ vars.PORT }}" >> .env.local
             echo "BUILD_ENV=${{ env.BUILD_ENV }}" >> .env.local
             
+            aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
+            | docker login --username AWS --password-stdin \
+              ${{ env.ECR_BASE_URL }}
             
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
             docker pull $IMAGE
