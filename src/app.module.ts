@@ -8,6 +8,7 @@ import { EnvModule } from './env/env.module';
 import { envSchema } from './env/env.schema';
 import { APP_FILTER } from '@nestjs/core';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -19,6 +20,19 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
     }),
     MoviesModule,
     EnvModule,
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: 'debug',
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            translateTime: 'SYS:standard',
+            colorize: true,
+            ignore: 'pid',
+          },
+        },
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
