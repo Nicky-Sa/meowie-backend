@@ -9,4 +9,4 @@ RUN --mount=type=secret,id=sentry_token \
     export SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_token) && \
     npm run build
 
-CMD ["npm", "start:debug"]
+CMD ["npm","run", "start:debug"]
