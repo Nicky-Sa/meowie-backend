@@ -96,11 +96,11 @@ export class MoviesService {
       try {
         omdbResult = imdbId
           ? await axios.get<OMDB_Info>(this.OMDB_BASE_URL, {
-              params: {
-                i: imdbId,
-                apikey: this.OMDB_API_KEY,
-              },
-            })
+            params: {
+              i: imdbId,
+              apikey: this.OMDB_API_KEY,
+            },
+          })
           : null;
         if (omdbResult && omdbResult.data?.Ratings) {
           omdbRatings = omdbResult.data.Ratings;
@@ -133,8 +133,8 @@ export class MoviesService {
           duration: formatDuration(tmdbResult.data.runtime),
           certification:
             (tmdbResult.data.release_dates.results.find(
-              (result) => result.iso_3166_1 === 'US',
-            )?.release_dates[0].certification ||
+                (result) => result.iso_3166_1 === 'US',
+              )?.release_dates[0].certification ||
               omdbResult?.data?.Rated) ??
             'N/A',
           trailerKey: findTrailerKey(tmdbResult.data.videos),
@@ -199,6 +199,12 @@ export class MoviesService {
         blurhash = encodedBlurhash;
       }
     } catch (error) {
+      if (error instanceof AggregateError) {
+        console.error(
+          `AggrigateError generating poster props: ${error.message}\n`,
+          `Errors: ${error.errors.join('\n ')}`,
+        );
+      }
       console.error(`Error generating poster props: ${error}`);
     }
     return {
