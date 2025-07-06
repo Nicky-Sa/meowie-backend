@@ -79,7 +79,7 @@ jobs:
             docker pull $IMAGE
             docker stop meowie-${{ env.BUILD_ENV }} || true
             docker rm meowie-${{ env.BUILD_ENV }} || true
-            docker run -d --name meowie-${{ env.BUILD_ENV }} \
+            docker run --restart unless-stopped -d --name meowie-${{ env.BUILD_ENV }} \
             --env-file .env.local \
             -p ${{ vars.PORT }}:${{ vars.PORT }} \
             $IMAGE
