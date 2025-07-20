@@ -67,6 +67,9 @@ jobs:
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
             docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
+            | grep ${{ env.BUILD_ENV }}
+            
+            docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
             | grep ${{ env.BUILD_ENV }} \
             | awk '{print $2}' \
             | xargs -r docker rmi -f
