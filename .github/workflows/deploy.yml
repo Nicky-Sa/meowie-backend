@@ -65,12 +65,11 @@ jobs:
         with:
           region: ${{ vars.AWS_REGION }}
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
-          commands:
+          commands: |
             docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
             | grep ${{ env.BUILD_ENV }} \
             | awk '{print $2}' \
             | xargs -r docker rmi -f
-            
             
             cd /home/ubuntu/meowie-backend/${{ env.BUILD_ENV }}
             rm -rf .env.local
