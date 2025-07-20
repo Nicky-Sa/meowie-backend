@@ -5,10 +5,6 @@ COPY . .
 
 RUN npm ci
 
-RUN --mount=type=secret,id=sentry_token \
-    export SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_token) && \
-    npm run build
-
-RUN rm -rf /run/secrets/sentry_token
+RUN npm run build
 
 CMD ["npm", "run", "start"]

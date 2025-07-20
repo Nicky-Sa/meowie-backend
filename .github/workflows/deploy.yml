@@ -40,21 +40,24 @@ jobs:
             | docker login --username AWS --password-stdin \
               ${{ env.ECR_BASE_URL }}
 
+      - name: Upload source maps to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          npm ci
+          npm run build
+          npm run sentry:sourcemaps
+
 
       - name: Build and Push Docker image
         run: |
-          echo "${{ secrets.SENTRY_AUTH_TOKEN }}" > sentry_token.txt
-
           docker build \
-          --platform linux/arm64 \
-          --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
-          --secret id=sentry_token,src=sentry_token.txt \
+            --platform linux/arm64 \
+            --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
             -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
             .
           
           docker push ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
-          
-          rm -rf sentry_token.txt
 
       - name: Trigger EC2 Deploy via SSM
         uses: thomasvjoseph/aws-ssm-send@v1.0.0
@@ -64,6 +67,7 @@ jobs:
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
             echo "y" | docker system prune -a
+            cd /home/ubuntu/meowie-backend/${{ env.BUILD_ENV }}
             rm -rf .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
             echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
@@ -83,3 +87,5 @@ jobs:
             --env-file .env.local \
             -p ${{ vars.PORT }}:${{ vars.PORT }} \
             $IMAGE
+            
+            rm -rf .env.local
