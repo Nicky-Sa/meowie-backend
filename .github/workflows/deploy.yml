@@ -69,7 +69,17 @@ jobs:
             set -ex
             
             docker buildx prune --all --force
-
+            
+            docker stop meowie-${{ env.BUILD_ENV }} || true
+            docker rm meowie-${{ env.BUILD_ENV }} || true
+            
+            docker rmi $(docker inspect --format='{{.Image}}' meowie-${{ env.BUILD_ENV }}) || true
+            
+            aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
+            | docker login --username AWS --password-stdin \
+              ${{ env.ECR_BASE_URL }}
+            
+            
             cd /home/ubuntu/meowie-backend/${{ env.BUILD_ENV }}
             rm -rf .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
@@ -78,15 +88,8 @@ jobs:
             echo "PORT=${{ vars.PORT }}" >> .env.local
             echo "BUILD_ENV=${{ env.BUILD_ENV }}" >> .env.local
             
-            aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
-            | docker login --username AWS --password-stdin \
-              ${{ env.ECR_BASE_URL }}
-            
             IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
             docker pull $IMAGE
-            docker stop meowie-${{ env.BUILD_ENV }} || true
-            docker rm meowie-${{ env.BUILD_ENV }} || true
-            docker image rm $IMAGE
             docker run --restart unless-stopped -d --name meowie-${{ env.BUILD_ENV }} \
             --env-file .env.local \
             -p ${{ vars.PORT }}:${{ vars.PORT }} \
