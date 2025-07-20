@@ -67,12 +67,9 @@ jobs:
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
           commands: |
             set -ex
-
-            docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
-            | grep ${{ env.BUILD_ENV }} \
-            | awk '{print $2}' \
-            | xargs -r docker rmi -f
             
+            docker buildx prune --all --force
+
             cd /home/ubuntu/meowie-backend/${{ env.BUILD_ENV }}
             rm -rf .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
@@ -89,6 +86,7 @@ jobs:
             docker pull $IMAGE
             docker stop meowie-${{ env.BUILD_ENV }} || true
             docker rm meowie-${{ env.BUILD_ENV }} || true
+            docker image rm $IMAGE
             docker run --restart unless-stopped -d --name meowie-${{ env.BUILD_ENV }} \
             --env-file .env.local \
             -p ${{ vars.PORT }}:${{ vars.PORT }} \
