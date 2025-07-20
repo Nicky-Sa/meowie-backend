@@ -70,10 +70,11 @@ jobs:
             
             docker buildx prune --all --force
             
+            OLD_IMAGE=$(docker inspect --format='{{.Image}}' meowie-${{ env.BUILD_ENV }})
             docker stop meowie-${{ env.BUILD_ENV }} || true
             docker rm meowie-${{ env.BUILD_ENV }} || true
             
-            docker rmi $(docker inspect --format='{{.Image}}' meowie-${{ env.BUILD_ENV }}) || true
+            docker rmi $OLD_IMAGE || true
             
             aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
             | docker login --username AWS --password-stdin \
