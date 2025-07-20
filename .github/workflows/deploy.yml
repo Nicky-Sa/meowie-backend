@@ -65,16 +65,7 @@ jobs:
         with:
           region: ${{ vars.AWS_REGION }}
           instance-id: ${{ secrets.EC2_INSTANCE_ID }}
-          commands: |
-            docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
-            | grep ${{ env.BUILD_ENV }}
-            
-            docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
-            | grep ${{ env.BUILD_ENV }} \
-            | awk '{print $2}' \
-            | xargs -r docker rmi -f
-            
-            
+          commands:
             cd /home/ubuntu/meowie-backend/${{ env.BUILD_ENV }}
             rm -rf .env.local
             echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
