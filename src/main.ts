@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { EnvService } from 'src/env/env.service';
 import { Logger } from 'nestjs-pino';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -10,13 +11,14 @@ async function bootstrap() {
   });
   const logger = app.get(Logger);
   app.useLogger(logger);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  const envsService = app.get(EnvService);
-  await app.listen(envsService.get('PORT'));
+  const env = app.get(EnvService);
+  await app.listen(env.get('PORT'));
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }
 

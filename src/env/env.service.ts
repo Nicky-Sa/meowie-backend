@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Env } from 'src/env/env.schema';
+import { Env, loadEnv } from 'src/env/env.config';
 
 @Injectable()
 export class EnvService {
-  constructor(private configService: ConfigService<Env, true>) {}
-  get<T extends keyof Env>(key: T) {
-    return this.configService.get(key, { infer: true });
+  private readonly env: Env = loadEnv();
+
+  get<T extends keyof Env>(key: T): Env[T] {
+    return this.env[key];
   }
 }
