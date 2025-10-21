@@ -23,9 +23,9 @@ export class MoviesService {
   private readonly TMDB_BASE_URL = 'https://api.themoviedb.org';
   private readonly OMDB_BASE_URL = 'http://www.omdbapi.com';
 
-  constructor(private readonly envService: EnvService) {
-    this.TMDB_API_KEY = this.envService.get('TMDB_API_KEY');
-    this.OMDB_API_KEY = this.envService.get('OMDB_API_KEY');
+  constructor(private readonly env: EnvService) {
+    this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
+    this.OMDB_API_KEY = this.env.get('OMDB_API_KEY');
   }
 
   async getMovieIds(query: QueryParams): Promise<MovieIdsDTO> {

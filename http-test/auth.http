@@ -3,6 +3,5 @@ POST http://localhost:5005/auth/signup
 Content-Type: application/json
 
 {
-  "email": "nicky@meowie.app",
-  "password": "test"
+  "email": "nicky@meowie.app"
 }

@@ -12,6 +12,8 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as fs from 'node:fs';
 import { EnvService } from './env/env.service';
+import { CacheModule } from './cache/cache.module';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { EnvService } from './env/env.service';
         };
       },
     }),
+    OtpModule,
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [

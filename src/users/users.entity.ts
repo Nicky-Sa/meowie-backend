@@ -10,12 +10,6 @@ export class User {
   @Column()
   email: string;
 
-  @Column()
-  hashedPassword: string;
-
-  @Column()
-  salt: string;
-
   @Column({ default: true })
   isActive: boolean;
 }

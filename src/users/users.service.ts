@@ -2,14 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './users.entity';
-import { generateSalt, hashPassword } from '../utils/hasher';
 import { CreateUserDto } from './dto/create-user.dto';
+import { OtpService } from '../otp/otp.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private otpService: OtpService,
   ) {}
 
   findAll(): Promise<User[]> {
@@ -20,19 +21,12 @@ export class UsersService {
     return this.usersRepository.findOneBy({ id });
   }
 
-  async create(dto: CreateUserDto): Promise<User> {
+  async create(dto: CreateUserDto): Promise<string> {
     try {
       const user = new User();
-      const { email, password } = dto;
 
-      const salt = generateSalt();
-      const hashedPassword = await hashPassword(password, salt);
-
-      user.email = email;
-      user.hashedPassword = hashedPassword;
-      user.salt = salt;
-
-      return this.usersRepository.save(user);
+      user.email = dto.email;
+      return await this.otpService.generateOtp(user.email);
     } catch (error) {
       throw new Error(`Error creating user: ${error}`);
     }
