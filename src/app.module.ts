@@ -14,6 +14,7 @@ import * as fs from 'node:fs';
 import { EnvService } from './env/env.service';
 import { CacheModule } from './cache/cache.module';
 import { OtpModule } from './otp/otp.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { OtpModule } from './otp/otp.module';
     }),
     OtpModule,
     CacheModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [

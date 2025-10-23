@@ -16,15 +16,37 @@ _a movie discovery app. Built with NestJS and deployed on AWS Elastic Beanstalk.
 /meowie-backend/[ENV]/nginx` for more info
 
 ### Connect to DB:
+
 Using AWS RDS
 
 - development: meowie-database-development - use ssm
-  ```bash
+
+```bash
+export AWS_PROFILE=local-dev
+```
+
+For RDS:
+```bash
   aws ssm start-session \
     --target <ec2-instance-id>\
     --document-name AWS-StartPortForwardingSessionToRemoteHost \
     --parameters host="<meowie-database-development-endpoint>",portNumber="5432",localPortNumber="5432"
-  ```
+```
+For ElastiCache(redis or valky):
+```bash
+  aws ssm start-session \
+    --target <ec2-instance-id>\
+    --document-name AWS-StartPortForwardingSessionToRemoteHost \
+    --parameters '{"host":["<elasti-cache-endpoint>"],"portNumber":["6379"],"localPortNumber":["6379"]}'
+```
+
+### Creat or Update OTP template
+
+```bash
+aws ses create-template --cli-input-json file://src/otp/otp.template.json --region eu-central-1
+aws ses update-template --cli-input-json file://src/otp/otp.template.json --region eu-central-1
+
+```
 
 ### Port
 

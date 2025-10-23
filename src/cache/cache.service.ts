@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export abstract class CacheService {
-  constructor() {}
+  protected constructor() {}
 
   abstract set(key: string, value: any, ttl?: number): Promise<void>;
 

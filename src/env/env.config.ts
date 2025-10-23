@@ -25,6 +25,14 @@ export const envConfig = z.object({
   }),
   REDIS_ENDPOINT: z.string().min(1, { message: 'REDIS_ENDPOINT is required' }),
   REDIS_PORT: z.coerce.number({ message: 'REDIS_PORT is required' }),
+  AWS_ACCESS_KEY_ID: z
+    .string()
+    .min(1, { message: 'AWS_ACCESS_KEY_ID is required' }),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1, {
+    message: 'AWS_SECRET_ACCESS_KEY is required',
+  }),
+  AWS_REGION: z.string().min(1, { message: 'AWS_REGION is required' }),
+  SENDER_EMAIL: z.email().min(1, { message: 'SENDER_EMAIL is required' }),
 });
 
 export type Env = z.infer<typeof envConfig>;
