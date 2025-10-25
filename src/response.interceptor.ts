@@ -8,26 +8,26 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Response as ExpressResponse } from 'express';
 
-type Data<T> = Record<string, T>;
-
-export type Response<T> = {
+export type SuccessResponse<T> = {
   success: true;
   statusCode: number;
-  data: Data<T>;
+  data: T;
   timestamp: string;
 };
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
+export class ResponseInterceptor<T>
+  implements NestInterceptor<T, SuccessResponse<T>>
+{
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<Response<T>> {
+  ): Observable<SuccessResponse<T>> {
     const ctx = context.switchToHttp();
     const response = ctx.getResponse<ExpressResponse>();
 
     return next.handle().pipe(
-      map((data: Data<T>) => ({
+      map((data: T) => ({
         success: true,
         statusCode: response.statusCode,
         data,

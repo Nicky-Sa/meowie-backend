@@ -1,15 +1,4 @@
-export type TMDB_RequiredInfo = {
-  title: string;
-  publishYear: string;
-  duration: string;
-  certification: string;
-  trailerKey: string;
-  posterPath: string;
-  overview: string;
-  genres: string[];
-};
-
-export type TMDB_Info = {
+export type TMDB_MovieInfo = {
   id: number;
   adult: boolean;
   backdrop_path: string;
@@ -38,6 +27,41 @@ export type TMDB_Info = {
   vote_count: number;
   videos: TMDB_Videos;
   release_dates: TMDB_ReleaseDates;
+};
+
+export type TMDB_MovieCredits = {
+  id: number;
+  cast: TMDB_Cast[];
+  crew: TMDB_Crew[];
+};
+
+export type TMDB_Cast = {
+  adult: boolean;
+  gender: number;
+  id: number;
+  known_for_department: string;
+  name: string;
+  original_name: string;
+  popularity: number;
+  profile_path?: string;
+  cast_id: number;
+  character: string;
+  credit_id: string;
+  order: number;
+};
+
+export type TMDB_Crew = {
+  adult: boolean;
+  gender: number;
+  id: number;
+  known_for_department: string;
+  name: string;
+  original_name: string;
+  popularity: number;
+  profile_path?: string;
+  credit_id: string;
+  department: string;
+  job: string;
 };
 
 type TMDB_BelongsToCollection = {

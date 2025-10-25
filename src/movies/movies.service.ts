@@ -1,12 +1,12 @@
 import axios, { AxiosResponse } from 'axios';
 import { EnvService } from 'src/env/env.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { CastInfo, TMDB_MoviesListResult } from 'src/movies/models/movie-info';
 import {
-  TMDB_MoviesList,
-  TMDB_MoviesListResult,
-} from 'src/movies/models/tmdb/moviesList';
-import { TMDB_Info } from 'src/movies/models/tmdb/info';
-import { OMDB_Info, OMDB_Source } from 'src/movies/models/omdb/info';
+  TMDB_MovieCredits,
+  TMDB_MovieInfo,
+} from 'src/movies/models/thirdparty/tmdb';
+import { OMDB_Info, OMDB_Source } from 'src/movies/models/thirdparty/omdb';
 import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
 import { QueryParams } from './models/query';
 import { min } from 'lodash';
@@ -14,7 +14,7 @@ import { Vibrant } from 'node-vibrant/node';
 import { PosterProps } from './models/image';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
-import { MovieIdsDTO, MoviesDTO } from './models/movies.dto';
+import { MovieIdsResDto, MoviesResDto } from './dto/movies.dto';
 
 @Injectable()
 export class MoviesService {
@@ -28,7 +28,7 @@ export class MoviesService {
     this.OMDB_API_KEY = this.env.get('OMDB_API_KEY');
   }
 
-  async getMovieIds(query: QueryParams): Promise<MovieIdsDTO> {
+  async getMovieIds(query: QueryParams) {
     const maxDate = min([
       new Date(`${Number(query.decade) + 9}-12-31`),
       new Date(),
@@ -36,7 +36,7 @@ export class MoviesService {
       ?.toISOString()
       .split('T')[0];
     try {
-      const response = await axios.get<TMDB_MoviesList>(
+      const response = await axios.get<MovieIdsResDto>(
         `${this.TMDB_BASE_URL}/3/discover/movie`,
         {
           params: {
@@ -72,10 +72,10 @@ export class MoviesService {
     }
   }
 
-  async getMovieInfo(id: number): Promise<MoviesDTO> {
+  async getMovieInfo(id: number) {
     try {
       // TMDB API
-      const tmdbResult = await axios.get<TMDB_Info>(
+      const tmdbResponse = await axios.get<TMDB_MovieInfo>(
         `${this.TMDB_BASE_URL}/3/movie/${id}`,
         {
           params: {
@@ -86,15 +86,15 @@ export class MoviesService {
       );
 
       // OMDB API
-      const imdbId = tmdbResult.data?.imdb_id;
-      let omdbResult: AxiosResponse<OMDB_Info> | null = null;
+      const imdbId = tmdbResponse.data?.imdb_id;
+      let omdbResponse: AxiosResponse<OMDB_Info> | null = null;
       let omdbRatings: {
         Source: OMDB_Source;
         Value: string;
       }[];
 
       try {
-        omdbResult = imdbId
+        omdbResponse = imdbId
           ? await axios.get<OMDB_Info>(this.OMDB_BASE_URL, {
               params: {
                 i: imdbId,
@@ -102,8 +102,8 @@ export class MoviesService {
               },
             })
           : null;
-        if (omdbResult && omdbResult.data?.Ratings) {
-          omdbRatings = omdbResult.data.Ratings;
+        if (omdbResponse && omdbResponse.data?.Ratings) {
+          omdbRatings = omdbResponse.data.Ratings;
         } else {
           throw new Error('No ratings found');
         }
@@ -116,29 +116,30 @@ export class MoviesService {
         }));
       }
 
-      if (tmdbResult.data) {
-        const posterPath = tmdbResult.data.poster_path
-          ? `https://image.tmdb.org/t/p/original${tmdbResult.data.poster_path}`
+      if (tmdbResponse.data) {
+        const posterPath = tmdbResponse.data.poster_path
+          ? `https://image.tmdb.org/t/p/original${tmdbResponse.data.poster_path}`
           : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png';
         const posterProps = await this.generatePosterProps(posterPath);
+        const credits = await this.getMovieCredits(id);
 
-        const data: MoviesDTO = {
+        const data: MoviesResDto = {
           // tmdb
-          title: tmdbResult.data.title,
-          publishYear: new Date(tmdbResult.data.release_date ?? 0)
+          title: tmdbResponse.data.title,
+          publishYear: new Date(tmdbResponse.data.release_date ?? 0)
             .getFullYear()
             .toString(),
-          overview: tmdbResult.data.overview,
+          overview: tmdbResponse.data.overview,
           posterPath,
-          duration: formatDuration(tmdbResult.data.runtime),
+          duration: formatDuration(tmdbResponse.data.runtime),
           certification:
-            (tmdbResult.data.release_dates.results.find(
+            (tmdbResponse.data.release_dates.results.find(
               (result) => result.iso_3166_1 === 'US',
             )?.release_dates[0].certification ||
-              omdbResult?.data?.Rated) ??
+              omdbResponse?.data?.Rated) ??
             'N/A',
-          trailerKey: findTrailerKey(tmdbResult.data.videos),
-          genres: tmdbResult.data.genres.map((genre) => genre.name),
+          trailerKey: findTrailerKey(tmdbResponse.data.videos),
+          genres: tmdbResponse.data.genres.map((genre) => genre.name),
           ratings: [
             // omdb
             ...omdbRatings.map((rating) => ({
@@ -147,10 +148,11 @@ export class MoviesService {
             })),
             {
               source: 'The Movie Database',
-              value: tmdbResult.data.vote_average.toFixed(1).toString(),
+              value: tmdbResponse.data.vote_average.toFixed(1).toString(),
             },
           ],
           posterProps,
+          credits,
         };
 
         return {
@@ -161,6 +163,35 @@ export class MoviesService {
       }
     } catch (error) {
       throw new Error(`Error fetching movie info: ${error}`);
+    }
+  }
+
+  async getMovieCredits(id: number) {
+    try {
+      const response = await axios.get<TMDB_MovieCredits>(
+        `${this.TMDB_BASE_URL}/3/movie/${id}/credits`,
+        {
+          params: {
+            api_key: this.TMDB_API_KEY,
+          },
+        },
+      );
+      const casts: CastInfo[] = response.data.cast
+        .filter((cast) => cast.known_for_department === 'Acting')
+        .sort((a, b) => a.order - b.order)
+        .slice(0, 5)
+        .map((cast) => ({
+          name: cast.name,
+          character: cast.character,
+          profilePath: `https://image.tmdb.org/t/p/original${cast.profile_path}`,
+        }));
+      const director = response.data.crew
+        .filter((crew) => crew.job === 'Director')
+        .slice(0, 4)
+        .map((crew) => crew.name)[0];
+      return { casts, director };
+    } catch (error) {
+      throw new Error(`Error fetching movie credits: ${error}`);
     }
   }
 
