@@ -23,8 +23,10 @@ export const envConfig = z.object({
   DB_MIGRATOR_PASSWORD: z.string().min(1, {
     message: 'DB_MIGRATOR_PASSWORD is required',
   }),
-  REDIS_ENDPOINT: z.string().min(1, { message: 'REDIS_ENDPOINT is required' }),
-  REDIS_PORT: z.coerce.number({ message: 'REDIS_PORT is required' }),
+  VALKEY_ENDPOINT: z
+    .string()
+    .min(1, { message: 'VALKEY_ENDPOINT is required' }),
+  VALKEY_PORT: z.coerce.number({ message: 'VALKEY_PORT is required' }),
   AWS_ACCESS_KEY_ID: z
     .string()
     .min(1, { message: 'AWS_ACCESS_KEY_ID is required' }),

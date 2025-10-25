@@ -15,30 +15,9 @@ _a movie discovery app. Built with NestJS and deployed on AWS Elastic Beanstalk.
 - Installed Nginx on EC2 instance and configured certbot for SSL -> Check `/home/ubuntu
 /meowie-backend/[ENV]/nginx` for more info
 
-### Connect to DB:
+### Local dev, passing security groups on AWS:
 
-Using AWS RDS
-
-- development: meowie-database-development - use ssm
-
-```bash
-export AWS_PROFILE=local-dev
-```
-
-For RDS:
-```bash
-  aws ssm start-session \
-    --target <ec2-instance-id>\
-    --document-name AWS-StartPortForwardingSessionToRemoteHost \
-    --parameters host="<meowie-database-development-endpoint>",portNumber="5432",localPortNumber="5432"
-```
-For ElastiCache(redis or valky):
-```bash
-  aws ssm start-session \
-    --target <ec2-instance-id>\
-    --document-name AWS-StartPortForwardingSessionToRemoteHost \
-    --parameters '{"host":["<elasti-cache-endpoint>"],"portNumber":["6379"],"localPortNumber":["6379"]}'
-```
+Run `sh init-dev.sh` to start port forwarding to ElastiCache and RDS.
 
 ### Creat or Update OTP template
 

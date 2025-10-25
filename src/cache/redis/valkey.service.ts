@@ -1,11 +1,10 @@
-// redis.service.ts
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import Redis from 'ioredis';
+import Valkey from 'ioredis';
 import { CacheService } from '../cache.service';
 import { EnvService } from '../../env/env.service';
 
 @Injectable()
-export class RedisService
+export class ValkeyService
   extends CacheService
   implements OnModuleInit, OnModuleDestroy
 {
@@ -13,21 +12,21 @@ export class RedisService
     super();
   }
 
-  private client: Redis;
+  private client: Valkey;
 
   onModuleInit() {
-    this.client = new Redis({
+    this.client = new Valkey({
       host: '127.0.0.1',
-      port: this.env.get('REDIS_PORT'),
+      port: this.env.get('VALKEY_PORT'),
       tls: {
-        servername: this.env.get('REDIS_ENDPOINT'),
+        servername: this.env.get('VALKEY_ENDPOINT'),
       },
     });
 
     this.client.on('connect', () =>
-      console.log('✅ Connected to ElastiCache Redis'),
+      console.log('✅ Connected to ElastiCache Valkey'),
     );
-    this.client.on('error', (err) => console.error('❌ Redis Error:', err));
+    this.client.on('error', (err) => console.error('❌ Valkey Error:', err));
   }
 
   async set(key: string, value: string, ttlSeconds = 300) {
