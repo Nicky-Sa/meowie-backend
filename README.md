@@ -1,6 +1,6 @@
 # Backend for Meowie
 
-_a movie discovery app. Built with NestJS and deployed on AWS Elastic Beanstalk._
+_Backend for a movie discovery app. Built with NestJS and deployed on AWS_
 
 ### Deploy:
 
@@ -8,7 +8,7 @@ _a movie discovery app. Built with NestJS and deployed on AWS Elastic Beanstalk.
     - preview: https://preview.api.meowie.app
     - production: https://api.meowie.app
 - Env variables defined in GitHub secrets and variables and pulled in during deploy via SSM
-- Dockerfile for building image
+- Dockerfile for building an image
 - ECR for storing images
 - SSM for deploying to EC2
 - GitHub actions for CI/CD
