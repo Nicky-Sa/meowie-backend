@@ -19,7 +19,7 @@ export default new DataSource({
     ssl: {
       rejectUnauthorized: true,
       ca: fs.readFileSync(env.DB_SSL_CA, 'utf8'),
-      servername: env.DB_ENDPOINT,
+      servername: env.DB_HOST,
     },
   },
 });

@@ -11,7 +11,6 @@ export const envConfig = z.object({
     message: 'BUILD_ENV is required',
   }),
   DB_SSL_CA: z.string().min(1, { message: 'DB_SSL_CA is required' }),
-  DB_ENDPOINT: z.string().min(1, { message: 'DB_ENDPOINT is required' }),
   DB_USER: z.string().min(1, { message: 'DB_USER is required' }),
   DB_PASSWORD: z.string().min(1, { message: 'DB_PASSWORD is required' }),
   DB_NAME: z.string().min(1, { message: 'DB_NAME is required' }),

@@ -53,7 +53,7 @@ import { EmailModule } from './email/email.module';
           ssl: {
             ca: fs.readFileSync(env.get('DB_SSL_CA'), 'utf8').toString(),
             rejectUnauthorized: true,
-            servername: env.get('DB_ENDPOINT'),
+            servername: env.get('DB_HOST'),
           },
         };
       },
