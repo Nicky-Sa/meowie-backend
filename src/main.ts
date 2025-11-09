@@ -4,8 +4,8 @@ import { AppModule } from './app.module';
 import { EnvService } from 'src/env/env.service';
 import { Logger } from 'nestjs-pino';
 import { ValidationPipe } from '@nestjs/common';
-import { ResponseInterceptor } from './response.interceptor';
-import { GlobalExceptionFilter } from './global-exception.filter';
+import { ResponseInterceptor } from './utils/response.interceptor';
+import { GlobalExceptionFilter } from './utils/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
