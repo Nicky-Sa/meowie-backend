@@ -22,6 +22,7 @@ export const envConfig = z.object({
   DB_MIGRATOR_PASSWORD: z.string().min(1, {
     message: 'DB_MIGRATOR_PASSWORD is required',
   }),
+  VALKEY_HOST: z.string().min(1, { message: 'VALKEY_HOST is required' }),
   VALKEY_ENDPOINT: z
     .string()
     .min(1, { message: 'VALKEY_ENDPOINT is required' }),

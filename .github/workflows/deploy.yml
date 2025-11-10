@@ -99,6 +99,7 @@ jobs:
             echo "DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}" >> .env.local
             echo "DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}" >> .env.local
             
+            echo "VALKEY_HOST=${{ secrets.VALKEY_HOST }}" >> .env.local
             echo "VALKEY_ENDPOINT=${{ secrets.VALKEY_ENDPOINT }}" >> .env.local
             echo "VALKEY_PORT=${{ secrets.VALKEY_PORT }}" >> .env.local
             

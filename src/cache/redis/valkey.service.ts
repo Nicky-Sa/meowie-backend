@@ -16,7 +16,7 @@ export class ValkeyService
 
   onModuleInit() {
     this.client = new Valkey({
-      host: '127.0.0.1',
+      host: this.env.get('VALKEY_HOST'),
       port: this.env.get('VALKEY_PORT'),
       tls: {
         servername: this.env.get('VALKEY_ENDPOINT'),
