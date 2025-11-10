@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import Valkey from 'ioredis';
 import { CacheService } from '../cache.service';
 import { EnvService } from '../../env/env.service';
@@ -8,6 +13,8 @@ export class ValkeyService
   extends CacheService
   implements OnModuleInit, OnModuleDestroy
 {
+  private readonly logger = new Logger();
+
   constructor(private readonly env: EnvService) {
     super();
   }
@@ -24,7 +31,7 @@ export class ValkeyService
     });
 
     this.client.on('connect', () =>
-      console.log('✅ Connected to ElastiCache Valkey'),
+      this.logger.log('✅ Connected to ElastiCache Valkey'),
     );
     this.client.on('error', (err) => console.error('❌ Valkey Error:', err));
   }

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { isArray } from 'lodash';
+import { SentryExceptionCaptured } from '@sentry/nestjs';
 
 type ErrorResponse = {
   success: false;
@@ -17,6 +18,7 @@ type ErrorResponse = {
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  @SentryExceptionCaptured()
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
