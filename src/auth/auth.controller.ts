@@ -1,6 +1,6 @@
 import { Body, Controller, HttpStatus, Post, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RequestOtpReqDto, RequestOtpResDto } from './dto/request-otp.dto';
+import { RequestOtpReqDto } from './dto/request-otp.dto';
 import { VerifyOtpReqDto, VerifyOtpResDto } from './dto/verify-otp.dto';
 import { Response } from 'express';
 
@@ -12,19 +12,19 @@ export class AuthController {
   async requestOtp(
     @Body() dto: RequestOtpReqDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<RequestOtpResDto> {
+  ): Promise<void> {
     const data = await this.authService.requestOtp(dto);
-    res.status(data.newUser ? HttpStatus.CREATED : HttpStatus.OK);
+    res.status(HttpStatus.OK);
     return data;
   }
 
   @Post('verify-otp')
-  verifyOtp(
+  async verifyOtp(
     @Body() dto: VerifyOtpReqDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyOtpResDto> {
-    const data = this.authService.verifyOtp(dto);
-    res.status(HttpStatus.OK);
+    const data = await this.authService.verifyOtp(dto);
+    res.status(data.isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
     return data;
   }
 }

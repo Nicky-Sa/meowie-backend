@@ -35,6 +35,13 @@ export const envConfig = z.object({
   }),
   AWS_REGION: z.string().min(1, { message: 'AWS_REGION is required' }),
   SENDER_EMAIL: z.email().min(1, { message: 'SENDER_EMAIL is required' }),
+  JWT_SECRET: z.string().min(100, {
+    message: 'JWT_SECRET is required and must be at least 100 characters long',
+  }),
+  JWT_REFRESH_SECRET: z.string().min(100, {
+    message:
+      'JWT_REFRESH_SECRET is required and must be at least 100 characters long',
+  }),
 });
 
 export type Env = z.infer<typeof envConfig>;

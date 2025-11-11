@@ -9,5 +9,7 @@ export class VerifyOtpReqDto {
 }
 
 export class VerifyOtpResDto {
-  isValid: boolean;
+  isNewUser: boolean;
+  accessToken: string;
+  refreshToken: string;
 }

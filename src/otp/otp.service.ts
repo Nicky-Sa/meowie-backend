@@ -11,13 +11,13 @@ export class OtpService {
     private readonly emailService: EmailService,
   ) {}
 
-  async generateOtp(userId: string) {
+  async generateOtp(email: string) {
     const otp = crypto.randomInt(100000, 999999).toString();
     const hash = crypto.createHash('sha256').update(otp).digest('hex');
 
     try {
-      await this.cacheService.set(`otp:${userId}`, hash, 300); // 5-min TTL
-      await this.emailService.sendEmail(userId, {
+      await this.cacheService.set(`otp:${email}`, hash, 300); // 5-min TTL
+      await this.emailService.sendEmail(email, {
         name: 'OtpEmailTemplate',
         data: {
           otp,
@@ -41,7 +41,7 @@ export class OtpService {
       if (isValid) {
         await this.cacheService.del(`otp:${userId}`);
       }
-      return { isValid };
+      return isValid;
     } catch (error) {
       throw new Error(`Failed to verify OTP: ${error}`);
     }
