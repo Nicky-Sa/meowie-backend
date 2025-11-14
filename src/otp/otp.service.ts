@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CacheService } from '../cache/cache.service';
 import { EmailService } from '../email/email.service';
@@ -25,7 +25,7 @@ export class OtpService {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to send OTP: ${error}`);
+      throw new InternalServerErrorException(`Failed to send OTP: ${error}`);
     }
   }
 
@@ -42,7 +42,7 @@ export class OtpService {
       }
       return isValid;
     } catch (error) {
-      throw new Error(`Failed to verify OTP: ${error}`);
+      throw new InternalServerErrorException(`Failed to verify OTP: ${error}`);
     }
   }
 }

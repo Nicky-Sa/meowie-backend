@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { User } from './users.entity';
@@ -28,7 +28,7 @@ export class UsersService {
       await this.usersRepository.save(user);
       return user;
     } catch (error) {
-      throw new Error(`Error creating user: ${error}`);
+      throw new InternalServerErrorException(`Error creating user: ${error}`);
     }
   }
 

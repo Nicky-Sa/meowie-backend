@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { isArray } from 'lodash';
-import { SentryExceptionCaptured } from '@sentry/nestjs';
+import * as Sentry from '@sentry/nestjs';
 
 type ErrorResponse = {
   success: false;
@@ -18,7 +18,6 @@ type ErrorResponse = {
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  @SentryExceptionCaptured()
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -37,6 +36,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             'An unexpected error occurred';
     } else if (exception instanceof Error) {
       errorMessage = exception.message;
+    }
+
+    // Conditionally capture only 5xx errors
+    if (status.valueOf() >= 500) {
+      Sentry.captureException(exception);
     }
 
     const errorResponse: ErrorResponse = {

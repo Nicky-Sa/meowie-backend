@@ -1,6 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 import { EnvService } from 'src/env/env.service';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CastInfo, TMDB_MoviesListResult } from 'src/movies/models/movie-info';
 import {
   TMDB_MovieCredits,
@@ -68,7 +72,9 @@ export class MoviesService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(`Error fetching movies ids: ${error}`);
+      throw new InternalServerErrorException(
+        `Error fetching movies ids: ${error}`,
+      );
     }
   }
 
@@ -105,7 +111,7 @@ export class MoviesService {
         if (omdbResponse && omdbResponse.data?.Ratings) {
           omdbRatings = omdbResponse.data.Ratings;
         } else {
-          throw new Error('No ratings found');
+          throw new NotFoundException('No ratings found');
         }
       } catch {
         omdbRatings = (
@@ -159,10 +165,12 @@ export class MoviesService {
           ...data,
         };
       } else {
-        throw new HttpException('Movie not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Movie not found');
       }
     } catch (error) {
-      throw new Error(`Error fetching movie info: ${error}`);
+      throw new InternalServerErrorException(
+        `Error fetching movie info: ${error}`,
+      );
     }
   }
 
