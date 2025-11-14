@@ -1,8 +1,8 @@
-// otp.service.ts
 import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { CacheService } from '../cache/cache.service';
 import { EmailService } from '../email/email.service';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class OtpService {
@@ -12,8 +12,8 @@ export class OtpService {
   ) {}
 
   async generateOtp(email: string) {
-    const otp = crypto.randomInt(100000, 999999).toString();
-    const hash = crypto.createHash('sha256').update(otp).digest('hex');
+    const otp = randomInt(100000, 999999).toString();
+    const hash = await bcrypt.hash(otp, 10);
 
     try {
       await this.cacheService.set(`otp:${email}`, hash, 300); // 5-min TTL
@@ -35,7 +35,7 @@ export class OtpService {
       if (!stored) {
         return { isValid: false };
       }
-      const hash = crypto.createHash('sha256').update(input).digest('hex');
+      const hash = await bcrypt.hash(input, 10);
       const isValid = stored === hash;
 
       if (isValid) {
