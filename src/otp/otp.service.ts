@@ -29,17 +29,16 @@ export class OtpService {
     }
   }
 
-  async verifyOtp(userId: string, input: string) {
+  async verifyOtp(email: string, input: string) {
     try {
-      const stored = await this.cacheService.get(`otp:${userId}`);
-      if (!stored) {
-        return { isValid: false };
+      const storedHash = await this.cacheService.get(`otp:${email}`);
+      if (!storedHash) {
+        return false;
       }
-      const hash = await bcrypt.hash(input, 10);
-      const isValid = stored === hash;
+      const isValid = await bcrypt.compare(input, storedHash);
 
       if (isValid) {
-        await this.cacheService.del(`otp:${userId}`);
+        await this.cacheService.del(`otp:${email}`);
       }
       return isValid;
     } catch (error) {

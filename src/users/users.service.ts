@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { User } from './users.entity';
 import { RequestOtpReqDto } from '../auth/dto/request-otp.dto';
+
+type FindOneBy = { key: 'email'; value: string } | { key: 'id'; value: number };
 
 @Injectable()
 export class UsersService {
@@ -15,8 +17,8 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  findOne(email: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ email });
+  findOneBy({ key, value }: FindOneBy): Promise<User | null> {
+    return this.usersRepository.findOneBy({ [key]: value });
   }
 
   async create(dto: RequestOtpReqDto): Promise<User> {
@@ -28,6 +30,10 @@ export class UsersService {
     } catch (error) {
       throw new Error(`Error creating user: ${error}`);
     }
+  }
+
+  async update(id: number, updatedProps: Partial<User>): Promise<UpdateResult> {
+    return this.usersRepository.update({ id }, updatedProps);
   }
 
   async remove(id: number): Promise<void> {

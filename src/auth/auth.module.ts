@@ -4,10 +4,18 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { OtpModule } from '../otp/otp.module';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AccessTokenStrategy } from './guards/access-token.strategy';
+import { RefreshTokenStrategy } from './guards/refresh-token.strategy';
 
 @Module({
-  imports: [UsersModule, OtpModule, JwtModule.register({})],
-  providers: [AuthService],
+  imports: [
+    UsersModule,
+    OtpModule,
+    JwtModule.register({}),
+    PassportModule.register({ defaultStrategy: 'jwt-access' }),
+  ],
+  providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

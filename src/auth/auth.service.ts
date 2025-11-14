@@ -1,15 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { RequestOtpReqDto } from './dto/request-otp.dto';
 import { UsersService } from '../users/users.service';
 import { OtpService } from '../otp/otp.service';
 import { VerifyOtpReqDto } from './dto/verify-otp.dto';
 import { JwtService } from '@nestjs/jwt';
 import { EnvService } from '../env/env.service';
-import { User } from '../users/users.entity';
 import {
   JwtAccessTokenPayload,
   JwtRefreshTokenPayload,
-} from './models/jwt-payload';
+} from './types/jwt-payload.type';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -27,25 +27,64 @@ export class AuthService {
   async verifyOtp(dto: VerifyOtpReqDto) {
     const isValid = await this.otpService.verifyOtp(dto.email, dto.otp);
     if (isValid) {
-      let user = await this.usersService.findOne(dto.email);
+      let user = await this.usersService.findOneBy({
+        key: 'email',
+        value: dto.email,
+      });
       let isNewUser = false;
       if (!user) {
         user = await this.usersService.create(dto);
         isNewUser = true;
       }
       // jwt
-      const { accessToken, refreshToken } = await this.generateTokens(user);
+      const { accessToken, refreshToken } = await this.generateTokens(user.id);
+      await this.updateRefreshTokenInDB(user.id, refreshToken);
 
       return { isNewUser, accessToken, refreshToken };
     }
-    throw new Error('Invalid OTP');
+    throw new ForbiddenException('Invalid OTP');
   }
 
-  async generateTokens(user: User) {
+  /**
+   * Implements the rotating token.
+   */
+  async refreshToken(userId: number, refreshToken: string) {
+    const user = await this.usersService.findOneBy({
+      key: 'id',
+      value: userId,
+    });
+    if (!user || !user.hashedRefreshToken) {
+      throw new ForbiddenException('Access Denied: User or token not found');
+    }
+
+    // Compare the incoming token with the stored hash
+    const isTokenMatch = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+
+    if (!isTokenMatch) {
+      // This is a critical security measure.
+      // If the token doesn't match, it could mean a token was stolen and reused.
+      // Invalidate all tokens for this user.
+      await this.usersService.update(user.id, { hashedRefreshToken: null });
+      throw new ForbiddenException('Access Denied: Token mismatch');
+    }
+
+    // Generate new tokens
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.generateTokens(user.id);
+
+    // Store the hash of the *new* refresh token
+    await this.updateRefreshTokenInDB(user.id, newRefreshToken);
+
+    return { accessToken, refreshToken: newRefreshToken };
+  }
+
+  private async generateTokens(userId: number) {
     const accessToken = await this.jwtService.signAsync<JwtAccessTokenPayload>(
       {
-        sub: user.id,
-        email: user.email,
+        sub: userId,
       },
       {
         secret: this.env.get('JWT_SECRET'),
@@ -55,7 +94,7 @@ export class AuthService {
     const refreshToken =
       await this.jwtService.signAsync<JwtRefreshTokenPayload>(
         {
-          sub: user.id,
+          sub: userId,
         },
         {
           secret: this.env.get('JWT_REFRESH_SECRET'),
@@ -63,5 +102,10 @@ export class AuthService {
         },
       );
     return { accessToken, refreshToken };
+  }
+
+  private async updateRefreshTokenInDB(userId: number, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.update(userId, { hashedRefreshToken });
   }
 }

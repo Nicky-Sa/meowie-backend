@@ -9,6 +9,7 @@ const SENSITIVE_KEYS: string[] = [
   'token',
   'refreshToken',
   'accessToken',
+  'userId',
 ];
 const REDACTION_PLACEHOLDER = '[REDACTED]';
 
@@ -31,13 +32,15 @@ export const redactSensitiveInfo = (
 
   const sanitizedObj: LoggableObject = {};
 
+  const lowerSENSITIVE_KEYS = SENSITIVE_KEYS.map((k) => k.toLowerCase());
+
   // Handle objects
   for (const key in input) {
     if (Object.prototype.hasOwnProperty.call(input, key)) {
       const value = input[key] as LoggableObject;
       const lowerKey = key.toLowerCase();
 
-      if (SENSITIVE_KEYS.includes(lowerKey)) {
+      if (lowerSENSITIVE_KEYS.map((k) => k.toLowerCase()).includes(lowerKey)) {
         // Redact the sensitive field
         sanitizedObj[key] = REDACTION_PLACEHOLDER;
       } else if (typeof value === 'object' && value !== null) {

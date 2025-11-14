@@ -12,4 +12,11 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({
+    nullable: true,
+    default: null,
+    type: String,
+  })
+  hashedRefreshToken: string | null;
 }
