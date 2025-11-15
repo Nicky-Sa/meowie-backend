@@ -53,9 +53,9 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard())
-  @Get('token-test')
+  @Get('is-authenticated')
   @HttpCode(HttpStatus.OK)
-  protected(@Req() req: AuthenticatedRequest) {
-    return req.user;
+  isAuthenticated() {
+    return { isAuthenticated: true }; // if we get here (pass the guard), the user is authenticated
   }
 }
