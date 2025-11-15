@@ -8,7 +8,7 @@ import { EnvService } from '../env/env.service';
 import {
   JwtAccessTokenPayload,
   JwtRefreshTokenPayload,
-} from './types/jwt-payload.type';
+} from './types/jwt.type';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()

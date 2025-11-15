@@ -5,3 +5,7 @@ export type JwtAccessTokenPayload = {
 export type JwtRefreshTokenPayload = {
   sub: number;
 };
+
+export type JwtAttachedToUser = {
+  id: number;
+};

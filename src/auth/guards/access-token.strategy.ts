@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EnvService } from '../../env/env.service';
-import { JwtAccessTokenPayload } from '../types/jwt-payload.type';
+import { JwtAccessTokenPayload, JwtAttachedToUser } from '../types/jwt.type';
 
 @Injectable()
 export class AccessTokenStrategy extends PassportStrategy(
@@ -22,8 +22,8 @@ export class AccessTokenStrategy extends PassportStrategy(
    * This method is called by passport after it successfully validates the token.
    * The returned value is then attached to the Request object as `req.user`.
    */
-  validate(payload: JwtAccessTokenPayload) {
+  validate(payload: JwtAccessTokenPayload): JwtAttachedToUser {
     // This object will be attached to req.user
-    return { userId: payload.sub };
+    return { id: payload.sub };
   }
 }

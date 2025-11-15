@@ -6,13 +6,6 @@ import { Request } from 'express';
  */
 export type AuthenticatedRequest = Request & {
   user: {
-    userId: number;
+    id: number;
   };
-};
-
-export type AuthenticatedWithRefreshTokenRequest = Request & {
-  user: {
-    userId: number;
-  };
-  refreshToken: string; // Attached by RefreshTokenStrategy
 };

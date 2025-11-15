@@ -14,10 +14,11 @@ import { RequestOtpReqDto } from './dto/request-otp.dto';
 import { VerifyOtpReqDto, VerifyOtpResDto } from './dto/verify-otp.dto';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { AuthenticatedRequest } from './types/authenticated-request.type';
 import {
-  AuthenticatedRequest,
-  AuthenticatedWithRefreshTokenRequest,
-} from './types/authenticated-request.type';
+  RefreshTokenReqDto,
+  RefreshTokenResDto,
+} from './dto/refresh-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -40,14 +41,15 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt-refresh'))
-  @Post('refresh')
+  @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: AuthenticatedWithRefreshTokenRequest) {
-    // The data now comes from req.user and req.refreshToken, populated by the strategies
-    const refreshToken = req.refreshToken;
-    const userId = req.user.userId;
-
-    return this.authService.refreshToken(userId, refreshToken);
+  async refreshToken(
+    @Body() dto: RefreshTokenReqDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<RefreshTokenResDto> {
+    // The user.id is populated by the strategy
+    const userId = req.user.id;
+    return this.authService.refreshToken(userId, dto.refreshToken);
   }
 
   @UseGuards(AuthGuard())
