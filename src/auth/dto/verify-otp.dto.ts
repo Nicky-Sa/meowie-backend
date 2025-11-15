@@ -8,8 +8,8 @@ export class VerifyOtpReqDto {
   otp: string;
 }
 
-export class VerifyOtpResDto {
+export type VerifyOtpResDto = {
   isNewUser: boolean;
   accessToken: string;
   refreshToken: string;
-}
+};

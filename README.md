@@ -32,3 +32,9 @@ aws ses update-template --cli-input-json file://src/otp/otp.template.json --regi
 - Preview: 5001
 - Production: 5000
 - In case you need to change the port, it must be updated in two places: GitHub variables and nginx config
+
+
+### Class vs type for DTOs
+
+- Class-validator is used for validation, so we need classes for Request DTOs
+- Response DTOs are just types
