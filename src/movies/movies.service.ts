@@ -3,6 +3,7 @@ import { EnvService } from 'src/env/env.service';
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CastInfo, TMDB_MoviesListResult } from 'src/movies/models/movie-info';
@@ -26,6 +27,7 @@ export class MoviesService {
   private readonly OMDB_API_KEY: string;
   private readonly TMDB_BASE_URL = 'https://api.themoviedb.org';
   private readonly OMDB_BASE_URL = 'http://www.omdbapi.com';
+  private readonly logger = new Logger();
 
   constructor(private readonly env: EnvService) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
@@ -239,12 +241,12 @@ export class MoviesService {
       }
     } catch (error) {
       if (error instanceof AggregateError) {
-        console.error(
+        this.logger.error(
           `AggrigateError generating poster props: ${error.message}\n`,
           `Errors: ${error.errors.join('\n ')}`,
         );
       }
-      console.error(`Error generating poster props: ${error}`);
+      this.logger.error(`Error generating poster props: ${error}`);
     }
     return {
       primaryColorHex,

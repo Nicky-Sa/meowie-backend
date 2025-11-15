@@ -1,11 +1,12 @@
 import { EmailService } from '../email.service';
 import { SendTemplatedEmailCommand, SESClient } from '@aws-sdk/client-ses';
 import { EnvService } from '../../env/env.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class SesService extends EmailService {
-  private sesClient: SESClient;
+  private readonly sesClient: SESClient;
+  private readonly logger = new Logger();
 
   constructor(private readonly env: EnvService) {
     super();
@@ -35,7 +36,7 @@ export class SesService extends EmailService {
     try {
       await this.sesClient.send(new SendTemplatedEmailCommand(params));
     } catch (error) {
-      console.error('Failed to send email: ', error);
+      this.logger.error('Failed to send email: ', error);
       throw error;
     }
   }

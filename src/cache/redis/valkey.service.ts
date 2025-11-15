@@ -33,7 +33,9 @@ export class ValkeyService
     this.client.on('connect', () =>
       this.logger.log('✅ Connected to ElastiCache Valkey'),
     );
-    this.client.on('error', (err) => console.error('❌ Valkey Error:', err));
+    this.client.on('error', (err) =>
+      this.logger.error('❌ Valkey Error:', err),
+    );
   }
 
   async set(key: string, value: string, ttlSeconds = 300) {
