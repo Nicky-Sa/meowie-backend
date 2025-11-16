@@ -34,5 +34,5 @@ export type CastInfo = {
 
 export type Credits = {
   casts: CastInfo[];
-  director: string;
+  director: CastInfo;
 };

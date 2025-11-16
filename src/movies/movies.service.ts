@@ -198,7 +198,11 @@ export class MoviesService {
       const director = response.data.crew
         .filter((crew) => crew.job === 'Director')
         .slice(0, 4)
-        .map((crew) => crew.name)[0];
+        .map((crew) => ({
+          name: crew.name,
+          character: crew.job,
+          profilePath: `https://image.tmdb.org/t/p/original${crew.profile_path}`,
+        }))[0];
       return { casts, director };
     } catch (error) {
       throw new Error(`Error fetching movie credits: ${error}`);
