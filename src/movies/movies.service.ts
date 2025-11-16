@@ -47,7 +47,7 @@ export class MoviesService {
         {
           params: {
             include_adult: false,
-            sort_by: 'vote_count.desc',
+            sort_by: 'popularity.desc',
             api_key: this.TMDB_API_KEY,
             ...(query.genres && {
               with_genres: query.genres.replaceAll(',', '|'),
