@@ -1,4 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity({
   name: 'users',
@@ -20,4 +25,7 @@ export class User {
     select: false,
   })
   hashedRefreshToken: string | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

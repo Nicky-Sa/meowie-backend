@@ -1,4 +1,4 @@
-import { User } from '../../users/users.entity';
+import { User } from '../../users/entities/users.entity';
 
 export type CurrentUserResDto = {
   user: User | null;

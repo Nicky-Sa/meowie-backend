@@ -12,8 +12,8 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
   imports: [
     UsersModule,
     OtpModule,
-    JwtModule.register({}),
-    PassportModule.register({ defaultStrategy: 'jwt-access' }),
+    JwtModule.register({}), // for generating tokens
+    PassportModule.register({ defaultStrategy: 'jwt-access' }), // for validating tokens and attaching user to request (@UseGuards(AuthGuard(...)))
   ],
   providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
   controllers: [AuthController],

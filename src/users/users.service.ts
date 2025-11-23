@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { User } from './users.entity';
+import { User } from './entities/users.entity';
 import { RequestOtpReqDto } from '../auth/dto/request-otp.dto';
 
 type FindOneBy =
@@ -38,7 +38,7 @@ export class UsersService {
     return this.usersRepository.update({ id }, updatedProps);
   }
 
-  async remove(id: number): Promise<void> {
+  async delete(id: number): Promise<void> {
     await this.usersRepository.delete(id);
   }
 }

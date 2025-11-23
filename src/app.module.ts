@@ -11,6 +11,7 @@ import { CacheModule } from './cache/cache.module';
 import { OtpModule } from './otp/otp.module';
 import { EmailModule } from './email/email.module';
 import { getDataSourceOptions } from './database/database.config';
+import { ConstantsModule } from './constants/constants.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { getDataSourceOptions } from './database/database.config';
     OtpModule,
     CacheModule,
     EmailModule,
+    ConstantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

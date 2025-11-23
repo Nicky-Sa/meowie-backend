@@ -24,6 +24,8 @@ import {
 } from './dto/refresh-token.dto';
 import { OptionalAuthGuard } from './guards/optional-auth-guard';
 import { CurrentUserResDto } from './dto/current-user.dto';
+import { LogoutResDto } from './dto/logout.dto';
+import { DeleteAccountReqDto } from './dto/delete-account.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -66,5 +68,26 @@ export class AuthController {
     const userId = req.user.id;
     const user = await this.authService.currentUser(userId);
     return { user };
+  }
+
+  @UseGuards(AuthGuard('jwt-access'))
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Req() req: AuthenticatedRequest): Promise<LogoutResDto> {
+    const userId = req.user.id;
+    const successful = await this.authService.logout(userId);
+    return { successful };
+  }
+
+  @UseGuards(AuthGuard('jwt-access'))
+  @Post('delete-account')
+  @HttpCode(HttpStatus.OK)
+  async deleteAccount(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: DeleteAccountReqDto,
+  ): Promise<LogoutResDto> {
+    const userId = req.user.id;
+    const successful = await this.authService.deleteAccount(userId, dto);
+    return { successful };
   }
 }
