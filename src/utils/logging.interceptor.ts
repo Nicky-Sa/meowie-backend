@@ -45,10 +45,3 @@ export class LoggingInterceptor implements NestInterceptor {
     );
   }
 }
-
-//         this.logger.log(
-//           `Outgoing Response: ${method} ${url} | Duration: ${
-//             Date.now() - now
-//           }ms | Response: ${JSON.stringify(responseData)}`,
-//         );
-//         return responseData; // return the same data user receives
