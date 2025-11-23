@@ -63,7 +63,7 @@ export class AuthController {
   async isAuthenticated(
     @Req() req: OptionallyAuthenticatedRequest,
   ): Promise<CurrentUserResDto> {
-    const userId = req.user?.id;
+    const userId = req.user.id;
     const user = await this.authService.currentUser(userId);
     return { user };
   }

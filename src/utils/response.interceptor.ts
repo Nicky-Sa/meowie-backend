@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Response as ExpressResponse } from 'express';
+import { Response } from 'express';
 
 export type SuccessResponse<T> = {
   success: true;
@@ -24,7 +24,7 @@ export class ResponseInterceptor<T>
     next: CallHandler,
   ): Observable<SuccessResponse<T>> {
     const ctx = context.switchToHttp();
-    const response = ctx.getResponse<ExpressResponse>();
+    const response = ctx.getResponse<Response>();
 
     return next.handle().pipe(
       map((data: T) => ({

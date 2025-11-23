@@ -4,7 +4,9 @@ import { Repository, UpdateResult } from 'typeorm';
 import { User } from './users.entity';
 import { RequestOtpReqDto } from '../auth/dto/request-otp.dto';
 
-type FindOneBy = { key: 'email'; value: string } | { key: 'id'; value: number };
+type FindOneBy =
+  | { key: 'email'; value: string | null }
+  | { key: 'id'; value: number | null };
 
 @Injectable()
 export class UsersService {
@@ -13,12 +15,12 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
-  }
-
-  findOneBy({ key, value }: FindOneBy): Promise<User | null> {
-    return this.usersRepository.findOneBy({ [key]: value });
+  async findOneBy({ key, value }: FindOneBy): Promise<User | null> {
+    try {
+      return await this.usersRepository.findOneByOrFail({ [key]: value }); // it's using findOneByOrFail to catch cases where id is undefined
+    } catch {
+      return null;
+    }
   }
 
   async create(dto: RequestOtpReqDto): Promise<User> {

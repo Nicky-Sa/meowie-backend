@@ -109,7 +109,7 @@ export class AuthService {
     await this.usersService.update(userId, { hashedRefreshToken });
   }
 
-  async currentUser(userId: number) {
+  async currentUser(userId: number | null) {
     return await this.usersService.findOneBy({
       key: 'id',
       value: userId,

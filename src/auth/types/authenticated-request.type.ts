@@ -16,6 +16,6 @@ export type AuthenticatedRequest = Request & {
  */
 export type OptionallyAuthenticatedRequest = Request & {
   user: {
-    id: number;
-  } | null;
+    id: number | null;
+  };
 };

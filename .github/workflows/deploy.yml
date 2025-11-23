@@ -91,11 +91,11 @@ jobs:
             echo "BUILD_ENV=${{ env.BUILD_ENV }}" >> .env.local
             
             echo "DB_SSL_CA=${{ secrets.DB_SSL_CA }}" >> .env.local
-            echo "DB_USER=${{ secrets.DB_USER }}" >> .env.local
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.local
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.local
             echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.local
             echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.local
+            echo "DB_APP_USER=${{ secrets.DB_APP_USER }}" >> .env.local
+            echo "DB_APP_PASSWORD=${{ secrets.DB_APP_PASSWORD }}" >> .env.local
             echo "DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}" >> .env.local
             echo "DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}" >> .env.local
             

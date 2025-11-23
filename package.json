@@ -18,7 +18,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org meowie --project meowie-backend ./dist && sentry-cli sourcemaps upload --org meowie --project meowie-backend ./dist",
-    "typeorm": "node -r tsconfig-paths/register -r ts-node/register ./node_modules/typeorm/cli -d ./src/data-source.ts",
+    "typeorm": "node -r tsconfig-paths/register -r ts-node/register ./node_modules/typeorm/cli -d ./src/database/data-source.ts",
     "migration:gen": "npm run typeorm -- migration:generate ./migrations/auto -p",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert"
