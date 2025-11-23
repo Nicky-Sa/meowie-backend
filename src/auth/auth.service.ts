@@ -108,4 +108,11 @@ export class AuthService {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.usersService.update(userId, { hashedRefreshToken });
   }
+
+  async currentUser(userId: number) {
+    return await this.usersService.findOneBy({
+      key: 'id',
+      value: userId,
+    });
+  }
 }

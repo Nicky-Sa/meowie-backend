@@ -14,11 +14,16 @@ import { RequestOtpReqDto } from './dto/request-otp.dto';
 import { VerifyOtpReqDto, VerifyOtpResDto } from './dto/verify-otp.dto';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthenticatedRequest } from './types/authenticated-request.type';
+import {
+  AuthenticatedRequest,
+  OptionallyAuthenticatedRequest,
+} from './types/authenticated-request.type';
 import {
   RefreshTokenReqDto,
   RefreshTokenResDto,
 } from './dto/refresh-token.dto';
+import { OptionalAuthGuard } from './guards/optional-auth-guard';
+import { CurrentUserResDto } from './dto/current-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -52,10 +57,14 @@ export class AuthController {
     return this.authService.refreshToken(userId, dto.refreshToken);
   }
 
-  @UseGuards(AuthGuard())
-  @Get('is-authenticated')
+  @UseGuards(OptionalAuthGuard)
+  @Get('current-user')
   @HttpCode(HttpStatus.OK)
-  isAuthenticated() {
-    return { isAuthenticated: true }; // if we get here (pass the guard), the user is authenticated
+  async isAuthenticated(
+    @Req() req: OptionallyAuthenticatedRequest,
+  ): Promise<CurrentUserResDto> {
+    const userId = req.user?.id;
+    const user = await this.authService.currentUser(userId);
+    return { user };
   }
 }

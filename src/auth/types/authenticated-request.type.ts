@@ -9,3 +9,13 @@ export type AuthenticatedRequest = Request & {
     id: number;
   };
 };
+
+/**
+ * Extends the default Express Request type to include
+ * the `user` object, which is attached by Passport strategies and can be null
+ */
+export type OptionallyAuthenticatedRequest = Request & {
+  user: {
+    id: number;
+  } | null;
+};

@@ -17,6 +17,7 @@ export class User {
     nullable: true,
     default: null,
     type: String,
+    select: false,
   })
   hashedRefreshToken: string | null;
 }

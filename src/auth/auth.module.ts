@@ -5,8 +5,8 @@ import { UsersModule } from '../users/users.module';
 import { OtpModule } from '../otp/otp.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AccessTokenStrategy } from './guards/access-token.strategy';
-import { RefreshTokenStrategy } from './guards/refresh-token.strategy';
+import { AccessTokenStrategy } from './strategies/access-token.strategy';
+import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 
 @Module({
   imports: [
