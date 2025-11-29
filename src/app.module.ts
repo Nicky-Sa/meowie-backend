@@ -12,6 +12,7 @@ import { OtpModule } from './otp/otp.module';
 import { EmailModule } from './email/email.module';
 import { getDataSourceOptions } from './database/database.config';
 import { ConstantsModule } from './constants/constants.module';
+import { PersonModule } from './person/person.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ConstantsModule } from './constants/constants.module';
     CacheModule,
     EmailModule,
     ConstantsModule,
+    PersonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

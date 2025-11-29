@@ -27,6 +27,7 @@ export type TMDB_MoviesListResult = {
 };
 
 export type CastInfo = {
+  id: number;
   name: string;
   character: string;
   profilePath: string;

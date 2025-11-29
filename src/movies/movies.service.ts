@@ -20,13 +20,16 @@ import { PosterProps } from './models/image';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
 import { MovieIdsResDto, MoviesResDto } from './dto/movies.dto';
+import {
+  OMDB_BASE_URL,
+  TMDB_BASE_URL,
+  TMDB_IMAGE_BASE_URL,
+} from '../utils/constants';
 
 @Injectable()
 export class MoviesService {
   private readonly TMDB_API_KEY: string;
   private readonly OMDB_API_KEY: string;
-  private readonly TMDB_BASE_URL = 'https://api.themoviedb.org';
-  private readonly OMDB_BASE_URL = 'http://www.omdbapi.com';
   private readonly logger = new Logger();
 
   constructor(private readonly env: EnvService) {
@@ -41,14 +44,15 @@ export class MoviesService {
     ])
       ?.toISOString()
       .split('T')[0];
+    const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
     try {
       const response = await axios.get<MovieIdsResDto>(
-        `${this.TMDB_BASE_URL}/3/discover/movie`,
+        `${TMDB_BASE_URL}/3/discover/movie`,
         {
           params: {
-            include_adult: false,
-            sort_by: 'popularity.desc',
             api_key: this.TMDB_API_KEY,
+            include_adult: false,
+            sort_by: sort,
             ...(query.genres && {
               with_genres: query.genres.replaceAll(',', '|'),
             }),
@@ -65,6 +69,8 @@ export class MoviesService {
             'vote_average.lte': hasFilters(query)
               ? (query.tmdbRatings?.split(',')[1] ?? 10)
               : 10,
+            with_cast: query.personId,
+            with_crew: query.personId,
             page: query.page ?? 1,
           },
         },
@@ -84,7 +90,7 @@ export class MoviesService {
     try {
       // TMDB API
       const tmdbResponse = await axios.get<TMDB_MovieInfo>(
-        `${this.TMDB_BASE_URL}/3/movie/${id}`,
+        `${TMDB_BASE_URL}/3/movie/${id}`,
         {
           params: {
             append_to_response: 'videos,release_dates',
@@ -103,7 +109,7 @@ export class MoviesService {
 
       try {
         omdbResponse = imdbId
-          ? await axios.get<OMDB_Info>(this.OMDB_BASE_URL, {
+          ? await axios.get<OMDB_Info>(OMDB_BASE_URL, {
               params: {
                 i: imdbId,
                 apikey: this.OMDB_API_KEY,
@@ -126,7 +132,7 @@ export class MoviesService {
 
       if (tmdbResponse.data) {
         const posterPath = tmdbResponse.data.poster_path
-          ? `https://image.tmdb.org/t/p/original${tmdbResponse.data.poster_path}`
+          ? `${TMDB_IMAGE_BASE_URL}${tmdbResponse.data.poster_path}`
           : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png';
         const posterProps = await this.generatePosterProps(posterPath);
         const credits = await this.getMovieCredits(id);
@@ -163,9 +169,7 @@ export class MoviesService {
           credits,
         };
 
-        return {
-          ...data,
-        };
+        return data;
       } else {
         throw new NotFoundException('Movie not found');
       }
@@ -179,7 +183,7 @@ export class MoviesService {
   async getMovieCredits(id: number) {
     try {
       const response = await axios.get<TMDB_MovieCredits>(
-        `${this.TMDB_BASE_URL}/3/movie/${id}/credits`,
+        `${TMDB_BASE_URL}/3/movie/${id}/credits`,
         {
           params: {
             api_key: this.TMDB_API_KEY,
@@ -191,17 +195,19 @@ export class MoviesService {
         .sort((a, b) => a.order - b.order)
         .slice(0, 5)
         .map((cast) => ({
+          id: cast.id,
           name: cast.name,
           character: cast.character,
-          profilePath: `https://image.tmdb.org/t/p/original${cast.profile_path}`,
+          profilePath: `${TMDB_IMAGE_BASE_URL}/${cast.profile_path}`,
         }));
       const director = response.data.crew
         .filter((crew) => crew.job === 'Director')
         .slice(0, 4)
         .map((crew) => ({
+          id: crew.id,
           name: crew.name,
           character: crew.job,
-          profilePath: `https://image.tmdb.org/t/p/original${crew.profile_path}`,
+          profilePath: `${TMDB_IMAGE_BASE_URL}${crew.profile_path}`,
         }))[0];
       return { casts, director };
     } catch (error) {

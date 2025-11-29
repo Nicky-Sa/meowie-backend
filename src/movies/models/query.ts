@@ -1,4 +1,10 @@
-export const filterKeys = ['genres', 'languages', 'decade', 'tmdbRatings'];
+export const filterKeys = [
+  'genres',
+  'languages',
+  'decade',
+  'tmdbRatings',
+  'personId',
+];
 
 type FilterKeys = (typeof filterKeys)[number];
 
@@ -10,7 +16,6 @@ type Page = {
   page: string;
 };
 
-export type QueryParams = Filters &
-  Page & {
-    noFilters?: string; // to check for the initial tmdbRatings value
-  };
+type Sort = 'popularity.desc' | 'primary_release_date.desc' | 'random';
+
+export type QueryParams = Filters & Page & { sort: Sort };
