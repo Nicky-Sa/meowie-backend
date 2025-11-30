@@ -31,6 +31,12 @@ export class MoviesService {
   private readonly TMDB_API_KEY: string;
   private readonly OMDB_API_KEY: string;
   private readonly logger = new Logger();
+  private readonly emptyCast: CastInfo = {
+    id: -1,
+    name: 'N/A',
+    character: '',
+    profilePath: '',
+  };
 
   constructor(private readonly env: EnvService) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
@@ -198,17 +204,20 @@ export class MoviesService {
           id: cast.id,
           name: cast.name,
           character: cast.character,
-          profilePath: `${TMDB_IMAGE_BASE_URL}/${cast.profile_path}`,
+          profilePath: `${TMDB_IMAGE_BASE_URL}${cast.profile_path}`,
         }));
-      const director = response.data.crew
+      let director = response.data.crew
         .filter((crew) => crew.job === 'Director')
-        .slice(0, 4)
+        .slice(0, 1)
         .map((crew) => ({
           id: crew.id,
           name: crew.name,
           character: crew.job,
           profilePath: `${TMDB_IMAGE_BASE_URL}${crew.profile_path}`,
         }))[0];
+      if (!director) {
+        director = this.emptyCast;
+      }
       return { casts, director };
     } catch (error) {
       throw new Error(`Error fetching movie credits: ${error}`);
