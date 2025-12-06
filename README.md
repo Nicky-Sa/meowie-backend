@@ -7,17 +7,13 @@ _Backend for a movie discovery app. Built with NestJS and deployed on AWS_
 - 2 environments:
     - preview: https://preview.api.meowie.app
     - production: https://api.meowie.app
-- Env variables defined in GitHub secrets and variables and pulled in during deploy via SSM
+- Env variables defined in GitHub secrets
 - Dockerfile for building an image
 - ECR for storing images
-- SSM for deploying to EC2
+- Lambda function for running the app
 - GitHub actions for CI/CD
-- Installed Nginx on EC2 instance and configured certbot for SSL -> Check `/home/ubuntu
-/meowie-backend/[ENV]/nginx` for more info
+- CloudFront for caching and SSL termination
 
-### Local dev, passing security groups on AWS:
-
-Run `sh init-dev.sh` to start port forwarding to ElastiCache and RDS.
 
 ### Creat or Update OTP template
 

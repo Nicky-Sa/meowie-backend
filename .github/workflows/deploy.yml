@@ -1,4 +1,4 @@
-name: Deploy to EC2 using ECR + SSM
+name: Deploy to AWS Lambda
 
 on:
   push:
@@ -15,11 +15,14 @@ jobs:
       BUILD_ENV: ${{ github.ref_name }}
       IMAGE_TAG: ${{ github.ref_name }}-${{ github.run_number }}
       ECR_BASE_URL: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+      # Construct the Function Name dynamically based on branch (meowie-production or meowie-preview)
+      LAMBDA_FUNCTION_NAME: meowie-${{ github.ref_name }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # --- Docker Setup ---
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -40,6 +43,7 @@ jobs:
             | docker login --username AWS --password-stdin \
               ${{ env.ECR_BASE_URL }}
 
+      # --- Sentry Setup ---
       - name: Upload source maps to Sentry
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -48,7 +52,7 @@ jobs:
           npm run build
           npm run sentry:sourcemaps
 
-
+      # --- Build & Push ---
       - name: Build and Push Docker image
         run: |
           docker build \
@@ -59,61 +63,62 @@ jobs:
           
           docker push ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
 
-      - name: Trigger EC2 Deploy via SSM
-        uses: thomasvjoseph/aws-ssm-send@v1.0.0
-        id: ssm-send
-        with:
-          region: ${{ vars.AWS_REGION }}
-          instance-id: ${{ secrets.EC2_INSTANCE_ID }}
-          commands: |
-            set -ex
-            
-            docker buildx prune --all --force
-            
-            OLD_IMAGE=$(docker inspect --format='{{.Image}}' meowie-${{ env.BUILD_ENV }} 2>/dev/null || echo "")
-            docker stop meowie-${{ env.BUILD_ENV }} || true
-            docker rm meowie-${{ env.BUILD_ENV }} || true
-            if [ -n $OLD_IMAGE ]; then
-              docker rmi $OLD_IMAGE || true
-            fi
-            
-            aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
-            | docker login --username AWS --password-stdin \
-              ${{ env.ECR_BASE_URL }}
-            
-            
-            cd /home/ubuntu/meowie-backend/${{ env.BUILD_ENV }}
-            rm -rf .env.local
-            echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env.local
-            echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env.local
-            echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}" >> .env.local
-            echo "PORT=${{ vars.PORT }}" >> .env.local
-            echo "BUILD_ENV=${{ env.BUILD_ENV }}" >> .env.local
-            
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.local
-            echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.local
-            echo "DB_APP_USER=${{ secrets.DB_APP_USER }}" >> .env.local
-            echo "DB_APP_PASSWORD=${{ secrets.DB_APP_PASSWORD }}" >> .env.local
-            echo "DB_HOST_POOLING=${{ secrets.DB_HOST_POOLING }}" >> .env.local
-            echo "DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}" >> .env.local
-            echo "DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}" >> .env.local
-            echo "DB_HOST_MIGRATOR=${{ secrets.DB_HOST_MIGRATOR }}" >> .env.local
-            
-            echo "REDIS_ENDPOINT=${{ secrets.REDIS_ENDPOINT }}" >> .env.local
+      # --- DEPLOYMENT STEP ---
+      # --- STEP 1: Update the Code (Image) ---
+      - name: Update Lambda Code
+        run: |
+          echo "Deploying new image to function: ${{ env.LAMBDA_FUNCTION_NAME }}..."
+          
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --image-uri ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
+          
+          # Wait for the update so the function is ready for the config change
+          aws lambda wait function-updated \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }}
 
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.local
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.local
-            echo "AWS_REGION=${{ vars.AWS_REGION }}" >> .env.local
-            echo "SENDER_EMAIL=${{ vars.SENDER_EMAIL }}" >> .env.local
-            
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.local
-            echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> .env.local
-            
-            IMAGE="${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}"
-            docker pull $IMAGE
-            docker run --restart unless-stopped -d --name meowie-${{ env.BUILD_ENV }} \
-            --env-file .env.local \
-            -p ${{ vars.PORT }}:${{ vars.PORT }} \
-            $IMAGE
-            
-            rm -rf .env.local
+          echo "Code deployment successful!"
+
+      # --- STEP 2: Update the Environment Variables ---
+      - name: Update Environment Variables
+        run: |
+          echo "Updating environment variables..."
+          
+          aws lambda update-function-configuration \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --environment "Variables={ \
+              TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}, \
+              OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}, \
+          
+              SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}, \
+          
+              PORT=${{ vars.PORT }}, \
+              BUILD_ENV=${{ env.BUILD_ENV }}, \
+          
+              DB_NAME=${{ secrets.DB_NAME }}, \
+              DB_PORT=${{ secrets.DB_PORT }}, \
+          
+              DB_APP_USER=${{ secrets.DB_APP_USER }}, \
+              DB_APP_PASSWORD=${{ secrets.DB_APP_PASSWORD }}, \
+              DB_HOST_POOLING=${{ secrets.DB_HOST_POOLING }}, \
+          
+              DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}, \
+              DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}, \
+              DB_HOST_MIGRATOR=${{ secrets.DB_HOST_MIGRATOR }}, \
+          
+              REDIS_ENDPOINT=${{ secrets.REDIS_ENDPOINT }}, \
+          
+              SENDER_EMAIL=${{ vars.SENDER_EMAIL }}, \
+          
+              JWT_SECRET=${{ secrets.JWT_SECRET }}, \
+              JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
+          
+              AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              AWS_REGION=${{ secrets.AWS_REGION }} \
+
+            }"
+          
+          # Wait again to ensure the config change is applied before finishing
+          aws lambda wait function-updated \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }}

@@ -41,6 +41,8 @@ export const getDataSourceOptions = (
       ssl: {
         rejectUnauthorized: true,
       },
+      max: 2,
+      connectionTimeoutMillis: 2000,
     },
   };
 };
