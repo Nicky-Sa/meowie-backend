@@ -99,10 +99,8 @@ jobs:
             echo "DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}" >> .env.local
             echo "DB_HOST_MIGRATOR=${{ secrets.DB_HOST_MIGRATOR }}" >> .env.local
             
-            echo "VALKEY_HOST=${{ secrets.VALKEY_HOST }}" >> .env.local
-            echo "VALKEY_ENDPOINT=${{ secrets.VALKEY_ENDPOINT }}" >> .env.local
-            echo "VALKEY_PORT=${{ secrets.VALKEY_PORT }}" >> .env.local
-            
+            echo "REDIS_ENDPOINT=${{ secrets.REDIS_ENDPOINT }}" >> .env.local
+
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.local
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.local
             echo "AWS_REGION=${{ vars.AWS_REGION }}" >> .env.local

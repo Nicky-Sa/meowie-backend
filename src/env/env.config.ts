@@ -28,11 +28,9 @@ export const envConfig = z.object({
   DB_HOST_MIGRATOR: z.string().min(1, {
     message: 'DB_HOST_MIGRATOR with no pooling for migrations is required',
   }),
-  VALKEY_HOST: z.string().min(1, { message: 'VALKEY_HOST is required' }),
-  VALKEY_ENDPOINT: z
-    .string()
-    .min(1, { message: 'VALKEY_ENDPOINT is required' }),
-  VALKEY_PORT: z.coerce.number({ message: 'VALKEY_PORT is required' }),
+  REDIS_ENDPOINT: z.string().min(1, {
+    message: 'REDIS_ENDPOINT is required',
+  }),
   AWS_ACCESS_KEY_ID: z
     .string()
     .min(1, { message: 'AWS_ACCESS_KEY_ID is required' }),

@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { ValkeyService } from './redis/valkey.service';
+import { RedisService } from './redis/redis.service';
 import { CacheService } from './cache.service';
 
 @Global()
@@ -7,7 +7,7 @@ import { CacheService } from './cache.service';
   providers: [
     {
       provide: CacheService, // abstract class as token
-      useClass: ValkeyService, // concrete implementation
+      useClass: RedisService, // concrete implementation
     },
   ],
   exports: [CacheService],
