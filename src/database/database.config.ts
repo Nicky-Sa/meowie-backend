@@ -1,5 +1,4 @@
 import { DataSourceOptions } from 'typeorm';
-import * as fs from 'node:fs';
 import { loadEnv } from '../env/env.config';
 
 export type DbConnectionRole = 'app' | 'migrator';
@@ -12,10 +11,11 @@ export const getDataSourceOptions = (
   const username = role === 'migrator' ? env.DB_MIGRATOR_USER : env.DB_APP_USER;
   const password =
     role === 'migrator' ? env.DB_MIGRATOR_PASSWORD : env.DB_APP_PASSWORD;
+  const host = role === 'migrator' ? env.DB_HOST_MIGRATOR : env.DB_HOST_POOLING;
 
   return {
     type: 'postgres',
-    host: env.DB_HOST,
+    host,
     port: env.DB_PORT,
     database: env.DB_NAME,
     schema: 'meowie',
@@ -36,11 +36,10 @@ export const getDataSourceOptions = (
       null: 'throw',
       undefined: 'throw',
     },
+    ssl: true,
     extra: {
       ssl: {
         rejectUnauthorized: true,
-        ca: fs.readFileSync(env.DB_SSL_CA, 'utf8'),
-        servername: env.DB_HOST,
       },
     },
   };

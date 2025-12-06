@@ -10,19 +10,23 @@ export const envConfig = z.object({
   BUILD_ENV: z.enum(['development', 'preview', 'production'], {
     message: 'BUILD_ENV is required',
   }),
-  DB_SSL_CA: z.string().min(1, { message: 'DB_SSL_CA is required' }),
   DB_NAME: z.string().min(1, { message: 'DB_NAME is required' }),
   DB_PORT: z.coerce.number({ message: 'DB_PORT is required' }),
-  DB_HOST: z.string().min(1, { message: 'DB_HOST is required' }),
   DB_APP_USER: z.string().min(1, { message: 'DB_APP_USER is required' }),
   DB_APP_PASSWORD: z
     .string()
     .min(1, { message: 'DB_APP_PASSWORD is required' }),
+  DB_HOST_POOLING: z.string().min(1, {
+    message: 'DB_HOST_POOLING for high performance app connections is required',
+  }),
   DB_MIGRATOR_USER: z
     .string()
     .min(1, { message: 'DB_MIGRATOR_USER is required' }),
   DB_MIGRATOR_PASSWORD: z.string().min(1, {
     message: 'DB_MIGRATOR_PASSWORD is required',
+  }),
+  DB_HOST_MIGRATOR: z.string().min(1, {
+    message: 'DB_HOST_MIGRATOR with no pooling for migrations is required',
   }),
   VALKEY_HOST: z.string().min(1, { message: 'VALKEY_HOST is required' }),
   VALKEY_ENDPOINT: z

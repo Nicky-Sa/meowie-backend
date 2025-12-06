@@ -90,14 +90,14 @@ jobs:
             echo "PORT=${{ vars.PORT }}" >> .env.local
             echo "BUILD_ENV=${{ env.BUILD_ENV }}" >> .env.local
             
-            echo "DB_SSL_CA=${{ secrets.DB_SSL_CA }}" >> .env.local
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.local
             echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.local
-            echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.local
             echo "DB_APP_USER=${{ secrets.DB_APP_USER }}" >> .env.local
             echo "DB_APP_PASSWORD=${{ secrets.DB_APP_PASSWORD }}" >> .env.local
+            echo "DB_HOST_POOLING=${{ secrets.DB_HOST_POOLING }}" >> .env.local
             echo "DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}" >> .env.local
             echo "DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}" >> .env.local
+            echo "DB_HOST_MIGRATOR=${{ secrets.DB_HOST_MIGRATOR }}" >> .env.local
             
             echo "VALKEY_HOST=${{ secrets.VALKEY_HOST }}" >> .env.local
             echo "VALKEY_ENDPOINT=${{ secrets.VALKEY_ENDPOINT }}" >> .env.local
