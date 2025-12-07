@@ -54,10 +54,13 @@ export class AuthService {
    * Implements the rotating token.
    */
   async refreshToken(userId: number, refreshToken: string) {
-    const user = await this.usersService.findOneBy({
-      key: 'id',
-      value: userId,
-    });
+    const user = await this.usersService.findOneBy(
+      {
+        key: 'id',
+        value: userId,
+      },
+      { withRefreshToken: true },
+    );
     if (!user || !user.hashedRefreshToken) {
       throw new ForbiddenException('Access Denied: User or token not found');
     }

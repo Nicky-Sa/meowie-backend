@@ -8,6 +8,10 @@ type FindOneBy =
   | { key: 'email'; value: string | null }
   | { key: 'id'; value: number | null };
 
+type FindOneOptions = Partial<{
+  withRefreshToken: boolean;
+}>;
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -15,9 +19,28 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async findOneBy({ key, value }: FindOneBy): Promise<User | null> {
+  async findOneBy(
+    { key, value }: FindOneBy,
+    { withRefreshToken }: FindOneOptions = {},
+  ): Promise<User | null> {
+    // 1. Get the list of ALL property names from the entity metadata
+    const metadata = this.usersRepository.manager.connection.getMetadata(User);
+
+    let select: (keyof User)[] = metadata.columns.map(
+      (column) => column.propertyName,
+    ) as (keyof User)[];
+
+    // 2. Add the 'hashedRefreshToken' to the list.
+    if (!withRefreshToken) {
+      select = select.filter((c) => c !== 'hashedRefreshToken');
+    }
+
     try {
-      return await this.usersRepository.findOneByOrFail({ [key]: value }); // it's using findOneByOrFail to catch cases where id is undefined
+      // it's using findOneOrFail to catch cases where id is undefined
+      return await this.usersRepository.findOneOrFail({
+        where: { [key]: value },
+        select,
+      });
     } catch {
       return null;
     }

@@ -4,7 +4,7 @@ export type LoggableObject = Record<string, unknown>;
 const env = loadEnv();
 
 const SENSITIVE_KEYS: string[] =
-  env.BUILD_ENV === 'development'
+  env.BUILD_ENV !== 'development'
     ? [
         'password',
         'confirmPassword',

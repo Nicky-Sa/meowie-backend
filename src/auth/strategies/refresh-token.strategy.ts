@@ -11,7 +11,6 @@ export class RefreshTokenStrategy extends PassportStrategy(
 ) {
   constructor(private readonly env: EnvService) {
     super({
-      // Strategy will extract the token from 'Authorization: Refresh <token>'
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
       secretOrKey: env.get('JWT_REFRESH_SECRET'),
