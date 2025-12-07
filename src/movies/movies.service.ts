@@ -24,6 +24,7 @@ import { encode } from 'blurhash';
 import { MovieIdsResDto, MoviesResDto } from './dto/movies.dto';
 import {
   OMDB_BASE_URL,
+  POSTER_FALLBACK_URL,
   TMDB_BASE_URL,
   TMDB_IMAGE_BASE_URL,
 } from '../utils/constants';
@@ -148,7 +149,7 @@ export class MoviesService {
       if (tmdbResponse.data) {
         const posterPath = tmdbResponse.data.poster_path
           ? `${TMDB_IMAGE_BASE_URL}${tmdbResponse.data.poster_path}`
-          : 'https://meowie-public.s3.eu-central-1.amazonaws.com/poster-fallback.png';
+          : POSTER_FALLBACK_URL;
         const posterProps = await this.generatePosterProps(posterPath);
         const credits = await this.getMovieCredits(id);
 
