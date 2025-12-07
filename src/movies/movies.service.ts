@@ -6,10 +6,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CastInfo, TMDB_MoviesListResult } from 'src/movies/models/movie-info';
+import { CastInfo } from 'src/movies/models/movie-info';
 import {
   TMDB_MovieCredits,
   TMDB_MovieInfo,
+  TMDB_MovieDetail,
+  TMDB_MoviesListResult,
 } from 'src/movies/models/thirdparty/tmdb';
 import { OMDB_Info, OMDB_Source } from 'src/movies/models/thirdparty/omdb';
 import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
@@ -43,7 +45,7 @@ export class MoviesService {
     this.OMDB_API_KEY = this.env.get('OMDB_API_KEY');
   }
 
-  async getMovieIds(query: QueryParams) {
+  async getMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
     const maxDate = min([
       new Date(`${Number(query.decade) + 9}-12-31`),
       new Date(),
@@ -52,7 +54,7 @@ export class MoviesService {
       .split('T')[0];
     const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
     try {
-      const response = await axios.get<MovieIdsResDto>(
+      const response = await axios.get<TMDB_MoviesListResult>(
         `${TMDB_BASE_URL}/3/discover/movie`,
         {
           params: {
@@ -75,16 +77,23 @@ export class MoviesService {
             'vote_average.lte': hasFilters(query)
               ? (query.tmdbRatings?.split(',')[1] ?? 10)
               : 10,
-            with_cast: query.personId,
-            with_crew: query.personId,
+            with_people: query.personId,
             page: query.page ?? 1,
           },
         },
       );
-      response.data.results = response.data.results.filter((movie) =>
-        this.isMovieValid(movie),
-      );
-      return response.data;
+      const highQualityMovieIds = response.data.results
+        .filter((movie) => this.isMovieValid(movie))
+        .map((movie) => movie.id);
+
+      const data = {
+        page: response.data.page,
+        results: highQualityMovieIds,
+        total_pages: response.data.total_pages,
+        total_results: response.data.total_results,
+      };
+
+      return data;
     } catch (error) {
       throw new InternalServerErrorException(
         `Error fetching movies ids: ${error}`,
@@ -224,7 +233,7 @@ export class MoviesService {
     }
   }
 
-  private isMovieValid(movie: TMDB_MoviesListResult): boolean {
+  private isMovieValid(movie: TMDB_MovieDetail): boolean {
     return Boolean(movie.title && movie.overview);
   }
 

@@ -1,4 +1,4 @@
-export type TMDB_RequiredInfo = {
+export type MovieDetails = {
   title: string;
   publishYear: string;
   duration: string;
@@ -7,23 +7,6 @@ export type TMDB_RequiredInfo = {
   posterPath: string;
   overview: string;
   genres: string[];
-};
-
-export type TMDB_MoviesListResult = {
-  adult: boolean;
-  backdrop_path: string;
-  genre_ids: number[];
-  id: number;
-  original_language: string;
-  original_title: string;
-  overview: string;
-  popularity: number;
-  poster_path: string;
-  release_date: string;
-  title: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
 };
 
 export type CastInfo = {
