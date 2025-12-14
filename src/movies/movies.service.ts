@@ -22,7 +22,7 @@ import { Vibrant } from 'node-vibrant/node';
 import { PosterProps } from './models/image';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
-import { MovieIdsResDto, MoviesResDto } from './dto/movies.dto';
+import { MovieIdsResDto, MovieInfoResDto } from './dto/movies.dto';
 import {
   OMDB_BASE_URL,
   POSTER_FALLBACK_URL,
@@ -154,7 +154,7 @@ export class MoviesService {
         const posterProps = await this.generatePosterProps(posterPath);
         const credits = await this.getMovieCredits(id);
 
-        const data: MoviesResDto = {
+        const data: MovieInfoResDto = {
           // tmdb
           title: tmdbResponse.data.title,
           publishYear: new Date(tmdbResponse.data.release_date ?? 0)

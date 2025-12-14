@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { QueryParams } from './models/query';
-import { MovieIdsResDto, MoviesResDto } from './dto/movies.dto';
+import { MovieIdsResDto, MovieInfoResDto } from './dto/movies.dto';
 
 @Controller('movies')
 export class MoviesController {
@@ -12,8 +12,8 @@ export class MoviesController {
     return this.moviesService.getMovieIds(query);
   }
 
-  @Get(':id')
-  async getMovieInfo(@Param('id') id: number): Promise<MoviesResDto> {
+  @Get('/info/:id')
+  async getMovieInfo(@Param('id') id: number): Promise<MovieInfoResDto> {
     return this.moviesService.getMovieInfo(id);
   }
 }

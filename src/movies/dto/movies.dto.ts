@@ -2,7 +2,7 @@ import { AllRatings } from '../models/ratings';
 import { PosterProps } from '../models/image';
 import { Credits, MovieDetails } from '../models/movie-info';
 
-export type MoviesResDto = MovieDetails &
+export type MovieInfoResDto = MovieDetails &
   AllRatings & {
     posterProps: PosterProps;
   } & {
