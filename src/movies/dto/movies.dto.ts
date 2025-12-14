@@ -15,3 +15,9 @@ export type MovieIdsResDto = {
   total_pages: number;
   total_results: number;
 };
+
+export type MoviePosterResDto = {
+  id: number;
+  posterPath: string;
+  blurhash: string;
+}[];

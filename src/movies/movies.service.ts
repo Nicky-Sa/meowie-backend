@@ -1,17 +1,12 @@
-import axios, { AxiosResponse, isAxiosError } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { EnvService } from 'src/env/env.service';
-import {
-  HttpException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CastInfo } from 'src/movies/models/movie-info';
 import {
   TMDB_MovieCredits,
-  TMDB_MovieInfo,
   TMDB_MovieDetail,
+  TMDB_MovieImages,
+  TMDB_MovieInfo,
   TMDB_MoviesListResult,
 } from 'src/movies/models/thirdparty/tmdb';
 import { OMDB_Info, OMDB_Source } from 'src/movies/models/thirdparty/omdb';
@@ -22,13 +17,18 @@ import { Vibrant } from 'node-vibrant/node';
 import { PosterProps } from './models/image';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
-import { MovieIdsResDto, MovieInfoResDto } from './dto/movies.dto';
+import {
+  MovieIdsResDto,
+  MovieInfoResDto,
+  MoviePosterResDto,
+} from './dto/movies.dto';
 import {
   OMDB_BASE_URL,
   POSTER_FALLBACK_URL,
   TMDB_BASE_URL,
   TMDB_IMAGE_BASE_URL,
 } from '../utils/constants';
+import pLimit from 'p-limit';
 
 @Injectable()
 export class MoviesService {
@@ -55,229 +55,248 @@ export class MoviesService {
       ?.toISOString()
       .split('T')[0];
     const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
-    try {
-      const response = await axios.get<TMDB_MoviesListResult>(
-        `${TMDB_BASE_URL}/3/discover/movie`,
-        {
-          params: {
-            api_key: this.TMDB_API_KEY,
-            include_adult: false,
-            sort_by: sort,
-            ...(query.genres && {
-              with_genres: query.genres.replaceAll(',', '|'),
-            }),
-            with_original_language: query.languages
-              ? query.languages.replaceAll(',', '|')
-              : 'en|fr|de|es',
-            ...(query.decade && {
-              'primary_release_date.gte': `${query.decade}-01-01`,
-              'primary_release_date.lte': maxDate,
-            }),
-            'vote_average.gte': hasFilters(query)
-              ? (query.tmdbRatings?.split(',')[0] ?? 0)
-              : 7,
-            'vote_average.lte': hasFilters(query)
-              ? (query.tmdbRatings?.split(',')[1] ?? 10)
-              : 10,
-            with_people: query.personId,
-            page: query.page ?? 1,
-          },
+
+    const response = await axios.get<TMDB_MoviesListResult>(
+      `${TMDB_BASE_URL}/3/discover/movie`,
+      {
+        params: {
+          api_key: this.TMDB_API_KEY,
+          include_adult: false,
+          sort_by: sort,
+          ...(query.genres && {
+            with_genres: query.genres.replaceAll(',', '|'),
+          }),
+          with_original_language: query.languages
+            ? query.languages.replaceAll(',', '|')
+            : 'en|fr|de|es',
+          ...(query.decade && {
+            'primary_release_date.gte': `${query.decade}-01-01`,
+            'primary_release_date.lte': maxDate,
+          }),
+          'vote_average.gte': hasFilters(query)
+            ? (query.tmdbRatings?.split(',')[0] ?? 0)
+            : 7,
+          'vote_average.lte': hasFilters(query)
+            ? (query.tmdbRatings?.split(',')[1] ?? 10)
+            : 10,
+          with_people: query.personId,
+          page: query.page ?? 1,
         },
-      );
-      const highQualityMovieIds = response.data.results
-        .filter((movie) => this.isMovieValid(movie))
-        .map((movie) => movie.id);
+      },
+    );
+    const highQualityMovieIds = response.data.results
+      .filter((movie) => this.isMovieValid(movie))
+      .map((movie) => movie.id);
 
-      const data = {
-        page: response.data.page,
-        results: highQualityMovieIds,
-        total_pages: response.data.total_pages,
-        total_results: response.data.total_results,
-      };
+    const data = {
+      page: response.data.page,
+      results: highQualityMovieIds,
+      total_pages: response.data.total_pages,
+      total_results: response.data.total_results,
+    };
 
-      return data;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Error fetching movies ids: ${error}`,
-      );
-    }
+    return data;
   }
 
   async getMovieInfo(id: number) {
-    try {
-      // TMDB API
-      const tmdbResponse = await axios.get<TMDB_MovieInfo>(
-        `${TMDB_BASE_URL}/3/movie/${id}`,
-        {
-          params: {
-            append_to_response: 'videos,release_dates',
-            api_key: this.TMDB_API_KEY,
-          },
+    // TMDB API
+    const tmdbResponse = await axios.get<TMDB_MovieInfo>(
+      `${TMDB_BASE_URL}/3/movie/${id}`,
+      {
+        params: {
+          append_to_response: 'videos,release_dates',
+          api_key: this.TMDB_API_KEY,
         },
-      );
+      },
+    );
 
-      // OMDB API
-      const imdbId = tmdbResponse.data?.imdb_id;
-      let omdbResponse: AxiosResponse<OMDB_Info> | null = null;
-      let omdbRatings: {
-        Source: OMDB_Source;
-        Value: string;
-      }[];
+    // OMDB API
+    const imdbId = tmdbResponse.data?.imdb_id;
+    let omdbResponse: AxiosResponse<OMDB_Info> | null = null;
+    let omdbRatings: {
+      Source: OMDB_Source;
+      Value: string;
+    }[];
 
-      try {
-        omdbResponse = imdbId
-          ? await axios.get<OMDB_Info>(OMDB_BASE_URL, {
-              params: {
-                i: imdbId,
-                apikey: this.OMDB_API_KEY,
-              },
-            })
-          : null;
-        if (omdbResponse && omdbResponse.data?.Ratings) {
-          omdbRatings = omdbResponse.data.Ratings;
-        } else {
-          throw new NotFoundException('No ratings found');
-        }
-      } catch {
-        omdbRatings = (
-          Object.keys({} as Record<OMDB_Source, unknown>) as OMDB_Source[]
-        ).map((source) => ({
-          Source: source,
-          Value: 'N/A',
-        }));
-      }
-
-      if (tmdbResponse.data) {
-        const posterPath = tmdbResponse.data.poster_path
-          ? `${TMDB_IMAGE_BASE_URL}${tmdbResponse.data.poster_path}`
-          : POSTER_FALLBACK_URL;
-        const posterProps = await this.generatePosterProps(posterPath);
-        const credits = await this.getMovieCredits(id);
-
-        const data: MovieInfoResDto = {
-          // tmdb
-          title: tmdbResponse.data.title,
-          publishYear: new Date(tmdbResponse.data.release_date ?? 0)
-            .getFullYear()
-            .toString(),
-          overview: tmdbResponse.data.overview,
-          posterPath,
-          duration: formatDuration(tmdbResponse.data.runtime),
-          certification:
-            (tmdbResponse.data.release_dates.results.find(
-              (result) => result.iso_3166_1 === 'US',
-            )?.release_dates[0].certification ||
-              omdbResponse?.data?.Rated) ??
-            'N/A',
-          trailerKey: findTrailerKey(tmdbResponse.data.videos),
-          genres: tmdbResponse.data.genres.map((genre) => genre.name),
-          ratings: [
-            // omdb
-            ...omdbRatings.map((rating) => ({
-              source: rating.Source,
-              value: rating.Value.split('/')[0].trim(),
-            })),
-            {
-              source: 'The Movie Database',
-              value: tmdbResponse.data.vote_average.toFixed(1).toString(),
+    try {
+      omdbResponse = imdbId
+        ? await axios.get<OMDB_Info>(OMDB_BASE_URL, {
+            params: {
+              i: imdbId,
+              apikey: this.OMDB_API_KEY,
             },
-          ],
-          posterProps,
-          credits,
-        };
-
-        return data;
+          })
+        : null;
+      if (omdbResponse && omdbResponse.data?.Ratings) {
+        omdbRatings = omdbResponse.data.Ratings;
       } else {
-        throw new NotFoundException('Movie not found');
+        throw new NotFoundException('No ratings found');
       }
-    } catch (error) {
-      // 1. If it's already a NestJS exception (like the one we threw manually), re-throw it
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      // 2. If it's an Axios 404 error (TMDB couldn't find it), throw a NotFoundException
-      if (isAxiosError(error) && error.response?.status === 404) {
-        throw new NotFoundException('Movie not found');
-      }
-      // 3. Otherwise, it's a genuine server error (parsing, network, etc.)
-      throw new InternalServerErrorException(
-        `Error fetching movie info: ${error}`,
-      );
+    } catch {
+      omdbRatings = (
+        Object.keys({} as Record<OMDB_Source, unknown>) as OMDB_Source[]
+      ).map((source) => ({
+        Source: source,
+        Value: 'N/A',
+      }));
     }
+
+    const posterPath = tmdbResponse.data.poster_path
+      ? `${TMDB_IMAGE_BASE_URL}${tmdbResponse.data.poster_path}`
+      : POSTER_FALLBACK_URL;
+    const posterProps = await this.generatePosterProps(posterPath);
+    const credits = await this.getMovieCredits(id);
+
+    const data: MovieInfoResDto = {
+      // tmdb
+      title: tmdbResponse.data.title,
+      publishYear: new Date(tmdbResponse.data.release_date ?? 0)
+        .getFullYear()
+        .toString(),
+      overview: tmdbResponse.data.overview,
+      posterPath,
+      duration: formatDuration(tmdbResponse.data.runtime),
+      certification:
+        (tmdbResponse.data.release_dates.results.find(
+          (result) => result.iso_3166_1 === 'US',
+        )?.release_dates[0].certification ||
+          omdbResponse?.data?.Rated) ??
+        'N/A',
+      trailerKey: findTrailerKey(tmdbResponse.data.videos),
+      genres: tmdbResponse.data.genres.map((genre) => genre.name),
+      ratings: [
+        // omdb
+        ...omdbRatings.map((rating) => ({
+          source: rating.Source,
+          value: rating.Value.split('/')[0].trim(),
+        })),
+        {
+          source: 'The Movie Database',
+          value: tmdbResponse.data.vote_average.toFixed(1).toString(),
+        },
+      ],
+      posterProps,
+      credits,
+    };
+
+    return data;
   }
 
   async getMovieCredits(id: number) {
-    try {
-      const response = await axios.get<TMDB_MovieCredits>(
-        `${TMDB_BASE_URL}/3/movie/${id}/credits`,
-        {
-          params: {
-            api_key: this.TMDB_API_KEY,
-          },
+    const response = await axios.get<TMDB_MovieCredits>(
+      `${TMDB_BASE_URL}/3/movie/${id}/credits`,
+      {
+        params: {
+          api_key: this.TMDB_API_KEY,
         },
-      );
-      const casts: CastInfo[] = response.data.cast
-        .filter((cast) => cast.known_for_department === 'Acting')
-        .sort((a, b) => a.order - b.order)
-        .slice(0, 5)
-        .map((cast) => ({
-          id: cast.id,
-          name: cast.name,
-          character: cast.character,
-          profilePath: `${TMDB_IMAGE_BASE_URL}${cast.profile_path}`,
-        }));
-      let director = response.data.crew
-        .filter((crew) => crew.job === 'Director')
-        .slice(0, 1)
-        .map((crew) => ({
-          id: crew.id,
-          name: crew.name,
-          character: crew.job,
-          profilePath: `${TMDB_IMAGE_BASE_URL}${crew.profile_path}`,
-        }))[0];
-      if (!director) {
-        director = this.emptyCast;
-      }
-      return { casts, director };
-    } catch (error) {
-      throw new Error(`Error fetching movie credits: ${error}`);
+      },
+    );
+    const casts: CastInfo[] = response.data.cast
+      .filter((cast) => cast.known_for_department === 'Acting')
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 5)
+      .map((cast) => ({
+        id: cast.id,
+        name: cast.name,
+        character: cast.character,
+        profilePath: `${TMDB_IMAGE_BASE_URL}${cast.profile_path}`,
+      }));
+    let director = response.data.crew
+      .filter((crew) => crew.job === 'Director')
+      .slice(0, 1)
+      .map((crew) => ({
+        id: crew.id,
+        name: crew.name,
+        character: crew.job,
+        profilePath: `${TMDB_IMAGE_BASE_URL}${crew.profile_path}`,
+      }))[0];
+    if (!director) {
+      director = this.emptyCast;
     }
+    return { casts, director };
+  }
+
+  async getMoviePosterBulk(ids: number[]) {
+    // Avoid bombarding TMDB by limiting the number of concurrent requests
+    const limit = pLimit(5);
+
+    const moviePromises = ids.map((id) =>
+      limit(async () => {
+        return this.getMoviePosterSingle(id);
+      }),
+    );
+    // Waits for all to finish (success or fail)
+    const results = await Promise.allSettled(moviePromises);
+
+    // Filter only the successful ones and extract the data
+    // Remove explicit nulls if any
+    return results
+      .filter((result) => result.status === 'fulfilled')
+      .map((result) => result.value)
+      .filter((data) => data !== null);
+  }
+
+  private async getMoviePosterSingle(id: number) {
+    const response = await axios.get<TMDB_MovieImages>(
+      `${TMDB_BASE_URL}/3/movie/${id}/images`,
+      {
+        params: {
+          api_key: this.TMDB_API_KEY,
+        },
+      },
+    );
+
+    const posterPath =
+      response.data.posters.length > 0 && response.data.posters[0].file_path
+        ? `${TMDB_IMAGE_BASE_URL}${response.data.posters[0].file_path}`
+        : POSTER_FALLBACK_URL;
+    const { blurhash } = await this.generatePosterProps(posterPath, {
+      blurhash: true,
+      hex: false,
+    });
+    const data: MoviePosterResDto[number] = {
+      id,
+      posterPath,
+      blurhash,
+    };
+    return data;
   }
 
   private isMovieValid(movie: TMDB_MovieDetail): boolean {
     return Boolean(movie.title && movie.overview);
   }
 
-  private async generatePosterProps(url: string): Promise<PosterProps> {
+  private async generatePosterProps(
+    url: string,
+    options: {
+      hex?: boolean;
+      blurhash?: boolean;
+    } = { hex: true, blurhash: true },
+  ): Promise<PosterProps> {
     let primaryColorHex = '#1F3854';
     let blurhash = 'U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xs';
+
+    // If both are false, return defaults immediately without fetching
+    if (!options.hex && !options.blurhash) {
+      return { primaryColorHex, blurhash };
+    }
 
     try {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
       const buffer = Buffer.from(response.data, 'binary');
 
-      const palette = await Vibrant.from(buffer).getPalette();
-
-      // Generate blurhash
-      const { data, info } = await sharp(buffer)
-        .raw()
-        .ensureAlpha()
-        .resize(32, 32, { fit: 'inside' })
-        .toBuffer({ resolveWithObject: true });
-
-      const encodedBlurhash = encode(
-        new Uint8ClampedArray(data),
-        info.width,
-        info.height,
-        4,
-        4,
-      );
-      if (palette.LightVibrant?.hex) {
-        primaryColorHex = palette.LightVibrant.hex;
+      if (options.hex) {
+        const hex = await this.getPrimaryColorHex(buffer);
+        if (hex) {
+          primaryColorHex = hex;
+        }
       }
-      if (encodedBlurhash) {
-        blurhash = encodedBlurhash;
+
+      if (options.blurhash) {
+        const hash = await this.getBlurhash(buffer);
+        if (hash) {
+          blurhash = hash;
+        }
       }
     } catch (error) {
       if (error instanceof AggregateError) {
@@ -292,5 +311,22 @@ export class MoviesService {
       primaryColorHex,
       blurhash,
     };
+  }
+
+  private async getPrimaryColorHex(
+    buffer: Buffer,
+  ): Promise<string | undefined> {
+    const palette = await Vibrant.from(buffer).getPalette();
+    return palette.LightVibrant?.hex;
+  }
+
+  private async getBlurhash(buffer: Buffer): Promise<string | undefined> {
+    const { data, info } = await sharp(buffer)
+      .raw()
+      .ensureAlpha()
+      .resize(32, 32, { fit: 'inside' })
+      .toBuffer({ resolveWithObject: true });
+
+    return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4);
   }
 }

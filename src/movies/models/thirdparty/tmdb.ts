@@ -162,3 +162,20 @@ export type TMDB_MoviesListResult = {
   total_pages: number;
   total_results: number;
 };
+
+type TMDB_Image = {
+  aspect_ratio: number;
+  height: number;
+  iso_639_1: string;
+  file_path: string;
+  vote_average: number;
+  vote_count: number;
+  width: number;
+};
+
+export type TMDB_MovieImages = {
+  backdrops: TMDB_Image[];
+  id: number;
+  logos: TMDB_Image[];
+  posters: TMDB_Image[];
+};
