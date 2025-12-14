@@ -1,6 +1,7 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, isAxiosError } from 'axios';
 import { EnvService } from 'src/env/env.service';
 import {
+  HttpException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -190,6 +191,16 @@ export class MoviesService {
         throw new NotFoundException('Movie not found');
       }
     } catch (error) {
+      // 1. If it's already a NestJS exception (like the one we threw manually), re-throw it
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // 2. If it's an Axios 404 error (TMDB couldn't find it), throw a NotFoundException
+      if (isAxiosError(error) && error.response?.status === 404) {
+        throw new NotFoundException('Movie not found');
+      }
+      // 3. Otherwise, it's a genuine server error (parsing, network, etc.)
       throw new InternalServerErrorException(
         `Error fetching movie info: ${error}`,
       );
