@@ -20,3 +20,9 @@ export type Credits = {
   casts: CastInfo[];
   director: CastInfo;
 };
+
+export type MoviePosterInfo = {
+  id: number;
+  posterPath: string;
+  blurhash: string;
+};

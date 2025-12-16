@@ -1,7 +1,11 @@
 import axios, { AxiosResponse } from 'axios';
 import { EnvService } from 'src/env/env.service';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CastInfo } from 'src/movies/models/movie-info';
+import {
+  CastInfo,
+  Credits,
+  MoviePosterInfo,
+} from 'src/movies/models/movie-info';
 import {
   TMDB_MovieCredits,
   TMDB_MovieDetail,
@@ -47,7 +51,7 @@ export class MoviesService {
     this.OMDB_API_KEY = this.env.get('OMDB_API_KEY');
   }
 
-  async getMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
+  async getPurifiedMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
     const maxDate = min([
       new Date(`${Number(query.decade) + 9}-12-31`),
       new Date(),
@@ -84,13 +88,13 @@ export class MoviesService {
         },
       },
     );
-    const highQualityMovieIds = response.data.results
+    const validMovieIds = response.data.results
       .filter((movie) => this.isMovieValid(movie))
       .map((movie) => movie.id);
 
     const data = {
       page: response.data.page,
-      results: highQualityMovieIds,
+      results: validMovieIds,
       total_pages: response.data.total_pages,
       total_results: response.data.total_results,
     };
@@ -98,7 +102,7 @@ export class MoviesService {
     return data;
   }
 
-  async getMovieInfo(id: number) {
+  async getMovieInfo(id: number): Promise<MovieInfoResDto> {
     // TMDB API
     const tmdbResponse = await axios.get<TMDB_MovieInfo>(
       `${TMDB_BASE_URL}/3/movie/${id}`,
@@ -182,7 +186,7 @@ export class MoviesService {
     return data;
   }
 
-  async getMovieCredits(id: number) {
+  async getMovieCredits(id: number): Promise<Credits> {
     const response = await axios.get<TMDB_MovieCredits>(
       `${TMDB_BASE_URL}/3/movie/${id}/credits`,
       {
@@ -216,7 +220,34 @@ export class MoviesService {
     return { casts, director };
   }
 
-  async getMoviePosterBulk(ids: number[]) {
+  async getMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
+    const response = await axios.get<TMDB_MoviesListResult>(
+      `${TMDB_BASE_URL}/3/discover/movie`,
+      {
+        params: {
+          api_key: this.TMDB_API_KEY,
+          include_adult: false,
+          sort_by: 'vote_count.desc',
+          with_people: query.personId,
+          page: query.page ?? 1,
+        },
+      },
+    );
+
+    const validMovieIds = response.data.results
+      .filter((movie) => this.isMovieValid(movie))
+      .map((movie) => movie.id);
+
+    return {
+      page: response.data.page,
+      results: validMovieIds,
+      total_pages: response.data.total_pages,
+      total_results: response.data.total_results,
+    };
+  }
+
+  async getMoviesPoster(query: QueryParams): Promise<MoviePosterResDto> {
+    const { results: ids, ...rest } = await this.getMovieIds(query);
     // Avoid bombarding TMDB by limiting the number of concurrent requests
     const limit = pLimit(5);
 
@@ -226,17 +257,19 @@ export class MoviesService {
       }),
     );
     // Waits for all to finish (success or fail)
-    const results = await Promise.allSettled(moviePromises);
+    const allResults = await Promise.allSettled(moviePromises);
 
     // Filter only the successful ones and extract the data
     // Remove explicit nulls if any
-    return results
+    const results = allResults
       .filter((result) => result.status === 'fulfilled')
       .map((result) => result.value)
       .filter((data) => data !== null);
+
+    return { results, ...rest };
   }
 
-  private async getMoviePosterSingle(id: number) {
+  private async getMoviePosterSingle(id: number): Promise<MoviePosterInfo> {
     const response = await axios.get<TMDB_MovieImages>(
       `${TMDB_BASE_URL}/3/movie/${id}/images`,
       {
@@ -254,7 +287,7 @@ export class MoviesService {
       blurhash: true,
       hex: false,
     });
-    const data: MoviePosterResDto[number] = {
+    const data = {
       id,
       posterPath,
       blurhash,

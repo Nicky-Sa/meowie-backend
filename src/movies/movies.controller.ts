@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseArrayPipe,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { QueryParams } from './models/query';
 import {
@@ -22,7 +15,7 @@ export class MoviesController {
 
   @Get('ids')
   async getMovieIds(@Query() query: QueryParams): Promise<MovieIdsResDto> {
-    return this.moviesService.getMovieIds(query);
+    return this.moviesService.getPurifiedMovieIds(query);
   }
 
   @Get('/info/:id')
@@ -30,12 +23,8 @@ export class MoviesController {
     return this.moviesService.getMovieInfo(id);
   }
 
-  @Get('/poster/bulk')
-  getPostersInBulk(
-    @Query('ids', new ParseArrayPipe({ items: Number, separator: ',' }))
-    ids: number[],
-  ): Promise<MoviePosterResDto> {
-    // ids are automatically [1, 2, 3] here
-    return this.moviesService.getMoviePosterBulk(ids);
+  @Get('/poster')
+  getPostersInBulk(@Query() query: QueryParams): Promise<MoviePosterResDto> {
+    return this.moviesService.getMoviesPoster(query);
   }
 }

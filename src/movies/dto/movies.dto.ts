@@ -1,6 +1,6 @@
 import { AllRatings } from '../models/ratings';
 import { PosterProps } from '../models/image';
-import { Credits, MovieDetails } from '../models/movie-info';
+import { Credits, MovieDetails, MoviePosterInfo } from '../models/movie-info';
 
 export type MovieInfoResDto = MovieDetails &
   AllRatings & {
@@ -17,7 +17,8 @@ export type MovieIdsResDto = {
 };
 
 export type MoviePosterResDto = {
-  id: number;
-  posterPath: string;
-  blurhash: string;
-}[];
+  page: number;
+  results: MoviePosterInfo[];
+  total_pages: number;
+  total_results: number;
+};
