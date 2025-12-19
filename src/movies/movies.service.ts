@@ -58,6 +58,8 @@ export class MoviesService {
     ])
       ?.toISOString()
       .split('T')[0];
+
+    // Sort defaults to popularity.desc by TMDB
     const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
 
     const response = await axios.get<TMDB_MoviesListResult>(
