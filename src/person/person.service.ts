@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { TMDB_Person } from '../movies/models/thirdparty/tmdb';
+import { TMDB_Person } from '../models/thirdparty/tmdb';
 import { EnvService } from '../env/env.service';
 import { TMDB_BASE_URL, TMDB_IMAGE_BASE_URL } from '../utils/constants';
 import { PersonResDto } from './dto/person.dto';

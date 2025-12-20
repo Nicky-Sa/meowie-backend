@@ -11,9 +11,9 @@ import {
   TMDB_MovieDetail,
   TMDB_MovieImages,
   TMDB_MovieInfo,
-  TMDB_MoviesListResult,
-} from 'src/movies/models/thirdparty/tmdb';
-import { OMDB_Info, OMDB_Source } from 'src/movies/models/thirdparty/omdb';
+  TMDB_MoviesList,
+} from 'src/models/thirdparty/tmdb';
+import { OMDB_Info, OMDB_Source } from 'src/models/thirdparty/omdb';
 import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
 import { QueryParams } from './models/query';
 import { min } from 'lodash';
@@ -62,7 +62,7 @@ export class MoviesService {
     // Sort defaults to popularity.desc by TMDB
     const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
 
-    const response = await axios.get<TMDB_MoviesListResult>(
+    const response = await axios.get<TMDB_MoviesList>(
       `${TMDB_BASE_URL}/3/discover/movie`,
       {
         params: {
@@ -223,7 +223,7 @@ export class MoviesService {
   }
 
   async getMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
-    const response = await axios.get<TMDB_MoviesListResult>(
+    const response = await axios.get<TMDB_MoviesList>(
       `${TMDB_BASE_URL}/3/discover/movie`,
       {
         params: {

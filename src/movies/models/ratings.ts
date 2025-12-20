@@ -1,4 +1,4 @@
-import { OMDB_Source } from './thirdparty/omdb';
+import { OMDB_Source } from '../../models/thirdparty/omdb';
 
 type RatingEntry = {
   source: OMDB_Source | 'The Movie Database';

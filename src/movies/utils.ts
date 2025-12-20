@@ -1,4 +1,4 @@
-import { TMDB_Videos } from 'src/movies/models/thirdparty/tmdb';
+import { TMDB_Videos } from 'src/models/thirdparty/tmdb';
 import { filterKeys, QueryParams } from './models/query';
 
 export const formatDuration = (minutes?: number) => {
