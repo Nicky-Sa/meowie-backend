@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { TMDB_Person } from '../models/thirdparty/tmdb';
 import { EnvService } from '../env/env.service';
-import { TMDB_BASE_URL, TMDB_IMAGE_BASE_URL } from '../utils/constants';
+import { TMDB_BASE_URL } from '../utils/constants';
 import { PersonResDto } from './dto/person.dto';
+import { getImage } from '../movies/models/image';
 
 @Injectable()
 export class PersonService {
@@ -26,7 +27,7 @@ export class PersonService {
       const data: PersonResDto = {
         id: response.data.id,
         name: response.data.name,
-        profilePath: `${TMDB_IMAGE_BASE_URL}${response.data.profile_path}`,
+        profilePath: getImage(response.data.profile_path, 'profile'),
         knownForDepartment: response.data.known_for_department,
       };
       return data;

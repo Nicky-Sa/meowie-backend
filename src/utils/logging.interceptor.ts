@@ -7,7 +7,10 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LoggableObject, redactSensitiveInfo } from './functions';
+import {
+  LoggableObject,
+  redactSensitiveInfo,
+} from './functions/redact-sensitive-info';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {

@@ -13,6 +13,7 @@ import { EmailModule } from './email/email.module';
 import { getDataSourceOptions } from './database/database.config';
 import { ConstantsModule } from './constants/constants.module';
 import { PersonModule } from './person/person.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PersonModule } from './person/person.module';
     EmailModule,
     ConstantsModule,
     PersonModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

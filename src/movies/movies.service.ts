@@ -18,7 +18,7 @@ import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
 import { QueryParams } from './models/query';
 import { min } from 'lodash';
 import { Vibrant } from 'node-vibrant/node';
-import { PosterProps } from './models/image';
+import { getImage, PosterProps } from './models/image';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
 import {
@@ -30,9 +30,9 @@ import {
   OMDB_BASE_URL,
   POSTER_FALLBACK_URL,
   TMDB_BASE_URL,
-  TMDB_IMAGE_BASE_URL,
 } from '../utils/constants';
 import pLimit from 'p-limit';
+import { extractYearFromDate } from '../utils/functions/dates';
 
 @Injectable()
 export class MoviesService {
@@ -147,18 +147,14 @@ export class MoviesService {
       }));
     }
 
-    const posterPath = tmdbResponse.data.poster_path
-      ? `${TMDB_IMAGE_BASE_URL}${tmdbResponse.data.poster_path}`
-      : POSTER_FALLBACK_URL;
+    const posterPath = getImage(tmdbResponse.data.poster_path, 'poster');
     const posterProps = await this.generatePosterProps(posterPath);
     const credits = await this.getMovieCredits(id);
 
     const data: MovieInfoResDto = {
       // tmdb
       title: tmdbResponse.data.title,
-      publishYear: new Date(tmdbResponse.data.release_date ?? 0)
-        .getFullYear()
-        .toString(),
+      publishYear: extractYearFromDate(tmdbResponse.data.release_date),
       overview: tmdbResponse.data.overview,
       posterPath,
       duration: formatDuration(tmdbResponse.data.runtime),
@@ -205,7 +201,7 @@ export class MoviesService {
         id: cast.id,
         name: cast.name,
         character: cast.character,
-        profilePath: `${TMDB_IMAGE_BASE_URL}${cast.profile_path}`,
+        profilePath: getImage(cast.profile_path, 'profile'),
       }));
     let director = response.data.crew
       .filter((crew) => crew.job === 'Director')
@@ -214,7 +210,7 @@ export class MoviesService {
         id: crew.id,
         name: crew.name,
         character: crew.job,
-        profilePath: `${TMDB_IMAGE_BASE_URL}${crew.profile_path}`,
+        profilePath: getImage(crew.profile_path, 'profile'),
       }))[0];
     if (!director) {
       director = this.emptyCast;
@@ -283,7 +279,7 @@ export class MoviesService {
 
     const posterPath =
       response.data.posters.length > 0 && response.data.posters[0].file_path
-        ? `${TMDB_IMAGE_BASE_URL}${response.data.posters[0].file_path}`
+        ? getImage(response.data.posters[0].file_path, 'poster')
         : POSTER_FALLBACK_URL;
     const { blurhash } = await this.generatePosterProps(posterPath, {
       blurhash: true,
