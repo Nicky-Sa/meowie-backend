@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { QueryParams } from './models/query';
 import {
-  MovieIdsResDto,
+  PurifiedMovieIdsResDto,
   MovieInfoResDto,
   MoviePosterResDto,
 } from './dto/movies.dto';
@@ -13,8 +13,10 @@ import { TMDBErrorInterceptor } from '../utils/tmdb-error.interceptor';
 export class MoviesController {
   constructor(private readonly moviesService: MoviesService) {}
 
-  @Get('ids')
-  async getMovieIds(@Query() query: QueryParams): Promise<MovieIdsResDto> {
+  @Get('purified-ids')
+  async getPurifiedMovieIds(
+    @Query() query: QueryParams,
+  ): Promise<PurifiedMovieIdsResDto> {
     return this.moviesService.getPurifiedMovieIds(query);
   }
 

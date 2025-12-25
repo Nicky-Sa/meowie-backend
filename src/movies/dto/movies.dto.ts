@@ -9,7 +9,7 @@ export type MovieInfoResDto = MovieDetails &
     credits: Credits;
   };
 
-export type MovieIdsResDto = {
+export type PurifiedMovieIdsResDto = {
   page: number;
   results: number[];
   total_pages: number;

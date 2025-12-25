@@ -22,7 +22,7 @@ import { getImage, PosterProps } from './models/image';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
 import {
-  MovieIdsResDto,
+  PurifiedMovieIdsResDto,
   MovieInfoResDto,
   MoviePosterResDto,
 } from './dto/movies.dto';
@@ -51,7 +51,9 @@ export class MoviesService {
     this.OMDB_API_KEY = this.env.get('OMDB_API_KEY');
   }
 
-  async getPurifiedMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
+  async getPurifiedMovieIds(
+    query: QueryParams,
+  ): Promise<PurifiedMovieIdsResDto> {
     const maxDate = min([
       new Date(`${Number(query.decade) + 9}-12-31`),
       new Date(),
@@ -218,7 +220,7 @@ export class MoviesService {
     return { casts, director };
   }
 
-  async getMovieIds(query: QueryParams): Promise<MovieIdsResDto> {
+  async getMovieIds(query: QueryParams): Promise<PurifiedMovieIdsResDto> {
     const response = await axios.get<TMDB_MoviesList>(
       `${TMDB_BASE_URL}/3/discover/movie`,
       {
