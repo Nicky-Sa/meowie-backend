@@ -201,7 +201,7 @@ export class MoviesService {
         id: cast.id,
         name: cast.name,
         character: cast.character,
-        profilePath: getImage(cast.profile_path, 'profile'),
+        profilePath: getImage(cast.profile_path, 'person'),
       }));
     let director = response.data.crew
       .filter((crew) => crew.job === 'Director')
@@ -210,7 +210,7 @@ export class MoviesService {
         id: crew.id,
         name: crew.name,
         character: crew.job,
-        profilePath: getImage(crew.profile_path, 'profile'),
+        profilePath: getImage(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
       director = this.emptyCast;

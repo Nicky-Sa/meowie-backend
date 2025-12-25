@@ -27,7 +27,7 @@ export class PersonService {
       const data: PersonResDto = {
         id: response.data.id,
         name: response.data.name,
-        profilePath: getImage(response.data.profile_path, 'profile'),
+        profilePath: getImage(response.data.profile_path, 'person'),
         knownForDepartment: response.data.known_for_department,
       };
       return data;

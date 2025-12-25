@@ -46,7 +46,7 @@ export class SearchService {
               id: result.id,
               name: result.name,
               knownForDepartment: result.known_for_department.toLowerCase(),
-              profilePath: getImage(result.profile_path, 'profile'),
+              profilePath: getImage(result.profile_path, 'person'),
             };
           case 'movie':
             return {

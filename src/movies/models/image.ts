@@ -11,13 +11,13 @@ export type PosterProps = {
 
 export const getImage = (
   path: string | null | undefined,
-  type: 'poster' | 'profile',
+  type: 'poster' | 'person',
 ) => {
   if (!path) {
     switch (type) {
       case 'poster':
         return POSTER_FALLBACK_URL;
-      case 'profile':
+      case 'person':
         return PERSON_FALLBACK_URL;
     }
   }
