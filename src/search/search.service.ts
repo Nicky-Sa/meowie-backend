@@ -7,7 +7,7 @@ import {
 import { TMDB_BASE_URL } from '../utils/constants';
 import { EnvService } from '../env/env.service';
 import { MultiSearchResDto } from './dto/search.dto';
-import { getGenreName } from '../movies/models/genres';
+import { getGenreName, searchGenres } from '../movies/models/genres';
 import { getImage } from '../movies/models/image';
 import { extractYearFromDate } from '../utils/functions/dates';
 
@@ -42,18 +42,18 @@ export class SearchService {
         switch (result.media_type) {
           case 'person':
             return {
+              mediaType: result.media_type,
               id: result.id,
               name: result.name,
-              mediaType: result.media_type,
-              knownForDepartment: result.known_for_department,
+              knownForDepartment: result.known_for_department.toLowerCase(),
               profilePath: getImage(result.profile_path, 'profile'),
             };
           case 'movie':
             return {
+              mediaType: result.media_type,
               id: result.id,
               title: result.title,
               posterPath: getImage(result.poster_path, 'poster'),
-              mediaType: result.media_type,
               genres: result.genre_ids
                 .map((id) => getGenreName(id))
                 .filter(Boolean),
@@ -61,6 +61,17 @@ export class SearchService {
             };
         }
       });
+    const matchingGenres = searchGenres(query);
+
+    if (matchingGenres.length > 0) {
+      data.push(
+        ...matchingGenres.map((genre) => ({
+          mediaType: 'genre' as const,
+          ...genre,
+        })),
+      );
+    }
+
     return data;
   }
 
