@@ -14,9 +14,8 @@ import {
   TMDB_MoviesList,
 } from 'src/models/thirdparty/tmdb';
 import { OMDB_Info, OMDB_Source } from 'src/models/thirdparty/omdb';
-import { findTrailerKey, formatDuration, hasFilters } from 'src/movies/utils';
+import { findTrailerKey, formatDuration } from 'src/movies/utils';
 import { QueryParams } from './models/query';
-import { min } from 'lodash';
 import { Vibrant } from 'node-vibrant/node';
 import { getImage, PosterProps } from './models/image';
 import sharp from 'sharp';
@@ -53,15 +52,8 @@ export class MoviesService {
   }
 
   async getPurifiedMovieIds(
-    query: QueryParams,
+    query: Pick<QueryParams, 'page' | 'sort'>,
   ): Promise<PurifiedMovieIdsResDto> {
-    const maxDate = min([
-      new Date(`${Number(query.decade) + 9}-12-31`),
-      new Date(),
-    ])
-      ?.toISOString()
-      .split('T')[0];
-
     // Sort defaults to popularity.desc by TMDB
     const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
 
@@ -72,25 +64,8 @@ export class MoviesService {
           api_key: this.TMDB_API_KEY,
           include_adult: false,
           sort_by: sort,
-          ...(query.genres && {
-            with_genres: query.genres.replaceAll(',', '|'),
-          }),
-          with_original_language: query.languages
-            ? query.languages.replaceAll(',', '|')
-            : 'en|fr|de|es',
-          ...(query.decade && {
-            'primary_release_date.gte': `${query.decade}-01-01`,
-            'primary_release_date.lte': maxDate,
-          }),
-          'vote_average.gte': hasFilters(query)
-            ? (query.tmdbRatings?.split(',')[0] ?? 0)
-            : 7,
-          'vote_average.lte': hasFilters(query)
-            ? (query.tmdbRatings?.split(',')[1] ?? 10)
-            : 10,
-          ...(query.personId && {
-            with_people: query.personId,
-          }),
+          with_original_language: 'en|fr|de|es',
+          'vote_average.gte': 7,
           page: query.page ?? 1,
         },
       },
@@ -239,6 +214,17 @@ export class MoviesService {
           }),
           ...(query.personId && {
             with_people: query.personId,
+          }),
+          ...(query.languages && {
+            with_original_language: query.languages.replaceAll(',', '|'),
+          }),
+          ...(query.decade && {
+            'primary_release_date.gte': `${query.decade}-01-01`,
+            'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
+          }),
+          ...(query.tmdbRatings && {
+            'vote_average.gte': query.tmdbRatings.split(',')[0],
+            'vote_average.lte': query.tmdbRatings.split(',')[1],
           }),
           page: query.page ?? 1,
         },
