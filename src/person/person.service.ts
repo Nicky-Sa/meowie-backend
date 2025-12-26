@@ -28,7 +28,7 @@ export class PersonService {
         id: response.data.id,
         name: response.data.name,
         profilePath: getImage(response.data.profile_path, 'person'),
-        knownForDepartment: response.data.known_for_department,
+        knownForDepartment: response.data.known_for_department.toLowerCase(),
       };
       return data;
     } catch (error) {
