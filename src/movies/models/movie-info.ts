@@ -1,3 +1,5 @@
+import { Genre } from '../../constants/items/genres.constant';
+
 export type MovieDetails = {
   title: string;
   publishYear: string;
@@ -6,7 +8,7 @@ export type MovieDetails = {
   trailerKey: string;
   posterPath: string;
   overview: string;
-  genres: string[];
+  genres: Genre[];
 };
 
 export type CastInfo = {

@@ -33,6 +33,7 @@ import {
 } from '../utils/constants';
 import pLimit from 'p-limit';
 import { extractYearFromDate } from '../utils/functions/dates';
+import { getGenreEmoji } from './models/genres';
 
 @Injectable()
 export class MoviesService {
@@ -87,7 +88,9 @@ export class MoviesService {
           'vote_average.lte': hasFilters(query)
             ? (query.tmdbRatings?.split(',')[1] ?? 10)
             : 10,
-          with_people: query.personId,
+          ...(query.personId && {
+            with_people: query.personId,
+          }),
           page: query.page ?? 1,
         },
       },
@@ -167,7 +170,10 @@ export class MoviesService {
           omdbResponse?.data?.Rated) ??
         'N/A',
       trailerKey: findTrailerKey(tmdbResponse.data.videos),
-      genres: tmdbResponse.data.genres.map((genre) => genre.name),
+      genres: tmdbResponse.data.genres.map((genre) => ({
+        ...genre,
+        emoji: getGenreEmoji(genre.id),
+      })),
       ratings: [
         // omdb
         ...omdbRatings.map((rating) => ({
@@ -228,7 +234,12 @@ export class MoviesService {
           api_key: this.TMDB_API_KEY,
           include_adult: false,
           sort_by: 'vote_count.desc',
-          with_people: query.personId,
+          ...(query.genres && {
+            with_genres: query.genres.replaceAll(',', '|'),
+          }),
+          ...(query.personId && {
+            with_people: query.personId,
+          }),
           page: query.page ?? 1,
         },
       },
