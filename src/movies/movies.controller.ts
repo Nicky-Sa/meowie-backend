@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  Param,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { QueryParams } from './models/query';
 import {
@@ -14,6 +21,7 @@ export class MoviesController {
   constructor(private readonly moviesService: MoviesService) {}
 
   @Get('purified-ids')
+  @Header('Cache-Control', 'public, max-age=3600')
   async getPurifiedMovieIds(
     @Query() query: QueryParams,
   ): Promise<PurifiedMovieIdsResDto> {
@@ -21,11 +29,13 @@ export class MoviesController {
   }
 
   @Get('/info/:id')
+  @Header('Cache-Control', 'public, max-age=3600')
   async getMovieInfo(@Param('id') id: number): Promise<MovieInfoResDto> {
     return this.moviesService.getMovieInfo(id);
   }
 
   @Get('/poster')
+  @Header('Cache-Control', 'public, max-age=3600')
   getPostersInBulk(@Query() query: QueryParams): Promise<MoviePosterResDto> {
     return this.moviesService.getMoviesPoster(query);
   }

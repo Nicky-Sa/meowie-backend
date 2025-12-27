@@ -1,7 +1,0 @@
-###
-POST http://localhost:5005/auth/request-otp
-Content-Type: application/json
-
-{
-  "email": "maa.hatam@gmail.com"
-}
