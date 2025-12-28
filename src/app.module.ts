@@ -14,6 +14,7 @@ import { getDataSourceOptions } from './database/database.config';
 import { ConstantsModule } from './constants/constants.module';
 import { PersonModule } from './person/person.module';
 import { SearchModule } from './search/search.module';
+import { MovieStatesModule } from './movie-states/movie-states.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SearchModule } from './search/search.module';
     ConstantsModule,
     PersonModule,
     SearchModule,
+    MovieStatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
