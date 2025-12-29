@@ -7,7 +7,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
-import { QueryParams } from './models/query';
+import { QueryParams } from './models/query.model';
 import {
   PurifiedMovieIdsResDto,
   MovieInfoResDto,

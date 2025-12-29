@@ -4,7 +4,7 @@ import { TMDB_Person } from '../models/thirdparty/tmdb';
 import { EnvService } from '../env/env.service';
 import { TMDB_BASE_URL } from '../utils/constants';
 import { PersonResDto } from './dto/person.dto';
-import { getImage } from '../movies/models/image';
+import { getImage } from '../movies/models/image.model';
 
 @Injectable()
 export class PersonService {

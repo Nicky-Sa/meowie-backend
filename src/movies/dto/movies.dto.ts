@@ -1,24 +1,33 @@
-import { AllRatings } from '../models/ratings';
-import { PosterProps } from '../models/image';
-import { Credits, MovieDetails, MoviePosterInfo } from '../models/movie-info';
+import { PosterProps } from '../models/image.model';
+import { Credits, MoviePosterInfo } from '../models/movie-info.model';
+import { Genre } from '../../constants/items/genres.constant';
+import { RatingEntry } from '../models/ratings.model';
 
-export type MovieInfoResDto = MovieDetails &
-  AllRatings & {
-    posterProps: PosterProps;
-  } & {
-    credits: Credits;
-  };
+// Combines MovieDetails and AllRatings into one parent class
+export class MovieInfoResDto {
+  title: string;
+  publishYear: string;
+  duration: string;
+  certification: string;
+  trailerKey: string;
+  posterPath: string;
+  overview: string;
+  genres: Genre[];
+  posterProps: PosterProps;
+  credits: Credits;
+  ratings: RatingEntry[];
+}
 
-export type PurifiedMovieIdsResDto = {
+export class PurifiedMovieIdsResDto {
   page: number;
   results: number[];
   total_pages: number;
   total_results: number;
-};
+}
 
-export type MoviePosterResDto = {
+export class MoviePosterResDto {
   page: number;
   results: MoviePosterInfo[];
   total_pages: number;
   total_results: number;
-};
+}

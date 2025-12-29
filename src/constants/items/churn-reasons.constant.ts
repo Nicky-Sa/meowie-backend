@@ -1,7 +1,7 @@
-export type ChurnReason = {
+export class ChurnReason {
   id: string;
   label: string;
-};
+}
 
 export const CHURN_REASONS: ChurnReason[] = [
   {

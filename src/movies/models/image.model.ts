@@ -4,10 +4,10 @@ import {
   TMDB_IMAGE_BASE_URL,
 } from '../../utils/constants';
 
-export type PosterProps = {
+export class PosterProps {
   primaryColorHex: string;
   blurhash: string;
-};
+}
 
 export const getImage = (
   path: string | null | undefined,

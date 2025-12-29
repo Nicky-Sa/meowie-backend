@@ -1,8 +1,8 @@
-export type Genre = {
+export class Genre {
   id: number;
   name: string;
   emoji: string;
-};
+}
 
 export const GENRES: Genre[] = [
   { id: 28, name: 'Action', emoji: '💥' },

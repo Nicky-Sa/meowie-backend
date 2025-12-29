@@ -1,25 +1,25 @@
 import { Genre } from '../../constants/items/genres.constant';
 
-export type SearchResultPerson = {
+export class SearchResultPerson {
   id: number;
   name: string;
   mediaType: 'person';
   knownForDepartment: string;
   profilePath: string;
-};
+}
 
-export type SearchResultMovie = {
+export class SearchResultMovie {
   id: number;
   title: string;
   posterPath: string;
   mediaType: 'movie';
   genres: string[];
   releaseYear: string;
-};
+}
 
-export type SearchResultGenre = Genre & {
+export class SearchResultGenre extends Genre {
   mediaType: 'genre';
-};
+}
 
 export type MultiSearchResults =
   | SearchResultPerson

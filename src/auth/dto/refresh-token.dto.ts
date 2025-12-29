@@ -1,11 +1,13 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class RefreshTokenReqDto {
   @IsNotEmpty()
+  @IsString()
   refreshToken: string;
 }
 
-export type RefreshTokenResDto = {
+export class RefreshTokenResDto {
   accessToken: string;
+
   refreshToken: string;
-};
+}

@@ -1,3 +1,3 @@
-export type LogoutResDto = {
+export class LogoutResDto {
   successful: boolean;
-};
+}

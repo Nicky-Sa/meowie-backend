@@ -1,6 +1,6 @@
 import { Genre } from '../../constants/items/genres.constant';
 
-export type MovieDetails = {
+export class MovieDetails {
   title: string;
   publishYear: string;
   duration: string;
@@ -9,22 +9,22 @@ export type MovieDetails = {
   posterPath: string;
   overview: string;
   genres: Genre[];
-};
+}
 
-export type CastInfo = {
+export class CastInfo {
   id: number;
   name: string;
   character: string;
   profilePath: string;
-};
+}
 
-export type Credits = {
+export class Credits {
   casts: CastInfo[];
   director: CastInfo;
-};
+}
 
-export type MoviePosterInfo = {
+export class MoviePosterInfo {
   id: number;
   posterPath: string;
   blurhash: string;
-};
+}

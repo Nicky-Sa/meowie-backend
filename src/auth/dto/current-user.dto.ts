@@ -1,5 +1,5 @@
 import { User } from '../../users/entities/users.entity';
 
-export type CurrentUserResDto = {
+export class CurrentUserResDto {
   user: User | null;
-};
+}

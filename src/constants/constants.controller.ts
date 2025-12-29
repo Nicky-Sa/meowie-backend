@@ -9,11 +9,11 @@ export class ConstantsController {
 
   @Get('churn-reasons')
   getChurnReasons(): ChurnReasonsResDto {
-    return CHURN_REASONS;
+    return { reasons: CHURN_REASONS };
   }
 
   @Get('genres')
   getGenres(): GenresResDto {
-    return GENRES;
+    return { genres: GENRES };
   }
 }

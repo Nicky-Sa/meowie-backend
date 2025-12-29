@@ -25,7 +25,10 @@ import {
 import { OptionalAuthGuard } from './guards/optional-auth-guard';
 import { CurrentUserResDto } from './dto/current-user.dto';
 import { LogoutResDto } from './dto/logout.dto';
-import { DeleteAccountReqDto } from './dto/delete-account.dto';
+import {
+  DeleteAccountReqDto,
+  DeleteAccountResDto,
+} from './dto/delete-account.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -85,7 +88,7 @@ export class AuthController {
   async deleteAccount(
     @Req() req: AuthenticatedRequest,
     @Body() dto: DeleteAccountReqDto,
-  ): Promise<LogoutResDto> {
+  ): Promise<DeleteAccountResDto> {
     const userId = req.user.id;
     const successful = await this.authService.deleteAccount(userId, dto);
     return { successful };

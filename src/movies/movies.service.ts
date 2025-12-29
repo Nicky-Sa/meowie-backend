@@ -5,7 +5,7 @@ import {
   CastInfo,
   Credits,
   MoviePosterInfo,
-} from 'src/movies/models/movie-info';
+} from 'src/movies/models/movie-info.model';
 import {
   TMDB_MovieCredits,
   TMDB_MovieDetail,
@@ -15,9 +15,9 @@ import {
 } from 'src/models/thirdparty/tmdb';
 import { OMDB_Info, OMDB_Source } from 'src/models/thirdparty/omdb';
 import { findTrailerKey, formatDuration } from 'src/movies/utils';
-import { QueryParams } from './models/query';
+import { QueryParams } from './models/query.model';
 import { Vibrant } from 'node-vibrant/node';
-import { getImage, PosterProps } from './models/image';
+import { getImage, PosterProps } from './models/image.model';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
 import {
@@ -32,7 +32,7 @@ import {
 } from '../utils/constants';
 import pLimit from 'p-limit';
 import { extractYearFromDate } from '../utils/functions/dates';
-import { getGenreEmoji } from './models/genres';
+import { getGenreEmoji } from './models/genres.model';
 
 @Injectable()
 export class MoviesService {

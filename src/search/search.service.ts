@@ -7,9 +7,10 @@ import {
 import { TMDB_BASE_URL } from '../utils/constants';
 import { EnvService } from '../env/env.service';
 import { MultiSearchResDto } from './dto/search.dto';
-import { getGenreName, searchGenres } from '../movies/models/genres';
-import { getImage } from '../movies/models/image';
+import { getGenreName, searchGenres } from '../movies/models/genres.model';
+import { getImage } from '../movies/models/image.model';
 import { extractYearFromDate } from '../utils/functions/dates';
+import { MultiSearchResults } from './models/search-results.model';
 
 @Injectable()
 export class SearchService {
@@ -21,7 +22,7 @@ export class SearchService {
 
   async multiSearch(query: string): Promise<MultiSearchResDto> {
     if (!query) {
-      return [];
+      return { results: [] };
     }
     const response = await axios.get<TMDB_MultiSearch>(
       `${TMDB_BASE_URL}/3/search/multi`,
@@ -32,7 +33,8 @@ export class SearchService {
         },
       },
     );
-    const data: MultiSearchResDto = response.data.results
+
+    const results: MultiSearchResults[] = response.data.results
       .filter(
         (result) =>
           result.media_type === 'person' || result.media_type === 'movie',
@@ -64,7 +66,7 @@ export class SearchService {
     const matchingGenres = searchGenres(query);
 
     if (matchingGenres.length > 0) {
-      data.push(
+      results.push(
         ...matchingGenres.map((genre) => ({
           mediaType: 'genre' as const,
           ...genre,
@@ -72,7 +74,7 @@ export class SearchService {
       );
     }
 
-    return data;
+    return { results };
   }
 
   private isResultValid(result: TMDB_MultiSearchDetail): boolean {

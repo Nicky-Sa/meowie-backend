@@ -1,15 +1,18 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class VerifyOtpReqDto {
   @IsEmail()
   email: string;
 
   @IsNotEmpty()
+  @IsString()
   otp: string;
 }
 
-export type VerifyOtpResDto = {
+export class VerifyOtpResDto {
   isNewUser: boolean;
+
   accessToken: string;
+
   refreshToken: string;
-};
+}

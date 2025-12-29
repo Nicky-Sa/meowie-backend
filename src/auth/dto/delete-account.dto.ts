@@ -14,6 +14,6 @@ export class DeleteAccountReqDto {
   churnReasonId: ChurnReasonId;
 }
 
-export type DeleteAccountResDto = {
+export class DeleteAccountResDto {
   successful: boolean;
-};
+}

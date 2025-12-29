@@ -1,3 +1,3 @@
-export type MovieStatesResDto = {
+export class MovieStatesResDto {
   bookmarked: boolean;
-};
+}

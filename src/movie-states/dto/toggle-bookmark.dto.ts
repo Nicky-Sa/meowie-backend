@@ -1,7 +1,11 @@
-export type ToggleBookmarkReqDto = {
-  id: number;
-};
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export type ToggleBookmarkResDto = {
+export class ToggleBookmarkReqDto {
+  @IsNotEmpty()
+  @IsNumber()
+  id: number;
+}
+
+export class ToggleBookmarkResDto {
   bookmarked: boolean;
-};
+}

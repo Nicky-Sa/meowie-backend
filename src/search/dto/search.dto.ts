@@ -1,7 +1,11 @@
-import { MultiSearchResults } from '../models/search-results';
+import { MultiSearchResults } from '../models/search-results.model';
+import { IsString } from 'class-validator';
 
-export type SearchReqQueryDto = {
+export class SearchReqQueryDto {
+  @IsString()
   query: string;
-};
+}
 
-export type MultiSearchResDto = MultiSearchResults[];
+export class MultiSearchResDto {
+  results: MultiSearchResults[];
+}
