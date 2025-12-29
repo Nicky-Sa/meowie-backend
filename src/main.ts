@@ -8,6 +8,8 @@ import { ResponseInterceptor } from './utils/response.interceptor';
 import { GlobalExceptionFilter } from './utils/global-exception.filter';
 import { LoggingInterceptor } from './utils/logging.interceptor';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import pkg from '../package.json';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,12 +19,22 @@ async function bootstrap() {
   app.useGlobalFilters(new SentryGlobalFilter());
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
+  const env = app.get(EnvService);
+  // Setup Swagger
+  if (env.get('BUILD_ENV') !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle(`Meowie API - ${env.get('BUILD_ENV')}`)
+      .setVersion(pkg.version)
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+  }
+
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  const env = app.get(EnvService);
   await app.listen(env.get('PORT'));
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }
