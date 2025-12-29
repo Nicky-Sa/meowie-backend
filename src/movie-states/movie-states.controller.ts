@@ -1,23 +1,15 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import { MovieStatesService } from './movie-states.service';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthenticatedRequest } from '../auth/types/authenticated-request.type';
 import {
   ToggleBookmarkReqDto,
   ToggleBookmarkResDto,
 } from './dto/toggle-bookmark.dto';
 import { MovieStatesResDto } from './dto/movie-states.dto';
+import { AccessGuard } from '../auth/guards/access.guard';
 
+@AccessGuard()
 @Controller('movie-states')
-@UseGuards(AuthGuard('jwt-access'))
 export class MovieStatesController {
   constructor(private readonly movieStatesService: MovieStatesService) {}
 

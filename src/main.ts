@@ -25,6 +25,24 @@ async function bootstrap() {
     const config = new DocumentBuilder()
       .setTitle(`Meowie API - ${env.get('BUILD_ENV')}`)
       .setVersion(pkg.version)
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter your Access Token here.',
+        },
+        'jwt-access-docs', // This name here is important for matching in the controller
+      )
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter your Refresh Token here.',
+        },
+        'jwt-refresh-docs',
+      )
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);

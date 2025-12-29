@@ -7,13 +7,11 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RequestOtpReqDto } from './dto/request-otp.dto';
 import { VerifyOtpReqDto, VerifyOtpResDto } from './dto/verify-otp.dto';
 import { Response } from 'express';
-import { AuthGuard } from '@nestjs/passport';
 import {
   AuthenticatedRequest,
   OptionallyAuthenticatedRequest,
@@ -22,13 +20,15 @@ import {
   RefreshTokenReqDto,
   RefreshTokenResDto,
 } from './dto/refresh-token.dto';
-import { OptionalAuthGuard } from './guards/optional-auth-guard';
+import { OptionalAccessGuard } from './guards/optional-access.guard';
 import { CurrentUserResDto } from './dto/current-user.dto';
 import { LogoutResDto } from './dto/logout.dto';
 import {
   DeleteAccountReqDto,
   DeleteAccountResDto,
 } from './dto/delete-account.dto';
+import { RefreshGuard } from './guards/refresh.guard';
+import { AccessGuard } from './guards/access.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -50,7 +50,7 @@ export class AuthController {
     return data;
   }
 
-  @UseGuards(AuthGuard('jwt-refresh'))
+  @RefreshGuard()
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
   async refreshToken(
@@ -62,7 +62,7 @@ export class AuthController {
     return this.authService.refreshToken(userId, dto.refreshToken);
   }
 
-  @UseGuards(OptionalAuthGuard)
+  @OptionalAccessGuard()
   @Get('current-user')
   @HttpCode(HttpStatus.OK)
   async isAuthenticated(
@@ -73,7 +73,7 @@ export class AuthController {
     return { user };
   }
 
-  @UseGuards(AuthGuard('jwt-access'))
+  @AccessGuard()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: AuthenticatedRequest): Promise<LogoutResDto> {
@@ -82,7 +82,7 @@ export class AuthController {
     return { successful };
   }
 
-  @UseGuards(AuthGuard('jwt-access'))
+  @AccessGuard()
   @Post('delete-account')
   @HttpCode(HttpStatus.OK)
   async deleteAccount(

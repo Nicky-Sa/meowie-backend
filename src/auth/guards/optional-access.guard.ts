@@ -1,8 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  applyDecorators,
+  Injectable,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Injectable()
-export class OptionalAuthGuard extends AuthGuard('jwt-access') {
+class OptionalAuthGuard extends PassportAuthGuard('jwt-access') {
   handleRequest<TUser>(
     err: any,
     user: TUser,
@@ -21,3 +27,10 @@ export class OptionalAuthGuard extends AuthGuard('jwt-access') {
     return user;
   }
 }
+
+export const OptionalAccessGuard = () => {
+  return applyDecorators(
+    UseGuards(OptionalAuthGuard),
+    ApiBearerAuth('jwt-access-docs'),
+  );
+};
