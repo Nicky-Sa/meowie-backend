@@ -46,6 +46,12 @@ export const envConfig = z.object({
     message:
       'JWT_REFRESH_SECRET is required and must be at least 100 characters long',
   }),
+  JWT_REFRESH_EXPIRY: z
+    .string('JWT_REFRESH_EXPIRY is required')
+    .regex(
+      /^\d+[smhdwy]$/,
+      "Invalid JWT_REFRESH_EXPIRY format. Use '1h', '2d', '365d', etc.",
+    ),
 });
 
 export type Env = z.infer<typeof envConfig>;

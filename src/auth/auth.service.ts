@@ -14,6 +14,7 @@ import { DataSource } from 'typeorm';
 import { DeleteAccountReqDto } from './dto/delete-account.dto';
 import { User } from '../users/entities/users.entity';
 import { ChurnLog } from '../users/entities/churn-log.entity';
+import type { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -84,7 +85,7 @@ export class AuthService {
       await this.generateTokens(user.id);
 
     // Rotating Refresh Tokens: Store the hash of the *new* refresh token with the new expiry.
-    // As long as the user opens the app (triggers a refresh) at least once every 7 days,
+    // As long as the user opens the app (triggers a refresh) at least once every JWT_REFRESH_EXPIRY,
     // they will stay logged in forever!
     await this.updateRefreshTokenInDB(user.id, newRefreshToken);
 
@@ -108,7 +109,7 @@ export class AuthService {
         },
         {
           secret: this.env.get('JWT_REFRESH_SECRET'),
-          expiresIn: '7d',
+          expiresIn: this.env.get('JWT_REFRESH_EXPIRY') as StringValue,
         },
       );
     return { accessToken, refreshToken };
