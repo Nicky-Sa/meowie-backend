@@ -14,13 +14,13 @@ class OptionalAuthGuard extends PassportAuthGuard('jwt-access') {
     user: TUser,
     info?: { message?: string },
   ): TUser | { id: null } {
+    // If the token is provided, but it's invalid, return 401 to trigger refresh
     const tokenProvided =
       info && info.message && info.message !== 'No auth token';
     if (tokenProvided) {
       throw new UnauthorizedException('Unauthorized');
     }
-    // If there is an error (e.g., invalid token) or no user because no token was provided,
-    // return null instead of throwing 401.
+    // if no token is provided, return null (guest user)
     if (err || !user) {
       return { id: null };
     }

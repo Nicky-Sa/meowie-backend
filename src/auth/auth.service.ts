@@ -83,7 +83,9 @@ export class AuthService {
     const { accessToken, refreshToken: newRefreshToken } =
       await this.generateTokens(user.id);
 
-    // Store the hash of the *new* refresh token
+    // Rotating Refresh Tokens: Store the hash of the *new* refresh token with the new expiry.
+    // As long as the user opens the app (triggers a refresh) at least once every 7 days,
+    // they will stay logged in forever!
     await this.updateRefreshTokenInDB(user.id, newRefreshToken);
 
     return { accessToken, refreshToken: newRefreshToken };
