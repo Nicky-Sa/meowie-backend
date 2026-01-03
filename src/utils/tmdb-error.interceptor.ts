@@ -9,6 +9,7 @@ import {
   ServiceUnavailableException,
   Logger,
   InternalServerErrorException,
+  HttpException,
 } from '@nestjs/common';
 import { Observable, catchError, throwError } from 'rxjs';
 import { isAxiosError } from 'axios';
@@ -16,7 +17,7 @@ import { isAxiosError } from 'axios';
 type TmdbErrorResponse = {
   status_message?: string;
   status_code?: number;
-  errors?: string[]; // Sometimes TMDB sends an array of strings
+  errors?: string[];
 };
 
 @Injectable()
@@ -26,6 +27,12 @@ export class TMDBErrorInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((error) => {
+        // 1. Pass through standard NestJS exceptions (ValidationPipe, Guards, etc.)
+        if (error instanceof HttpException) {
+          return throwError(() => error);
+        }
+
+        // 2. Handle Axios (TMDB) specific errors
         if (isAxiosError(error) && error.response) {
           const status = error.response.status;
           const data = error.response.data as TmdbErrorResponse;
@@ -36,7 +43,7 @@ export class TMDBErrorInterceptor implements NestInterceptor {
             (data?.errors ? data.errors.join(', ') : null) ||
             error.message;
 
-          const logMessage = `TMDB Error [${status}]": ${tmdbMessage}`;
+          const logMessage = `TMDB Error [${status}]: ${tmdbMessage}`;
           console.log({ error, status });
 
           // 1. Handle 404 (Not Found)
@@ -82,7 +89,7 @@ export class TMDBErrorInterceptor implements NestInterceptor {
           // Log other weird errors (500s from TMDB)
           this.logger.error(logMessage);
         } else {
-          // Network errors (no response received)
+          // Handle Network errors or unknown non-HTTP errors
           this.logger.error(`Network Error calling TMDB: ${error}`);
         }
 
