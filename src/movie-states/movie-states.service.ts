@@ -49,6 +49,9 @@ export class MovieStatesService {
 
     const [bookmarks, total] = await this.bookmarkRepository.findAndCount({
       where: { userId },
+      order: {
+        createdAt: 'DESC',
+      },
       take: LIMIT,
       skip,
     });
