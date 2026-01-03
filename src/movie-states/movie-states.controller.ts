@@ -23,7 +23,7 @@ export class MovieStatesController {
   ) {}
 
   @OptionalAccessGuard()
-  @Get('posters')
+  @Get('poster')
   async getPostersInBulk(
     @Req() req: OptionallyAuthenticatedRequest,
     @Query() query: PostersQueryDto,
