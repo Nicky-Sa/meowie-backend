@@ -7,11 +7,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
-import { QueryParams } from './models/query.model';
 import {
   PurifiedMovieIdsResDto,
   MovieInfoResDto,
   MoviePosterResDto,
+  QueryParamsDto,
 } from './dto/movies.dto';
 import { TMDBErrorInterceptor } from '../utils/tmdb-error.interceptor';
 
@@ -23,7 +23,7 @@ export class MoviesController {
   @Get('purified-ids')
   @Header('Cache-Control', 'public, max-age=3600')
   async getPurifiedMovieIds(
-    @Query() query: QueryParams,
+    @Query() query: QueryParamsDto,
   ): Promise<PurifiedMovieIdsResDto> {
     return this.moviesService.getPurifiedMovieIds(query);
   }
@@ -37,7 +37,7 @@ export class MoviesController {
   @Get('/poster')
   @Header('Cache-Control', 'public, max-age=3600')
   async getPostersInBulk(
-    @Query() query: QueryParams,
+    @Query() query: QueryParamsDto,
   ): Promise<MoviePosterResDto> {
     const movieIds = await this.moviesService.getMovieIds(query);
     return this.moviesService.getMoviesPoster(movieIds);

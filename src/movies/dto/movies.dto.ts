@@ -3,7 +3,8 @@ import { Credits, MoviePosterInfo } from '../models/movie-info.model';
 import { Genre } from '../../constants/items/genres.constant';
 import { RatingEntry } from '../models/ratings.model';
 import { PaginatedResponse } from '../../models/paginated-results.model';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType } from '@nestjs/swagger';
+import { Browse, Filters, Page, Sort } from '../models/query.model';
 
 // Combines MovieDetails and AllRatings into one parent class
 export class MovieInfoResDto {
@@ -29,3 +30,8 @@ export class MoviePosterResDto extends PaginatedResponse<MoviePosterInfo> {
   @ApiProperty({ type: [MoviePosterInfo] })
   declare results: MoviePosterInfo[];
 }
+
+export class QueryParamsDto extends IntersectionType(
+  Browse,
+  IntersectionType(Filters, IntersectionType(Page, Sort)),
+) {}

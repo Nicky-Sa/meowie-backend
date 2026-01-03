@@ -15,7 +15,6 @@ import {
 } from 'src/models/thirdparty/tmdb';
 import { OMDB_Info, OMDB_Source } from 'src/models/thirdparty/omdb';
 import { findTrailerKey, formatDuration } from 'src/movies/utils';
-import { QueryParams } from './models/query.model';
 import { Vibrant } from 'node-vibrant/node';
 import { getImage, PosterProps } from './models/image.model';
 import sharp from 'sharp';
@@ -24,6 +23,7 @@ import {
   PurifiedMovieIdsResDto,
   MovieInfoResDto,
   MoviePosterResDto,
+  QueryParamsDto,
 } from './dto/movies.dto';
 import {
   OMDB_BASE_URL,
@@ -33,6 +33,7 @@ import {
 import pLimit from 'p-limit';
 import { extractYearFromDate } from '../utils/functions/dates';
 import { getGenreEmoji } from './models/genres.model';
+import { SortOption } from './models/query.model';
 
 @Injectable()
 export class MoviesService {
@@ -52,10 +53,11 @@ export class MoviesService {
   }
 
   async getPurifiedMovieIds(
-    query: Pick<QueryParams, 'page' | 'sort'>,
+    query: Pick<QueryParamsDto, 'page' | 'sort'>,
   ): Promise<PurifiedMovieIdsResDto> {
     // Sort defaults to popularity.desc by TMDB
-    const sort = query.sort === 'random' ? 'vote_count.desc' : query.sort;
+    const sort =
+      query.sort === SortOption.RANDOM ? 'vote_count.desc' : query.sort;
 
     const response = await axios.get<TMDB_MoviesList>(
       `${TMDB_BASE_URL}/3/discover/movie`,
@@ -201,7 +203,7 @@ export class MoviesService {
     return { casts, director };
   }
 
-  async getMovieIds(query: QueryParams): Promise<PurifiedMovieIdsResDto> {
+  async getMovieIds(query: QueryParamsDto): Promise<PurifiedMovieIdsResDto> {
     const response = await axios.get<TMDB_MoviesList>(
       `${TMDB_BASE_URL}/3/discover/movie`,
       {

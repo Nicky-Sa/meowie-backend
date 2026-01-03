@@ -1,31 +1,50 @@
-export const filterKeys = ['genres', 'languages', 'decade', 'tmdbRatings'];
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
-type FilterKeys = (typeof filterKeys)[number];
+export class Browse {
+  @IsOptional()
+  @IsString()
+  personId?: string;
 
-export type Filters = {
-  [key in FilterKeys[number]]?: string;
-};
+  // You can easily add more properties here later
+  // @IsOptional()
+  // companyId?: string;
+}
 
-type Page = {
-  page: string;
-};
+export class Filters {
+  @IsOptional()
+  @IsString()
+  genres?: string;
 
-type Sort = 'popularity.desc' | 'primary_release_date.desc' | 'random';
+  @IsOptional()
+  @IsString()
+  languages?: string;
 
-// Browse include items that don't have an individual modifier in the filters page,
-// but can still be used to filter results
-type Browse = {
-  personId: string;
-};
+  @IsOptional()
+  @IsString()
+  decade?: string;
 
-// Search params = anything that can be used to filter results.
-export type SearchParams = Filters & Browse;
+  @IsOptional()
+  @IsString()
+  tmdbRatings?: string;
+}
 
-export type QueryParams = SearchParams & Page & { sort: Sort };
+export class Page {
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page: number = 1;
+}
 
-export const hasFilters = (query: QueryParams): boolean => {
-  const queryKeys = Object.keys(query);
-  return queryKeys.some((key) => {
-    return filterKeys.includes(key);
-  });
-};
+export enum SortOption {
+  POPULARITY = 'popularity.desc',
+  RELEASE_DATE = 'primary_release_date.desc',
+  RANDOM = 'random',
+}
+
+export class Sort {
+  @IsOptional()
+  @IsEnum(SortOption)
+  sort: SortOption = SortOption.POPULARITY;
+}
