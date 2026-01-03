@@ -243,8 +243,10 @@ export class MoviesService {
     };
   }
 
-  async getMoviesPoster(query: QueryParams): Promise<MoviePosterResDto> {
-    const { results: ids, ...rest } = await this.getMovieIds(query);
+  async getMoviesPoster(
+    movieIds: PurifiedMovieIdsResDto,
+  ): Promise<MoviePosterResDto> {
+    const { results: ids, ...rest } = movieIds;
     // Avoid bombarding TMDB by limiting the number of concurrent requests
     const limit = pLimit(5);
 

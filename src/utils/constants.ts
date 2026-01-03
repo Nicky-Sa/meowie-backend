@@ -5,3 +5,4 @@ export const POSTER_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/movie-poster-fallback.png';
 export const PERSON_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/person-fallback.png';
+export const LIMIT = 20;

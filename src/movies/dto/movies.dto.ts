@@ -2,6 +2,8 @@ import { PosterProps } from '../models/image.model';
 import { Credits, MoviePosterInfo } from '../models/movie-info.model';
 import { Genre } from '../../constants/items/genres.constant';
 import { RatingEntry } from '../models/ratings.model';
+import { PaginatedResponse } from '../../models/paginated-results.model';
+import { ApiProperty } from '@nestjs/swagger';
 
 // Combines MovieDetails and AllRatings into one parent class
 export class MovieInfoResDto {
@@ -18,16 +20,12 @@ export class MovieInfoResDto {
   ratings: RatingEntry[];
 }
 
-export class PurifiedMovieIdsResDto {
-  page: number;
-  results: number[];
-  total_pages: number;
-  total_results: number;
+export class PurifiedMovieIdsResDto extends PaginatedResponse<number> {
+  @ApiProperty({ type: [Number] })
+  declare results: number[];
 }
 
-export class MoviePosterResDto {
-  page: number;
-  results: MoviePosterInfo[];
-  total_pages: number;
-  total_results: number;
+export class MoviePosterResDto extends PaginatedResponse<MoviePosterInfo> {
+  @ApiProperty({ type: [MoviePosterInfo] })
+  declare results: MoviePosterInfo[];
 }

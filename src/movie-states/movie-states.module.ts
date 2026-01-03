@@ -3,9 +3,10 @@ import { MovieStatesService } from './movie-states.service';
 import { MovieStatesController } from './movie-states.controller';
 import { Bookmark } from './entities/bookmark.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MoviesModule } from '../movies/movies.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Bookmark])],
+  imports: [TypeOrmModule.forFeature([Bookmark]), MoviesModule],
   controllers: [MovieStatesController],
   providers: [MovieStatesService],
 })

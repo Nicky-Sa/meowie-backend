@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bookmark } from './entities/bookmark.entity';
 import { Repository } from 'typeorm';
+import { LIMIT } from '../utils/constants';
+import { PostersQueryDto } from './dto/posters.dto';
 
 @Injectable()
 export class MovieStatesService {
@@ -38,5 +40,25 @@ export class MovieStatesService {
 
     await this.bookmarkRepository.save(newBookmark);
     return { bookmarked: true };
+  }
+
+  async getBookmarkedMovieIds(query: PostersQueryDto, userId: number) {
+    const page = query.page;
+
+    const skip = (page - 1) * LIMIT;
+
+    const [bookmarks, total] = await this.bookmarkRepository.findAndCount({
+      where: { userId },
+      take: LIMIT,
+      skip,
+    });
+    const results = bookmarks.map((bookmark) => bookmark.tmdbId);
+
+    return {
+      results,
+      page,
+      total_pages: Math.ceil(total / LIMIT),
+      total_results: total,
+    };
   }
 }

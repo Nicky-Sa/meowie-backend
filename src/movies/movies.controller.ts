@@ -36,7 +36,10 @@ export class MoviesController {
 
   @Get('/poster')
   @Header('Cache-Control', 'public, max-age=3600')
-  getPostersInBulk(@Query() query: QueryParams): Promise<MoviePosterResDto> {
-    return this.moviesService.getMoviesPoster(query);
+  async getPostersInBulk(
+    @Query() query: QueryParams,
+  ): Promise<MoviePosterResDto> {
+    const movieIds = await this.moviesService.getMovieIds(query);
+    return this.moviesService.getMoviesPoster(movieIds);
   }
 }
