@@ -113,8 +113,6 @@ jobs:
               JWT_SECRET=${{ secrets.JWT_SECRET }}, \
               JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}, \
               JWT_REFRESH_EXPIRY=${{ vars.JWT_REFRESH_EXPIRY }}, \
-          
-              AWS_REGION=${{ vars.AWS_REGION }}, \
 
             }"
           

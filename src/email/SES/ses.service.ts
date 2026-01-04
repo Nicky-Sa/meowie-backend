@@ -11,10 +11,10 @@ export class SesService extends EmailService {
   constructor(private readonly env: EnvService) {
     super();
     this.sesClient = new SESClient({
-      region: this.env.get('AWS_REGION'),
-      // For local development, we need to provide credentials,
+      // For local development, we need to provide credentials and region,
       // but for production, it will use IAM role attached to the runner
       ...(this.env.get('BUILD_ENV') === 'development' && {
+        region: this.env.get('AWS_REGION'),
         credentials: {
           accessKeyId: this.env.get('AWS_ACCESS_KEY_ID'),
           secretAccessKey: this.env.get('AWS_SECRET_ACCESS_KEY'),
