@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { User } from '@sentry/nestjs';
 
 export class VerifyOtpReqDto {
   @IsEmail()
@@ -15,4 +16,6 @@ export class VerifyOtpResDto {
   accessToken: string;
 
   refreshToken: string;
+
+  user: User;
 }

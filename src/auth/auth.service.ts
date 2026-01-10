@@ -46,7 +46,7 @@ export class AuthService {
       const { accessToken, refreshToken } = await this.generateTokens(user.id);
       await this.updateRefreshTokenInDB(user.id, refreshToken);
 
-      return { isNewUser, accessToken, refreshToken };
+      return { isNewUser, accessToken, refreshToken, user };
     }
     throw new ForbiddenException('Invalid OTP');
   }
