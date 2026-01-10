@@ -178,7 +178,12 @@ export class MoviesService {
         },
       },
     );
-    const casts: CastInfo[] = response.data.cast
+    // 1. Deduplicate first using a Map (Key = ID, Value = Object)
+    const uniqueCastMap = new Map(
+      response.data.cast.map((cast) => [cast.id, cast]),
+    );
+    // 2. Convert back to array and chain your logic
+    const casts: CastInfo[] = [...uniqueCastMap.values()]
       .filter((cast) => cast.known_for_department === 'Acting')
       .sort((a, b) => a.order - b.order)
       .slice(0, 5)
