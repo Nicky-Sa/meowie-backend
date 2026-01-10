@@ -9,9 +9,9 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/users.entity';
 
-@Entity('bookmarks')
-@Unique(['userId', 'tmdbId']) // Ensures a user can only bookmark a movie once
-export class Bookmark {
+@Entity('saved')
+@Unique(['userId', 'tmdbId']) // Ensures a user can only save a movie once
+export class Saved {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -26,6 +26,6 @@ export class Bookmark {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.bookmarks, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.saved, { onDelete: 'CASCADE' })
   user: User;
 }

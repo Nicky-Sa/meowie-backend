@@ -1,3 +1,3 @@
 export class MovieStatesResDto {
-  bookmarked: boolean;
+  saved: boolean;
 }

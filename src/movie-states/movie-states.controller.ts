@@ -4,10 +4,7 @@ import {
   AuthenticatedRequest,
   OptionallyAuthenticatedRequest,
 } from '../auth/types/authenticated-request.type';
-import {
-  ToggleBookmarkReqDto,
-  ToggleBookmarkResDto,
-} from './dto/toggle-bookmark.dto';
+import { ToggleSaveReqDto, ToggleSaveResDto } from './dto/toggle-save.dto';
 import { MovieStatesResDto } from './dto/movie-states.dto';
 import { AccessGuard } from '../auth/guards/access.guard';
 import { OptionalAccessGuard } from '../auth/guards/optional-access.guard';
@@ -31,7 +28,7 @@ export class MovieStatesController {
     if (!req.user.id) {
       return { results: [], page: 1, total_pages: 1, total_results: 0 };
     }
-    const movieIds = await this.movieStatesService.getBookmarkedMovieIds(
+    const movieIds = await this.movieStatesService.getSavedMovieIds(
       query,
       req.user.id,
     );
@@ -45,17 +42,17 @@ export class MovieStatesController {
     @Param('id') id: number,
   ): Promise<MovieStatesResDto> {
     if (!req.user.id) {
-      return { bookmarked: false };
+      return { saved: false };
     }
     return this.movieStatesService.getMovieStates(req.user.id, id);
   }
 
   @AccessGuard()
-  @Post('bookmark')
-  toggleBookmark(
+  @Post('save')
+  toggleSave(
     @Req() req: AuthenticatedRequest,
-    @Body() dto: ToggleBookmarkReqDto,
-  ): Promise<ToggleBookmarkResDto> {
-    return this.movieStatesService.toggleBookmark(req.user.id, dto.id);
+    @Body() dto: ToggleSaveReqDto,
+  ): Promise<ToggleSaveResDto> {
+    return this.movieStatesService.toggleSave(req.user.id, dto.id);
   }
 }

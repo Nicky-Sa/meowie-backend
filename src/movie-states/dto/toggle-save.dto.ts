@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class ToggleBookmarkReqDto {
+export class ToggleSaveReqDto {
   @IsNotEmpty()
   @IsNumber()
   id: number;
 }
 
-export class ToggleBookmarkResDto {
-  bookmarked: boolean;
+export class ToggleSaveResDto {
+  saved: boolean;
 }

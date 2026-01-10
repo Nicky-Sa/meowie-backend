@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Bookmark } from './entities/bookmark.entity';
+import { Saved } from './entities/saved.entity';
 import { Repository } from 'typeorm';
 import { LIMIT } from '../utils/constants';
 import { PostersQueryDto } from './dto/posters.dto';
@@ -8,46 +8,46 @@ import { PostersQueryDto } from './dto/posters.dto';
 @Injectable()
 export class MovieStatesService {
   constructor(
-    @InjectRepository(Bookmark)
-    private bookmarkRepository: Repository<Bookmark>,
+    @InjectRepository(Saved)
+    private savedRepository: Repository<Saved>,
   ) {}
 
   async getMovieStates(userId: number, tmdbId: number) {
-    const bookmark = await this.bookmarkRepository.findOne({
+    const saved = await this.savedRepository.findOne({
       where: { userId, tmdbId },
     });
 
-    return { bookmarked: Boolean(bookmark) };
+    return { saved: Boolean(saved) };
   }
 
   /**
-   * Logic: If bookmark exists, delete it. If not, create it.
+   * Logic: If saved exists, delete it. If not, create it.
    */
-  async toggleBookmark(userId: number, tmdbId: number) {
-    const existing = await this.bookmarkRepository.findOne({
+  async toggleSave(userId: number, tmdbId: number) {
+    const existing = await this.savedRepository.findOne({
       where: { userId, tmdbId },
     });
 
     if (existing) {
-      await this.bookmarkRepository.remove(existing);
-      return { bookmarked: false };
+      await this.savedRepository.remove(existing);
+      return { saved: false };
     }
 
-    const newBookmark = this.bookmarkRepository.create({
+    const newItem = this.savedRepository.create({
       userId,
       tmdbId,
     });
 
-    await this.bookmarkRepository.save(newBookmark);
-    return { bookmarked: true };
+    await this.savedRepository.save(newItem);
+    return { saved: true };
   }
 
-  async getBookmarkedMovieIds(query: PostersQueryDto, userId: number) {
+  async getSavedMovieIds(query: PostersQueryDto, userId: number) {
     const page = query.page;
 
     const skip = (page - 1) * LIMIT;
 
-    const [bookmarks, total] = await this.bookmarkRepository.findAndCount({
+    const [saved, total] = await this.savedRepository.findAndCount({
       where: { userId },
       order: {
         createdAt: 'DESC',
@@ -55,7 +55,7 @@ export class MovieStatesService {
       take: LIMIT,
       skip,
     });
-    const results = bookmarks.map((bookmark) => bookmark.tmdbId);
+    const results = saved.map((item) => item.tmdbId);
 
     return {
       results,

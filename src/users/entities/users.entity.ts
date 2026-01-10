@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Bookmark } from '../../movie-states/entities/bookmark.entity';
+import { Saved } from '../../movie-states/entities/saved.entity';
 
 @Entity({
   name: 'users',
@@ -31,6 +31,6 @@ export class User {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
-  bookmarks: Bookmark[];
+  @OneToMany(() => Saved, (saved) => saved.user)
+  saved: Saved[];
 }

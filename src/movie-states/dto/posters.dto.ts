@@ -2,7 +2,7 @@ import { IsEnum, IsOptional, IsNumber, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum MovieStateKey {
-  BOOKMARKED = 'bookmarked',
+  SAVED = 'saved',
   SEEN = 'seen',
 }
 
