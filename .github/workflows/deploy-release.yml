@@ -1,4 +1,4 @@
-name: Deploy to AWS Lambda
+name: Deploy and Release
 
 on:
   push:
@@ -6,13 +6,19 @@ on:
       - preview
       - production
 
+# Global permissions (needed for creating releases/tags)
+permissions:
+  contents: write
+
 jobs:
+  # --- JOB 1: DEPLOY TO AWS ---
   deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     env:
       DOCKER_BUILDKIT: 1
       BUILD_ENV: ${{ github.ref_name }}
+      # Using run_number for Docker tag (e.g., preview-123)
       IMAGE_TAG: ${{ github.ref_name }}-${{ github.run_number }}
       ECR_BASE_URL: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
       # Construct the Function Name dynamically based on branch (meowie-production or meowie-preview)
@@ -60,7 +66,6 @@ jobs:
             --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
             -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
             .
-          
           docker push ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
 
       # --- DEPLOYMENT STEP ---
@@ -68,7 +73,6 @@ jobs:
       - name: Update Lambda Code
         run: |
           echo "Deploying new image to function: ${{ env.LAMBDA_FUNCTION_NAME }}..."
-          
           aws lambda update-function-code \
             --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
             --image-uri ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
@@ -88,33 +92,71 @@ jobs:
             --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
             --environment "Variables={ \
               TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}, \
-          
               SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}, \
-          
               PORT=${{ vars.PORT }}, \
               BUILD_ENV=${{ env.BUILD_ENV }}, \
-          
               DB_NAME=${{ secrets.DB_NAME }}, \
               DB_PORT=${{ secrets.DB_PORT }}, \
-          
               DB_APP_USER=${{ secrets.DB_APP_USER }}, \
               DB_APP_PASSWORD=${{ secrets.DB_APP_PASSWORD }}, \
               DB_HOST_POOLING=${{ secrets.DB_HOST_POOLING }}, \
-          
               DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}, \
               DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}, \
               DB_HOST_MIGRATOR=${{ secrets.DB_HOST_MIGRATOR }}, \
-          
               REDIS_ENDPOINT=${{ secrets.REDIS_ENDPOINT }}, \
-          
               SENDER_EMAIL=${{ vars.SENDER_EMAIL }}, \
-          
               JWT_SECRET=${{ secrets.JWT_SECRET }}, \
               JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}, \
               JWT_REFRESH_EXPIRY=${{ vars.JWT_REFRESH_EXPIRY }}, \
-
             }"
           
           # Wait again to ensure the config change is applied before finishing
           aws lambda wait function-updated \
             --function-name ${{ env.LAMBDA_FUNCTION_NAME }}
+
+  # --- JOB 2: RELEASE (Runs only after Deploy succeeds) ---
+  smart-release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      PREVIEW_BRANCH: preview
+      PRODUCTION_BRANCH: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0' # Required for calculating version history
+
+      # 1. Setup variables
+      - name: Set Release Config
+        id: config
+        run: |
+          if [[ "${{ github.ref_name }}" == "$PRODUCTION_BRANCH" ]]; then
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+            echo "SUFFIX=" >> $GITHUB_OUTPUT
+            echo "Environment: Production (Release)"
+          else
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+            echo "SUFFIX=beta" >> $GITHUB_OUTPUT
+            echo "Environment: Preview (Pre-release)"
+          fi
+
+      # 2. Calculate Tag
+      - name: Bump Version
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          tag_prefix: "v"
+          append_to_pre_release_tag: ${{ steps.config.outputs.SUFFIX }}
+
+      # 3. Create the Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ github.ref_name == env.PRODUCTION_BRANCH && 'Production' || 'Preview' }} Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          prerelease: ${{ steps.config.outputs.IS_PRERELEASE }}
+          draft: false
