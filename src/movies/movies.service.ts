@@ -190,7 +190,7 @@ export class MoviesService {
     // 2. Convert back to array and chain your logic
     const casts: CastInfo[] = [...uniqueCastMap.values()]
       .filter((cast) => cast.known_for_department === 'Acting')
-      .sort((a, b) => a.popularity - b.popularity)
+      .sort((a, b) => a.order - b.order)
       .slice(0, 5)
       .map((cast) => ({
         id: cast.id,

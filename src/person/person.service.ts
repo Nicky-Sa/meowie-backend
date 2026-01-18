@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { TMDB_Person } from '../models/thirdparty/tmdb';
+import { TMDB_MovieCredits, TMDB_Person } from '../models/thirdparty/tmdb';
 import { EnvService } from '../env/env.service';
 import { TMDB_BASE_URL } from '../utils/constants';
 import { PersonResDto } from './dto/person.dto';
@@ -33,6 +33,40 @@ export class PersonService {
       return data;
     } catch (error) {
       throw new Error(`Error fetching person info: ${error}`);
+    }
+  }
+
+  async getRoleInMovie(personId: number, movieId: number) {
+    try {
+      const response = await axios.get<TMDB_MovieCredits>(
+        `${TMDB_BASE_URL}/3/movie/${movieId}/credits`,
+        {
+          params: {
+            api_key: this.TMDB_API_KEY,
+          },
+        },
+      );
+      const credits = response.data;
+      const cast = credits.cast.find((cast) => cast.id === personId);
+      if (cast) {
+        return { role: `Performing as ${cast.character}` };
+      }
+      const crewJobs = credits.crew.filter((crew) => crew.id === personId);
+      if (crewJobs.length > 0) {
+        const knownForDepartment = crewJobs[0].known_for_department;
+        // first, try to find the role which matches what they are known for
+        const primaryRole = crewJobs.find(
+          (crew) => crew.department === knownForDepartment,
+        );
+        if (primaryRole) {
+          return { role: primaryRole.job };
+        }
+        // if we can't find a role that matches what they are known for, return the first role
+        return { role: crewJobs[0].job };
+      }
+      return { role: 'N/A' };
+    } catch {
+      return { role: 'N/A' };
     }
   }
 }
