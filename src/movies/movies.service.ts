@@ -1,6 +1,6 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { EnvService } from 'src/env/env.service';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   CastInfo,
   Credits,
@@ -13,7 +13,10 @@ import {
   TMDB_MovieInfo,
   TMDB_MoviesList,
 } from 'src/models/thirdparty/tmdb';
-import { OMDB_Info, OMDB_Source } from 'src/models/thirdparty/omdb';
+import {
+  RATING_SOURCES,
+  Whatson_MediaItem,
+} from 'src/models/thirdparty/whatson';
 import { findTrailerKey, formatDuration } from 'src/movies/utils';
 import { Vibrant } from 'node-vibrant/node';
 import { getImage, PosterProps } from './models/image.model';
@@ -26,7 +29,7 @@ import {
   QueryParamsDto,
 } from './dto/movies.dto';
 import {
-  OMDB_BASE_URL,
+  WHATSON_BASE_URL,
   POSTER_FALLBACK_URL,
   TMDB_BASE_URL,
 } from '../utils/constants';
@@ -34,22 +37,22 @@ import pLimit from 'p-limit';
 import { extractYearFromDate } from '../utils/functions/dates';
 import { getGenreEmoji } from './models/genres.model';
 import { SortOption } from './models/query.model';
+import { RatingEntry } from './models/ratings.model';
 
 @Injectable()
 export class MoviesService {
   private readonly TMDB_API_KEY: string;
-  private readonly OMDB_API_KEY: string;
   private readonly logger = new Logger();
   private readonly emptyCast: CastInfo = {
     id: -1,
     name: 'N/A',
     character: '',
+    creditId: '',
     profilePath: '',
   };
 
   constructor(private readonly env: EnvService) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
-    this.OMDB_API_KEY = this.env.get('OMDB_API_KEY');
   }
 
   async getPurifiedMovieIds(
@@ -87,8 +90,7 @@ export class MoviesService {
   }
 
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
-    // TMDB API
-    const tmdbResponse = await axios.get<TMDB_MovieInfo>(
+    const response = await axios.get<TMDB_MovieInfo>(
       `${TMDB_BASE_URL}/3/movie/${id}`,
       {
         params: {
@@ -97,76 +99,79 @@ export class MoviesService {
         },
       },
     );
+    const item = response.data;
 
-    // OMDB API
-    const imdbId = tmdbResponse.data?.imdb_id;
-    let omdbResponse: AxiosResponse<OMDB_Info> | null = null;
-    let omdbRatings: {
-      Source: OMDB_Source;
-      Value: string;
-    }[];
-
-    try {
-      omdbResponse = imdbId
-        ? await axios.get<OMDB_Info>(OMDB_BASE_URL, {
-            params: {
-              i: imdbId,
-              apikey: this.OMDB_API_KEY,
-            },
-          })
-        : null;
-      if (omdbResponse && omdbResponse.data?.Ratings) {
-        omdbRatings = omdbResponse.data.Ratings;
-      } else {
-        throw new NotFoundException('No ratings found');
-      }
-    } catch {
-      omdbRatings = (
-        Object.keys({} as Record<OMDB_Source, unknown>) as OMDB_Source[]
-      ).map((source) => ({
-        Source: source,
-        Value: 'N/A',
-      }));
-    }
-
-    const posterPath = getImage(tmdbResponse.data.poster_path, 'poster');
+    const posterPath = getImage(item.poster_path, 'poster');
     const posterProps = await this.generatePosterProps(posterPath);
+    const ratings = await this.getMovieRatings(id);
     const credits = await this.getMovieCredits(id);
 
     const data: MovieInfoResDto = {
-      // tmdb
-      title: tmdbResponse.data.title,
-      publishYear: extractYearFromDate(tmdbResponse.data.release_date),
-      overview: tmdbResponse.data.overview,
+      title: item.title,
+      publishYear: extractYearFromDate(item.release_date),
+      overview: item.overview,
       posterPath,
-      duration: formatDuration(tmdbResponse.data.runtime),
+      duration: formatDuration(item.runtime),
       certification:
-        (tmdbResponse.data.release_dates.results.find(
-          (result) => result.iso_3166_1 === 'US',
-        )?.release_dates[0].certification ||
-          omdbResponse?.data?.Rated) ??
-        'N/A',
-      trailerKey: findTrailerKey(tmdbResponse.data.videos),
-      genres: tmdbResponse.data.genres.map((genre) => ({
+        item.release_dates.results.find((result) => result.iso_3166_1 === 'US')
+          ?.release_dates[0].certification ?? 'N/A',
+      trailerKey: findTrailerKey(item.videos),
+      genres: item.genres.map((genre) => ({
         ...genre,
         emoji: getGenreEmoji(genre.id),
       })),
-      ratings: [
-        // omdb
-        ...omdbRatings.map((rating) => ({
-          source: rating.Source,
-          value: rating.Value.split('/')[0].trim(),
-        })),
-        {
-          source: 'The Movie Database',
-          value: tmdbResponse.data.vote_average.toFixed(1).toString(),
-        },
-      ],
+      ratings,
       posterProps,
       credits,
     };
 
     return data;
+  }
+
+  async getMovieRatings(id: number): Promise<RatingEntry[]> {
+    let ratings: RatingEntry[] = [];
+
+    try {
+      const response = await axios.get<Whatson_MediaItem>(
+        `${WHATSON_BASE_URL}/movie/${id}`,
+      );
+      const item = response.data;
+      // 1. IMDb ⭐
+      ratings.push({
+        source: 'IMDb',
+        value: item.imdb?.users_rating ? `${item.imdb.users_rating}` : 'N/A',
+      });
+
+      // 2. Rotten Tomatoes 🍅
+      // Prioritizing Critics' Rating (Tomatometer)
+      ratings.push({
+        source: 'Rotten Tomatoes',
+        value: item.rotten_tomatoes?.critics_rating
+          ? `${item.rotten_tomatoes.critics_rating}%`
+          : 'N/A',
+      });
+
+      // 3. Metacritic Ⓜ️
+      // Prioritizing Critics Rating (Metascore)
+      ratings.push({
+        source: 'Metacritic',
+        value: item.metacritic?.critics_rating
+          ? `${item.metacritic.critics_rating}`
+          : 'N/A',
+      });
+
+      // 4. TMDB 🎬
+      ratings.push({
+        source: 'TMDB',
+        value: item.tmdb?.users_rating ? `${item.tmdb.users_rating}` : 'N/A',
+      });
+    } catch {
+      ratings = RATING_SOURCES.map((source) => ({
+        source,
+        value: 'N/A',
+      }));
+    }
+    return ratings;
   }
 
   async getMovieCredits(id: number): Promise<Credits> {
@@ -178,28 +183,31 @@ export class MoviesService {
         },
       },
     );
+    const item = response.data;
+
     // 1. Deduplicate first using a Map (Key = ID, Value = Object)
-    const uniqueCastMap = new Map(
-      response.data.cast.map((cast) => [cast.id, cast]),
-    );
+    const uniqueCastMap = new Map(item.cast.map((cast) => [cast.id, cast]));
     // 2. Convert back to array and chain your logic
     const casts: CastInfo[] = [...uniqueCastMap.values()]
       .filter((cast) => cast.known_for_department === 'Acting')
-      .sort((a, b) => a.order - b.order)
+      .sort((a, b) => a.popularity - b.popularity)
       .slice(0, 5)
       .map((cast) => ({
         id: cast.id,
         name: cast.name,
-        character: cast.character,
+        character: `${cast.known_for_department}: ${cast.character}`,
+        creditId: cast.credit_id,
         profilePath: getImage(cast.profile_path, 'person'),
       }));
-    let director = response.data.crew
+    let director = item.crew
       .filter((crew) => crew.job === 'Director')
+      .sort((a, b) => a.popularity - b.popularity)
       .slice(0, 1)
       .map((crew) => ({
         id: crew.id,
         name: crew.name,
         character: crew.job,
+        creditId: crew.credit_id,
         profilePath: getImage(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
@@ -237,16 +245,17 @@ export class MoviesService {
         },
       },
     );
+    const item = response.data;
 
-    const validMovieIds = response.data.results
+    const validMovieIds = item.results
       .filter((movie) => this.isMovieValid(movie))
       .map((movie) => movie.id);
 
     return {
-      page: response.data.page,
+      page: item.page,
       results: validMovieIds,
-      total_pages: response.data.total_pages,
-      total_results: response.data.total_results,
+      total_pages: item.total_pages,
+      total_results: item.total_results,
     };
   }
 
@@ -284,10 +293,11 @@ export class MoviesService {
         },
       },
     );
+    const item = response.data;
 
     const posterPath =
-      response.data.posters.length > 0 && response.data.posters[0].file_path
-        ? getImage(response.data.posters[0].file_path, 'poster')
+      item.posters.length > 0 && item.posters[0].file_path
+        ? getImage(item.posters[0].file_path, 'poster')
         : POSTER_FALLBACK_URL;
     const { blurhash } = await this.generatePosterProps(posterPath, {
       blurhash: true,

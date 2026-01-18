@@ -1,6 +1,6 @@
-import { OMDB_Source } from '../../models/thirdparty/omdb';
+import { Rating_Source } from '../../models/thirdparty/whatson';
 
 export class RatingEntry {
-  source: OMDB_Source | 'The Movie Database';
+  source: Rating_Source;
   value: string;
 }
