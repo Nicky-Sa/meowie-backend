@@ -17,7 +17,12 @@ import {
   RATING_SOURCES,
   Whatson_MediaItem,
 } from 'src/models/thirdparty/whatson';
-import { findTrailerKey, formatDuration } from 'src/movies/utils';
+import {
+  cleanRating,
+  findCertification,
+  findTrailerKey,
+  formatDuration,
+} from 'src/movies/utils';
 import { Vibrant } from 'node-vibrant/node';
 import { getImage, PosterProps } from './models/image.model';
 import sharp from 'sharp';
@@ -70,8 +75,8 @@ export class MoviesService {
           api_key: this.TMDB_API_KEY,
           include_adult: false,
           sort_by: sort,
-          with_original_language: 'en|fr|de|es',
-          'vote_average.gte': 7,
+          'vote_count.gte': 100,
+          'with_runtime.gte': 30,
           page: query.page ?? 1,
         },
       },
@@ -104,7 +109,7 @@ export class MoviesService {
 
     const posterPath = getImage(item.poster_path, 'poster');
     const posterProps = await this.generatePosterProps(posterPath);
-    const ratings = await this.getMovieRatings(id);
+    const ratings = await this.getMovieRatings(id, item.vote_average);
     const credits = await this.getMovieCredits(id);
 
     const data: MovieInfoResDto = {
@@ -113,9 +118,7 @@ export class MoviesService {
       overview: item.overview,
       posterPath,
       duration: formatDuration(item.runtime),
-      certification:
-        item.release_dates.results.find((result) => result.iso_3166_1 === 'US')
-          ?.release_dates[0].certification ?? 'N/A',
+      certification: findCertification(item.release_dates),
       trailerKey: findTrailerKey(item.videos),
       genres: item.genres.map((genre) => ({
         ...genre,
@@ -129,7 +132,10 @@ export class MoviesService {
     return data;
   }
 
-  async getMovieRatings(id: number): Promise<RatingEntry[]> {
+  async getMovieRatings(
+    id: number,
+    tmdbVoteAverage: number,
+  ): Promise<RatingEntry[]> {
     let ratings: RatingEntry[] = [];
 
     try {
@@ -147,26 +153,30 @@ export class MoviesService {
       // Prioritizing Critics' Rating (Tomatometer)
       ratings.push({
         source: 'Rotten Tomatoes',
-        value: this.cleanRating(item.rotten_tomatoes?.critics_rating, '%'),
+        value: cleanRating(item.rotten_tomatoes?.critics_rating, '%'),
       });
 
       // 3. Metacritic Ⓜ️
       // Prioritizing Critics Rating (Metascore)
       ratings.push({
         source: 'Metacritic',
-        value: this.cleanRating(item.metacritic?.critics_rating),
+        value: cleanRating(item.metacritic?.critics_rating),
       });
 
       // 4. TMDB 🎬
       ratings.push({
         source: 'TMDB',
-        value: this.cleanRating(item.tmdb?.users_rating),
+        value: cleanRating(item.tmdb?.users_rating || tmdbVoteAverage),
       });
     } catch {
       ratings = RATING_SOURCES.map((source) => ({
         source,
         value: 'N/A',
       }));
+      if (tmdbVoteAverage) {
+        ratings.find((rating) => rating.source === 'TMDB')!.value =
+          cleanRating(tmdbVoteAverage);
+      }
     }
     return ratings;
   }
@@ -309,6 +319,7 @@ export class MoviesService {
   }
 
   private isMovieValid(movie: TMDB_MovieDetail): boolean {
+    // const duration = movie.;
     return Boolean(movie.title && movie.overview);
   }
 
@@ -374,13 +385,5 @@ export class MoviesService {
       .toBuffer({ resolveWithObject: true });
 
     return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4);
-  }
-
-  private cleanRating(
-    rating: number | undefined,
-    postfix: string = '',
-  ): string {
-    if (typeof rating !== 'number') return 'N/A';
-    return Math.floor(rating * 10) / 10 + postfix; // truncate to 1 decimal place
   }
 }
