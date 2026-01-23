@@ -14,22 +14,22 @@ export const findTrailerKey = (videoList: TMDB_Videos): string => {
   if (!youtubeVideos) {
     return '';
   }
+
+  const trailers = youtubeVideos.filter((video) => video.type === 'Trailer');
   // 1. Look for a video that is both Trailer and Official
-  const officialTrailer = youtubeVideos.find(
-    (video) => video.type === 'Trailer' && video.official,
-  )?.key;
+  const officialTrailer = trailers.find((video) => video.official)?.key;
 
   if (officialTrailer) {
     return officialTrailer;
   }
 
   // 2. Look for a video that is a Trailer (regardless of official status)
-  const trailer = youtubeVideos.find((video) => video.type === 'Trailer')?.key;
+  const trailer = trailers[0]?.key;
 
   if (trailer) {
     return trailer;
   }
 
   // 3. Return the first video in the list (if any)
-  return youtubeVideos.length > 0 ? youtubeVideos[0].key : '';
+  return youtubeVideos[0]?.key ?? '';
 };
