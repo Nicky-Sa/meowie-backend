@@ -147,24 +147,20 @@ export class MoviesService {
       // Prioritizing Critics' Rating (Tomatometer)
       ratings.push({
         source: 'Rotten Tomatoes',
-        value: item.rotten_tomatoes?.critics_rating
-          ? `${item.rotten_tomatoes.critics_rating}%`
-          : 'N/A',
+        value: this.cleanRating(item.rotten_tomatoes?.critics_rating, '%'),
       });
 
       // 3. Metacritic Ⓜ️
       // Prioritizing Critics Rating (Metascore)
       ratings.push({
         source: 'Metacritic',
-        value: item.metacritic?.critics_rating
-          ? `${item.metacritic.critics_rating}`
-          : 'N/A',
+        value: this.cleanRating(item.metacritic?.critics_rating),
       });
 
       // 4. TMDB 🎬
       ratings.push({
         source: 'TMDB',
-        value: item.tmdb?.users_rating ? `${item.tmdb.users_rating}` : 'N/A',
+        value: this.cleanRating(item.tmdb?.users_rating),
       });
     } catch {
       ratings = RATING_SOURCES.map((source) => ({
@@ -378,5 +374,13 @@ export class MoviesService {
       .toBuffer({ resolveWithObject: true });
 
     return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4);
+  }
+
+  private cleanRating(
+    rating: number | undefined,
+    postfix: string = '',
+  ): string {
+    if (typeof rating !== 'number') return 'N/A';
+    return Math.floor(rating * 10) / 10 + postfix; // truncate to 1 decimal place
   }
 }
