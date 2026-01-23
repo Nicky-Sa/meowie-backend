@@ -22,6 +22,7 @@ import {
   findCertification,
   findTrailerKey,
   formatDuration,
+  screeningStatus,
 } from 'src/movies/utils';
 import { Vibrant } from 'node-vibrant/node';
 import { getImage, PosterProps } from './models/image.model';
@@ -40,7 +41,6 @@ import {
   PERSON_FALLBACK_URL,
 } from '../utils/constants';
 import pLimit from 'p-limit';
-import { extractYearFromDate } from '../utils/functions/dates';
 import { getGenreEmoji } from './models/genres.model';
 import { SortOption } from './models/query.model';
 import { RatingEntry } from './models/ratings.model';
@@ -75,7 +75,7 @@ export class MoviesService {
           api_key: this.TMDB_API_KEY,
           include_adult: false,
           sort_by: sort,
-          'vote_count.gte': 100,
+          'vote_count.gte': 50,
           'with_runtime.gte': 30,
           page: query.page ?? 1,
         },
@@ -114,7 +114,7 @@ export class MoviesService {
 
     const data: MovieInfoResDto = {
       title: item.title,
-      publishYear: extractYearFromDate(item.release_date),
+      screeningStatus: screeningStatus(item.release_date, item.release_dates),
       overview: item.overview,
       posterPath,
       duration: formatDuration(item.runtime),

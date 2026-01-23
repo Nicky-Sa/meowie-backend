@@ -1,6 +1,6 @@
 export const extractYearFromDate = (date: string | null | undefined) => {
   if (!date) {
-    return '-';
+    return 'N/A';
   }
   return new Date(date).getFullYear().toString();
 };

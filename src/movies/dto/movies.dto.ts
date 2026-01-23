@@ -9,7 +9,7 @@ import { Browse, Filters, Page, Sort } from '../models/query.model';
 // Combines MovieDetails and AllRatings into one parent class
 export class MovieInfoResDto {
   title: string;
-  publishYear: string;
+  screeningStatus: string | null;
   duration: string;
   certification: string;
   trailerKey: string;
