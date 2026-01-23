@@ -32,6 +32,7 @@ import {
   WHATSON_BASE_URL,
   POSTER_FALLBACK_URL,
   TMDB_BASE_URL,
+  PERSON_FALLBACK_URL,
 } from '../utils/constants';
 import pLimit from 'p-limit';
 import { extractYearFromDate } from '../utils/functions/dates';
@@ -48,7 +49,7 @@ export class MoviesService {
     name: 'N/A',
     character: '',
     creditId: '',
-    profilePath: '',
+    profilePath: PERSON_FALLBACK_URL,
   };
 
   constructor(private readonly env: EnvService) {
