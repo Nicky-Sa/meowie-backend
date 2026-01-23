@@ -115,7 +115,7 @@ export class MoviesService {
     const data: MovieInfoResDto = {
       title: item.title,
       screeningStatus: screeningStatus(item.release_date, item.release_dates),
-      overview: item.overview,
+      overview: item.overview || 'N/A',
       posterPath,
       duration: formatDuration(item.runtime),
       certification: findCertification(item.release_dates),
