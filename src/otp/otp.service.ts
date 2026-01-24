@@ -21,7 +21,7 @@ export class OtpService {
     const hash = await bcrypt.hash(otp, 10);
 
     try {
-      await this.otpRepository.save({ email, otp: hash });
+      await this.otpRepository.upsert({ email, otp: hash }, ['email']);
       await this.emailService.sendEmail(email, {
         name: 'OtpEmailTemplate',
         data: {
@@ -36,21 +36,23 @@ export class OtpService {
 
   async verifyOtp(email: string, input: string) {
     try {
-      const storedOtpHash = await this.otpRepository.findOne({
+      const storedOtpItem = await this.otpRepository.findOne({
         where: { email },
       });
-      if (!storedOtpHash || !storedOtpHash.otp) {
+      if (!storedOtpItem || !storedOtpItem.otp) {
         return false;
       }
-      const storedOtp = storedOtpHash.otp;
+
       const isExpired = this.isExpired(
-        storedOtpHash.createdAt,
+        storedOtpItem.updatedAt,
         this.OTP_EXPIRY_MINUTES,
       );
       if (isExpired) {
         await this.otpRepository.delete({ email });
         return false;
       }
+
+      const storedOtp = storedOtpItem.otp;
       const isValid = await bcrypt.compare(input, storedOtp);
 
       if (isValid) {
@@ -63,8 +65,7 @@ export class OtpService {
   }
 
   private isExpired(createdAt: Date, expiryMinutes: number) {
-    const now = new Date();
-    const diff = now.getTime() - createdAt.getTime();
+    const diff = Date.now() - createdAt.getTime();
     const minutesPassed = Math.floor(diff / (1000 * 60));
     return minutesPassed > expiryMinutes;
   }

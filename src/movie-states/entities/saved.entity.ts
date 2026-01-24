@@ -23,7 +23,7 @@ export class Saved {
   @Column({ type: 'int' })
   tmdbId: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @ManyToOne(() => User, (user) => user.saved, { onDelete: 'CASCADE' })

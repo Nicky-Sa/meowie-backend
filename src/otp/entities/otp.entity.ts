@@ -4,11 +4,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity({
   name: 'otp',
 })
+@Unique(['email'])
 export class Otp {
   @PrimaryGeneratedColumn()
   id: number;
@@ -19,9 +21,9 @@ export class Otp {
   @Column()
   otp: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

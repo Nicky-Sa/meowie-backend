@@ -28,7 +28,7 @@ export class User {
   })
   hashedRefreshToken: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @OneToMany(() => Saved, (saved) => saved.user)

@@ -21,6 +21,6 @@ export class ChurnLog {
   @Column({ nullable: true })
   userTenureInDays: number; // How long they stayed
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
