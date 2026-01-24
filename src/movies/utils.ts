@@ -1,8 +1,4 @@
-import {
-  TMDB_MovieInfo,
-  TMDB_ReleaseDates,
-  TMDB_Videos,
-} from 'src/models/thirdparty/tmdb';
+import { TMDB_ReleaseDates, TMDB_Videos } from 'src/models/thirdparty/tmdb';
 import { extractYearFromDate } from '../utils/functions/dates';
 
 export const formatDuration = (minutes?: number) => {

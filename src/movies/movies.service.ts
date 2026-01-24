@@ -330,8 +330,10 @@ export class MoviesService {
     let blurhash = 'U11o;?of00of00of00of00of00of00of00of';
 
     try {
-      const response = await axios.get(url, { responseType: 'arraybuffer' });
-      const buffer = Buffer.from(response.data, 'binary');
+      const response = await axios.get<ArrayBuffer>(url, {
+        responseType: 'arraybuffer',
+      });
+      const buffer = Buffer.from(response.data);
 
       const [hexResult, blurhashResult] = await Promise.allSettled([
         this.getPrimaryColorHex(buffer),
