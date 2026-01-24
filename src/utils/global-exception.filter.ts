@@ -13,7 +13,7 @@ import * as Sentry from '@sentry/nestjs';
 type ErrorResponse = {
   success: false;
   statusCode: number;
-  errors: string[];
+  errors: string;
   timestamp: string;
 };
 
@@ -48,7 +48,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const errorResponse: ErrorResponse = {
       success: false,
-      errors: [isArray(errorMessage) ? errorMessage.join(', ') : errorMessage],
+      errors: isArray(errorMessage) ? errorMessage.join(', ') : errorMessage,
       statusCode: status,
       timestamp: new Date().toISOString(),
     };
