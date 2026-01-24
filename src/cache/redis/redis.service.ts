@@ -27,12 +27,21 @@ export class RedisService
     this.client.on('error', (err) => this.logger.error('❌ Redis Error:', err));
   }
 
-  async set(key: string, value: string, ttlSeconds = 300) {
-    await this.client.set(key, value, 'EX', ttlSeconds);
+  async set(key: string, value: unknown, ttlSeconds = 3600) {
+    const stringValue = JSON.stringify(value); // Serialize
+    await this.client.set(key, stringValue, 'EX', ttlSeconds);
   }
 
-  async get(key: string): Promise<string | null> {
-    return this.client.get(key);
+  async get<T>(key: string): Promise<T | null> {
+    const data = await this.client.get(key);
+    if (!data) return null;
+
+    try {
+      return JSON.parse(data) as T; // Deserialize
+    } catch (error) {
+      this.logger.error(`Failed to parse cache for key ${key}`, error);
+      return null;
+    }
   }
 
   async del(key: string) {

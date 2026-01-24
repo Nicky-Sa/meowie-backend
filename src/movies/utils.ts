@@ -1,4 +1,8 @@
-import { TMDB_MovieInfo, TMDB_Videos } from 'src/models/thirdparty/tmdb';
+import {
+  TMDB_MovieInfo,
+  TMDB_ReleaseDates,
+  TMDB_Videos,
+} from 'src/models/thirdparty/tmdb';
 import { extractYearFromDate } from '../utils/functions/dates';
 
 export const formatDuration = (minutes?: number) => {
@@ -44,7 +48,7 @@ export const cleanRating = (
 };
 
 export const findCertification = (
-  releaseDates: TMDB_MovieInfo['release_dates'],
+  releaseDates: TMDB_ReleaseDates,
   country: string = 'US',
 ) => {
   const certification =
@@ -56,7 +60,7 @@ export const findCertification = (
 
 export const screeningStatus = (
   releaseDate: string,
-  releaseDates: TMDB_MovieInfo['release_dates'],
+  releaseDates: TMDB_ReleaseDates,
   country: string = 'US',
 ): string => {
   const fallback = extractYearFromDate(releaseDate);

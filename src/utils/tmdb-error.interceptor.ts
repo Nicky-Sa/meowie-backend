@@ -25,6 +25,9 @@ export class TMDBErrorInterceptor implements NestInterceptor {
   private readonly logger = new Logger(TMDBErrorInterceptor.name);
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const ctx = context.switchToHttp();
+    const request = ctx.getRequest<Request>();
+    const { url, method } = request;
     return next.handle().pipe(
       catchError((error) => {
         // 1. Pass through standard NestJS exceptions (ValidationPipe, Guards, etc.)
@@ -43,7 +46,7 @@ export class TMDBErrorInterceptor implements NestInterceptor {
             (data?.errors ? data.errors.join(', ') : null) ||
             error.message;
 
-          const logMessage = `TMDB Error [${status}]: ${tmdbMessage}`;
+          const logMessage = `[${method} ${url}] TMDB Error [${status}]: ${tmdbMessage}`;
           console.log({ error, status });
 
           // 1. Handle 404 (Not Found)
@@ -90,14 +93,16 @@ export class TMDBErrorInterceptor implements NestInterceptor {
           this.logger.error(logMessage);
         } else {
           // Handle Network errors or unknown non-HTTP errors
-          this.logger.error(`Network Error calling TMDB: ${error}`);
+          this.logger.error(
+            `[${method} ${url}] Network Error calling TMDB: ${error}`,
+          );
         }
 
         // Default fallback for everything else
         return throwError(
           () =>
             new InternalServerErrorException(
-              `Unknown error happened while calling TMDB: ${error}`,
+              `[${method} ${url}] Unknown error happened while calling TMDB: ${error}`,
             ),
         );
       }),

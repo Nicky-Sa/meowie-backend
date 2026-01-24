@@ -31,7 +31,7 @@ export class OtpService {
 
   async verifyOtp(email: string, input: string) {
     try {
-      const storedHash = await this.cacheService.get(`otp:${email}`);
+      const storedHash = await this.cacheService.get<string>(`otp:${email}`);
       if (!storedHash) {
         return false;
       }

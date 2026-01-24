@@ -1,3 +1,5 @@
+import { PaginatedResponse } from '../paginated-results.model';
+
 // /3/movie/${id}
 
 type TMDB_BelongsToCollection = {
@@ -30,7 +32,7 @@ type TMDB_SpokenLanguage = {
   name: string;
 };
 
-type TMDB_ReleaseDates = {
+export type TMDB_ReleaseDates = {
   results: { iso_3166_1: string; release_dates: TMDB_ReleaseDate[] }[];
 };
 
@@ -144,12 +146,10 @@ export type TMDB_Person = {
 };
 
 // /3/discover/movie
-export type TMDB_MoviesList = {
-  page: number;
-  results: TMDB_MovieDetail[];
-  total_pages: number;
-  total_results: number;
-};
+export class TMDB_MoviesList extends PaginatedResponse<TMDB_MovieDetail> {
+  declare results: TMDB_MovieDetail[];
+}
+
 export type TMDB_MovieDetail = {
   adult: boolean;
   backdrop_path: string;
@@ -239,9 +239,6 @@ type SearchResultMovie = {
 
 export type TMDB_MultiSearchDetail = SearchResultPerson | SearchResultMovie;
 
-export type TMDB_MultiSearch = {
-  page: number;
-  results: TMDB_MultiSearchDetail[];
-  total_pages: number;
-  total_results: number;
-};
+export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
+  declare results: TMDB_MultiSearchDetail[];
+}

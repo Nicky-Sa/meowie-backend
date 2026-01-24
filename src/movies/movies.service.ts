@@ -9,7 +9,6 @@ import {
 import {
   TMDB_MovieCredits,
   TMDB_MovieDetail,
-  TMDB_MovieImages,
   TMDB_MovieInfo,
   TMDB_MoviesList,
 } from 'src/models/thirdparty/tmdb';
@@ -36,7 +35,6 @@ import {
 } from './dto/movies.dto';
 import {
   WHATSON_BASE_URL,
-  POSTER_FALLBACK_URL,
   TMDB_BASE_URL,
   PERSON_FALLBACK_URL,
 } from '../utils/constants';
@@ -44,6 +42,7 @@ import pLimit from 'p-limit';
 import { getGenreEmoji } from './models/genres.model';
 import { SortOption } from './models/query.model';
 import { RatingEntry } from './models/ratings.model';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class MoviesService {
@@ -57,13 +56,17 @@ export class MoviesService {
     profilePath: PERSON_FALLBACK_URL,
   };
 
-  constructor(private readonly env: EnvService) {
+  constructor(
+    private readonly env: EnvService,
+    private readonly cacheService: CacheService,
+  ) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
   }
 
-  async getPurifiedMovieIds(
-    query: Pick<QueryParamsDto, 'page' | 'sort'>,
-  ): Promise<PurifiedMovieIdsResDto> {
+  async getDiscoveredMovies(
+    query: QueryParamsDto,
+    tmdbQuery?: Record<string, string | number>,
+  ): Promise<TMDB_MoviesList> {
     // Sort defaults to popularity.desc by TMDB
     const sort =
       query.sort === SortOption.RANDOM ? 'vote_count.desc' : query.sort;
@@ -75,37 +78,103 @@ export class MoviesService {
           api_key: this.TMDB_API_KEY,
           include_adult: false,
           sort_by: sort,
-          'vote_count.gte': 50,
-          'with_runtime.gte': 30,
+          ...(query.genres && {
+            with_genres: query.genres.replaceAll(',', '|'),
+          }),
+          ...(query.personId && {
+            with_people: query.personId,
+          }),
+          ...(query.languages && {
+            with_original_language: query.languages.replaceAll(',', '|'),
+          }),
+          ...(query.decade && {
+            'primary_release_date.gte': `${query.decade}-01-01`,
+            'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
+          }),
+          ...(query.tmdbRatings && {
+            'vote_average.gte': query.tmdbRatings.split(',')[0],
+            'vote_average.lte': query.tmdbRatings.split(',')[1],
+          }),
           page: query.page ?? 1,
+          ...tmdbQuery,
         },
       },
     );
-    const validMovieIds = response.data.results
-      .filter((movie) => this.isMovieValid(movie))
-      .map((movie) => movie.id);
+    const validMovies = response.data.results.filter((movie) =>
+      this.isMovieValid(movie),
+    );
+    return {
+      ...response.data,
+      results: validMovies,
+    };
+  }
+
+  async getPurifiedMovieIds(
+    query: Pick<QueryParamsDto, 'page' | 'sort'>,
+  ): Promise<PurifiedMovieIdsResDto> {
+    const discoveredMovies = await this.getDiscoveredMovies(query, {
+      'vote_count.gte': 50,
+      'with_runtime.gte': 30,
+    });
 
     const data = {
-      page: response.data.page,
-      results: validMovieIds,
-      total_pages: response.data.total_pages,
-      total_results: response.data.total_results,
+      ...discoveredMovies,
+      results: discoveredMovies.results.map((movie) => movie.id),
     };
 
     return data;
   }
 
-  async getMovieInfo(id: number): Promise<MovieInfoResDto> {
-    const response = await axios.get<TMDB_MovieInfo>(
-      `${TMDB_BASE_URL}/3/movie/${id}`,
-      {
-        params: {
-          append_to_response: 'videos,release_dates',
-          api_key: this.TMDB_API_KEY,
-        },
+  // based on append_to_response, the return type can differ
+  async getBasicMovieInfo<T>(
+    id: number,
+    append_to_response: string = '',
+  ): Promise<T> {
+    const cacheKey = `movie-basic-info-${id}-${append_to_response}`;
+    const cachedData = await this.cacheService.get<T>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    const response = await axios.get<T>(`${TMDB_BASE_URL}/3/movie/${id}`, {
+      params: {
+        api_key: this.TMDB_API_KEY,
+        ...(append_to_response && { append_to_response }),
       },
-    );
+    });
     const item = response.data;
+    await this.cacheService.set(cacheKey, item, 3600 * 24); // 24h TTL
+    return item;
+  }
+
+  async getBasicMovieInfoBulk<T>(
+    ids: number[],
+    append_to_response?: string,
+  ): Promise<T[]> {
+    // Avoid bombarding TMDB by limiting the number of concurrent requests
+    const limit = pLimit(5);
+    const moviePromises = ids.map((id) =>
+      limit(() => {
+        return this.getBasicMovieInfo<T>(id, append_to_response);
+      }),
+    );
+    const allResults = await Promise.allSettled(moviePromises);
+    const results = allResults
+      .filter((result) => result.status === 'fulfilled')
+      .map((result) => result.value);
+    return results;
+  }
+
+  async getMovieInfo(id: number): Promise<MovieInfoResDto> {
+    const cacheKey = `movie-info-${id}`;
+    const cachedData = await this.cacheService.get<MovieInfoResDto>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+    const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
+      id,
+      'videos,release_dates',
+    );
 
     const posterPath = getImage(item.poster_path, 'poster');
     const posterProps = await this.generatePosterProps(posterPath);
@@ -128,6 +197,8 @@ export class MoviesService {
       posterProps,
       credits,
     };
+
+    await this.cacheService.set(cacheKey, data, 3600 * 24); // 24h TTL
 
     return data;
   }
@@ -223,95 +294,21 @@ export class MoviesService {
     return { casts, director };
   }
 
-  async getMovieIds(query: QueryParamsDto): Promise<PurifiedMovieIdsResDto> {
-    const response = await axios.get<TMDB_MoviesList>(
-      `${TMDB_BASE_URL}/3/discover/movie`,
-      {
-        params: {
-          api_key: this.TMDB_API_KEY,
-          include_adult: false,
-          sort_by: 'vote_count.desc',
-          ...(query.genres && {
-            with_genres: query.genres.replaceAll(',', '|'),
-          }),
-          ...(query.personId && {
-            with_people: query.personId,
-          }),
-          ...(query.languages && {
-            with_original_language: query.languages.replaceAll(',', '|'),
-          }),
-          ...(query.decade && {
-            'primary_release_date.gte': `${query.decade}-01-01`,
-            'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
-          }),
-          ...(query.tmdbRatings && {
-            'vote_average.gte': query.tmdbRatings.split(',')[0],
-            'vote_average.lte': query.tmdbRatings.split(',')[1],
-          }),
-          page: query.page ?? 1,
-        },
-      },
+  getMoviesPoster(moviesList: TMDB_MoviesList): MoviePosterResDto {
+    const { results: movies, ...rest } = moviesList;
+
+    const moviePosterInfoResults = movies.map((movie) =>
+      this.getMoviePosterSingle(movie),
     );
-    const item = response.data;
 
-    const validMovieIds = item.results
-      .filter((movie) => this.isMovieValid(movie))
-      .map((movie) => movie.id);
-
-    return {
-      page: item.page,
-      results: validMovieIds,
-      total_pages: item.total_pages,
-      total_results: item.total_results,
-    };
+    return { results: moviePosterInfoResults, ...rest };
   }
 
-  async getMoviesPoster(
-    movieIds: PurifiedMovieIdsResDto,
-  ): Promise<MoviePosterResDto> {
-    const { results: ids, ...rest } = movieIds;
-    // Avoid bombarding TMDB by limiting the number of concurrent requests
-    const limit = pLimit(5);
-
-    const moviePromises = ids.map((id) =>
-      limit(async () => {
-        return this.getMoviePosterSingle(id);
-      }),
-    );
-    // Waits for all to finish (success or fail)
-    const allResults = await Promise.allSettled(moviePromises);
-
-    // Filter only the successful ones and extract the data
-    // Remove explicit nulls if any
-    const results = allResults
-      .filter((result) => result.status === 'fulfilled')
-      .map((result) => result.value)
-      .filter((data) => data !== null);
-
-    return { results, ...rest };
-  }
-
-  private async getMoviePosterSingle(id: number): Promise<MoviePosterInfo> {
-    const response = await axios.get<TMDB_MovieImages>(
-      `${TMDB_BASE_URL}/3/movie/${id}/images`,
-      {
-        params: {
-          api_key: this.TMDB_API_KEY,
-        },
-      },
-    );
-    const item = response.data;
-
-    const posterPath =
-      item.posters.length > 0 && item.posters[0].file_path
-        ? getImage(item.posters[0].file_path, 'poster')
-        : POSTER_FALLBACK_URL;
-    const { blurhash } = await this.generatePosterProps(posterPath, {
-      blurhash: true,
-      hex: false,
-    });
+  private getMoviePosterSingle(movie: TMDB_MovieDetail): MoviePosterInfo {
+    const posterPath = getImage(movie.poster_path, 'poster');
+    const blurhash = 'U11o;?of00of00of00of00of00of00of00of';
     const data = {
-      id,
+      id: movie.id,
       posterPath,
       blurhash,
     };
@@ -319,46 +316,45 @@ export class MoviesService {
   }
 
   private isMovieValid(movie: TMDB_MovieDetail): boolean {
-    // const duration = movie.;
     return Boolean(movie.title && movie.overview);
   }
 
-  private async generatePosterProps(
-    url: string,
-    options: {
-      hex?: boolean;
-      blurhash?: boolean;
-    } = { hex: true, blurhash: true },
-  ): Promise<PosterProps> {
-    let primaryColorHex = '#1F3854';
-    let blurhash = 'U6PZfSi_.AyE_3t7t7R**0o#DgR4_3R*D%xs';
-
-    // If both are false, return defaults immediately without fetching
-    if (!options.hex && !options.blurhash) {
-      return { primaryColorHex, blurhash };
+  private async generatePosterProps(url: string): Promise<PosterProps> {
+    const cacheKey = `poster-props-${url}`;
+    const cachedData = await this.cacheService.get<PosterProps>(cacheKey);
+    if (cachedData) {
+      return cachedData;
     }
+
+    let primaryColorHex = '#1F3854';
+    let blurhash = 'U11o;?of00of00of00of00of00of00of00of';
 
     try {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
       const buffer = Buffer.from(response.data, 'binary');
 
-      if (options.hex) {
-        const hex = await this.getPrimaryColorHex(buffer);
-        if (hex) {
-          primaryColorHex = hex;
-        }
+      const [hexResult, blurhashResult] = await Promise.allSettled([
+        this.getPrimaryColorHex(buffer),
+        this.getBlurhash(buffer),
+      ]);
+
+      if (hexResult.status === 'fulfilled' && hexResult.value) {
+        primaryColorHex = hexResult.value;
       }
 
-      if (options.blurhash) {
-        const hash = await this.getBlurhash(buffer);
-        if (hash) {
-          blurhash = hash;
-        }
+      if (blurhashResult.status === 'fulfilled' && blurhashResult.value) {
+        blurhash = blurhashResult.value;
       }
+
+      // Save to Cache (30 Days)
+      const dataToCache: PosterProps = { primaryColorHex, blurhash };
+      await this.cacheService.set(cacheKey, dataToCache, 3600 * 24 * 30);
+
+      return dataToCache;
     } catch (error) {
       if (error instanceof AggregateError) {
         this.logger.error(
-          `AggrigateError generating poster props: ${error.message}\n`,
+          `AggregateError generating poster props: ${error.message}\n`,
           `Errors: ${error.errors.join('\n ')}`,
         );
       }

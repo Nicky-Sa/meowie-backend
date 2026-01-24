@@ -39,7 +39,8 @@ export class MoviesController {
   async getPostersInBulk(
     @Query() query: QueryParamsDto,
   ): Promise<MoviePosterResDto> {
-    const movieIds = await this.moviesService.getMovieIds(query);
-    return this.moviesService.getMoviesPoster(movieIds);
+    const discoveredMoviesList =
+      await this.moviesService.getDiscoveredMovies(query);
+    return this.moviesService.getMoviesPoster(discoveredMoviesList);
   }
 }

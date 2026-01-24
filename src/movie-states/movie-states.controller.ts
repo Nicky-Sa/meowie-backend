@@ -11,6 +11,7 @@ import { OptionalAccessGuard } from '../auth/guards/optional-access.guard';
 import { MoviePosterResDto } from '../movies/dto/movies.dto';
 import { MoviesService } from '../movies/movies.service';
 import { PostersQueryDto } from './dto/posters.dto';
+import { TMDB_MovieDetail } from '../models/thirdparty/tmdb';
 
 @Controller('movie-states')
 export class MovieStatesController {
@@ -28,11 +29,16 @@ export class MovieStatesController {
     if (!req.user.id) {
       return { results: [], page: 1, total_pages: 1, total_results: 0 };
     }
-    const movieIds = await this.movieStatesService.getSavedMovieIds(
-      query,
-      req.user.id,
-    );
-    return this.moviesService.getMoviesPoster(movieIds);
+    const paginatedSavedMovieIds =
+      await this.movieStatesService.getSavedMovieIds(query, req.user.id);
+    const moviesList =
+      await this.moviesService.getBasicMovieInfoBulk<TMDB_MovieDetail>(
+        paginatedSavedMovieIds.results,
+      );
+    return this.moviesService.getMoviesPoster({
+      ...paginatedSavedMovieIds,
+      results: moviesList,
+    });
   }
 
   @OptionalAccessGuard()
