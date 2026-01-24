@@ -30,7 +30,7 @@ import { encode } from 'blurhash';
 import {
   MovieInfoResDto,
   MoviePosterResDto,
-  PurifiedMovieIdsResDto,
+  InterestingMovieIdsResDto,
   QueryParamsDto,
 } from './dto/movies.dto';
 import {
@@ -110,9 +110,9 @@ export class MoviesService {
     };
   }
 
-  async getPurifiedMovieIds(
+  async getInterestingMovieIds(
     query: Pick<QueryParamsDto, 'page' | 'sort'>,
-  ): Promise<PurifiedMovieIdsResDto> {
+  ): Promise<InterestingMovieIdsResDto> {
     const discoveredMovies = await this.getDiscoveredMovies(query, {
       'vote_count.gte': 50,
       'with_runtime.gte': 30,

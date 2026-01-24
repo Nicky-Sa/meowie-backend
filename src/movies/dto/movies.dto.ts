@@ -21,7 +21,7 @@ export class MovieInfoResDto {
   ratings: RatingEntry[];
 }
 
-export class PurifiedMovieIdsResDto extends PaginatedResponse<number> {
+export class InterestingMovieIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
   declare results: number[];
 }
