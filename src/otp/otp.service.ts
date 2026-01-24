@@ -1,13 +1,18 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { CacheService } from '../cache/cache.service';
 import { EmailService } from '../email/email.service';
 import { randomInt } from 'crypto';
+import { Repository } from 'typeorm';
+import { Otp } from './entities/otp.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class OtpService {
+  private readonly OTP_EXPIRY_MINUTES = 5;
+
   constructor(
-    private readonly cacheService: CacheService,
+    @InjectRepository(Otp)
+    private readonly otpRepository: Repository<Otp>,
     private readonly emailService: EmailService,
   ) {}
 
@@ -16,7 +21,7 @@ export class OtpService {
     const hash = await bcrypt.hash(otp, 10);
 
     try {
-      await this.cacheService.set(`otp:${email}`, hash, 300); // 5-min TTL
+      await this.otpRepository.save({ email, otp: hash });
       await this.emailService.sendEmail(email, {
         name: 'OtpEmailTemplate',
         data: {
@@ -31,18 +36,36 @@ export class OtpService {
 
   async verifyOtp(email: string, input: string) {
     try {
-      const storedHash = await this.cacheService.get<string>(`otp:${email}`);
-      if (!storedHash) {
+      const storedOtpHash = await this.otpRepository.findOne({
+        where: { email },
+      });
+      if (!storedOtpHash || !storedOtpHash.otp) {
         return false;
       }
-      const isValid = await bcrypt.compare(input, storedHash);
+      const storedOtp = storedOtpHash.otp;
+      const isExpired = this.isExpired(
+        storedOtpHash.createdAt,
+        this.OTP_EXPIRY_MINUTES,
+      );
+      if (isExpired) {
+        await this.otpRepository.delete({ email });
+        return false;
+      }
+      const isValid = await bcrypt.compare(input, storedOtp);
 
       if (isValid) {
-        await this.cacheService.del(`otp:${email}`);
+        await this.otpRepository.delete({ email });
       }
       return isValid;
     } catch (error) {
       throw new InternalServerErrorException(`Failed to verify OTP: ${error}`);
     }
+  }
+
+  private isExpired(createdAt: Date, expiryMinutes: number) {
+    const now = new Date();
+    const diff = now.getTime() - createdAt.getTime();
+    const minutesPassed = Math.floor(diff / (1000 * 60));
+    return minutesPassed > expiryMinutes;
   }
 }

@@ -1,0 +1,54 @@
+import { CacheService } from './cache.service';
+
+interface CacheableOptions {
+  key: (...args: any[]) => string;
+  ttl?: number;
+}
+
+// Define the shape of the class instance (it MUST have cacheService)
+interface ServiceWithCache {
+  cacheService: CacheService;
+}
+
+export const Cacheable = (options: CacheableOptions) => {
+  return function (
+    _target: unknown,
+    _propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) {
+    const originalMethod = descriptor.value as (...args: any[]) => Promise<any>;
+
+    descriptor.value = async function (this: ServiceWithCache, ...args: any[]) {
+      const cacheService = this.cacheService;
+
+      if (!cacheService) {
+        throw new Error(
+          `@Cacheable decorator used, but 'cacheService' is missing on the instance.`,
+        );
+      }
+
+      const cacheKey = options.key(...args);
+
+      // Get from cache
+      const cachedValue = await cacheService.get(cacheKey);
+      if (cachedValue) {
+        return cachedValue;
+      }
+
+      // Call original method (using .call to preserve strict typing)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await originalMethod.call(this, ...args);
+
+      // Set cache
+      if (result) {
+        const ttl = options.ttl || 86400;
+        await cacheService.set(cacheKey, result, ttl);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return result;
+    };
+
+    return descriptor;
+  };
+};

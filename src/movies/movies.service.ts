@@ -28,21 +28,22 @@ import { getImage, PosterProps } from './models/image.model';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
 import {
-  PurifiedMovieIdsResDto,
   MovieInfoResDto,
   MoviePosterResDto,
+  PurifiedMovieIdsResDto,
   QueryParamsDto,
 } from './dto/movies.dto';
 import {
-  WHATSON_BASE_URL,
-  TMDB_BASE_URL,
   PERSON_FALLBACK_URL,
+  TMDB_BASE_URL,
+  WHATSON_BASE_URL,
 } from '../utils/constants';
 import pLimit from 'p-limit';
 import { getGenreEmoji } from './models/genres.model';
 import { SortOption } from './models/query.model';
 import { RatingEntry } from './models/ratings.model';
 import { CacheService } from '../cache/cache.service';
+import { Cacheable } from '../cache/cacheable.decorator';
 
 @Injectable()
 export class MoviesService {
@@ -126,25 +127,22 @@ export class MoviesService {
   }
 
   // based on append_to_response, the return type can differ
+  @Cacheable({
+    key: (id: number, append_to_response = '') =>
+      `movie-basic-info-${id}-{${append_to_response}}`,
+    ttl: 3600 * 24,
+  })
   async getBasicMovieInfo<T>(
     id: number,
     append_to_response: string = '',
   ): Promise<T> {
-    const cacheKey = `movie-basic-info-${id}-${append_to_response}`;
-    const cachedData = await this.cacheService.get<T>(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
-
     const response = await axios.get<T>(`${TMDB_BASE_URL}/3/movie/${id}`, {
       params: {
         api_key: this.TMDB_API_KEY,
         ...(append_to_response && { append_to_response }),
       },
     });
-    const item = response.data;
-    await this.cacheService.set(cacheKey, item, 3600 * 24); // 24h TTL
-    return item;
+    return response.data;
   }
 
   async getBasicMovieInfoBulk<T>(
@@ -165,12 +163,11 @@ export class MoviesService {
     return results;
   }
 
+  @Cacheable({
+    key: (id: number) => `movie-info-${id}`,
+    ttl: 3600 * 24,
+  })
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
-    const cacheKey = `movie-info-${id}`;
-    const cachedData = await this.cacheService.get<MovieInfoResDto>(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
     const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
       id,
       'videos,release_dates',
@@ -197,8 +194,6 @@ export class MoviesService {
       posterProps,
       credits,
     };
-
-    await this.cacheService.set(cacheKey, data, 3600 * 24); // 24h TTL
 
     return data;
   }
@@ -319,13 +314,11 @@ export class MoviesService {
     return Boolean(movie.title && movie.overview);
   }
 
+  @Cacheable({
+    key: (url: string) => `poster-props-${url}`,
+    ttl: 3600 * 24 * 30,
+  })
   private async generatePosterProps(url: string): Promise<PosterProps> {
-    const cacheKey = `poster-props-${url}`;
-    const cachedData = await this.cacheService.get<PosterProps>(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
-
     let primaryColorHex = '#1F3854';
     let blurhash = 'U11o;?of00of00of00of00of00of00of00of';
 
@@ -348,11 +341,7 @@ export class MoviesService {
         blurhash = blurhashResult.value;
       }
 
-      // Save to Cache (30 Days)
-      const dataToCache: PosterProps = { primaryColorHex, blurhash };
-      await this.cacheService.set(cacheKey, dataToCache, 3600 * 24 * 30);
-
-      return dataToCache;
+      return { primaryColorHex, blurhash };
     } catch (error) {
       if (error instanceof AggregateError) {
         this.logger.error(
