@@ -1,7 +1,9 @@
 import { PaginatedResponse } from '../paginated-results.model';
 
-// /3/movie/${id}
+//--------------------------------------------------
+// Movies
 
+// /3/movie/${id}
 type TMDB_BelongsToCollection = {
   id: number;
   name: string;
@@ -243,3 +245,28 @@ export type TMDB_MultiSearchDetail = SearchResultPerson | SearchResultMovie;
 export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
   declare results: TMDB_MultiSearchDetail[];
 }
+
+//--------------------------------------------------
+// Series
+
+// /3/discover/tv
+export class TMDB_SeriesList extends PaginatedResponse<TMDB_SeriesDetail> {
+  declare results: TMDB_SeriesDetail[];
+}
+
+export type TMDB_SeriesDetail = {
+  adult: boolean;
+  backdrop_path: string;
+  genre_ids: number[];
+  id: number;
+  origin_country: string[];
+  original_language: string;
+  original_name: string;
+  overview: string;
+  popularity: number;
+  poster_path: string;
+  first_air_date: string;
+  name: string;
+  vote_average: number;
+  vote_count: number;
+};
