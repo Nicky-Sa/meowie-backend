@@ -6,13 +6,53 @@ on:
       - preview
       - production
 
-# Global permissions (needed for creating releases/tags)
 permissions:
   contents: write
 
 jobs:
+  # --- JOB 0: CALCULATE VERSION ---
+  calculate-version:
+    runs-on: ubuntu-latest
+    outputs:
+      final_tag: ${{ steps.format_tag.outputs.FINAL_TAG }}
+      clean_version: ${{ steps.calc_version.outputs.new_tag }}
+      changelog: ${{ steps.calc_version.outputs.changelog }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: '0'
+
+      # 1. Calculate the Next "Clean" Version (e.g., v1.0.2)
+      - name: Calculate Next Version
+        id: calc_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          tag_prefix: "v"
+          dry_run: true
+          release_branches: "preview,production"
+
+      # 2. Format the Final Tag Name
+      # - Production: v1.0.2
+      # - Preview: v1.0.2-beta
+      - name: Set Tag Name
+        id: format_tag
+        run: |
+          CLEAN_VER="${{ steps.calc_version.outputs.new_tag }}"
+          
+          if [[ "${{ github.ref_name }}" == "production" ]]; then
+            echo "FINAL_TAG=$CLEAN_VER" >> $GITHUB_OUTPUT
+            echo "Environment: Production ($CLEAN_VER)"
+          else
+            echo "FINAL_TAG=${CLEAN_VER}-beta" >> $GITHUB_OUTPUT
+            echo "Environment: Preview (${CLEAN_VER}-beta)"
+          fi
+
   # --- JOB 1: DEPLOY TO AWS ---
   deploy:
+    needs: calculate-version
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     env:
@@ -26,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # --- Docker Setup ---
       - name: Set up QEMU
@@ -36,7 +76,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -50,6 +90,12 @@ jobs:
               ${{ env.ECR_BASE_URL }}
 
       # --- Sentry Setup ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
       - name: Upload source maps to Sentry
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -116,47 +162,20 @@ jobs:
 
   # --- JOB 2: RELEASE (Runs only after Deploy succeeds) ---
   smart-release:
-    needs: deploy
+    needs: [ calculate-version, deploy ]
     runs-on: ubuntu-latest
-    env:
-      PREVIEW_BRANCH: preview
-      PRODUCTION_BRANCH: production
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          fetch-depth: '0' # Required for calculating version history
+          fetch-depth: '0'
 
-      # 1. Setup variables
-      - name: Set Release Config
-        id: config
-        run: |
-          if [[ "${{ github.ref_name }}" == "$PRODUCTION_BRANCH" ]]; then
-            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
-            echo "SUFFIX=" >> $GITHUB_OUTPUT
-            echo "Environment: Production (Release)"
-          else
-            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
-            echo "SUFFIX=beta" >> $GITHUB_OUTPUT
-            echo "Environment: Preview (Pre-release)"
-          fi
 
-      # 2. Calculate Tag
-      - name: Bump Version
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
-          tag_prefix: "v"
-          append_to_pre_release_tag: ${{ steps.config.outputs.SUFFIX }}
-
-      # 3. Create the Release
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          name: ${{ github.ref_name == env.PRODUCTION_BRANCH && 'Production' || 'Preview' }} Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
-          prerelease: ${{ steps.config.outputs.IS_PRERELEASE }}
+          tag_name: ${{ needs.calculate-version.outputs.final_tag }}
+          name: Release ${{ needs.calculate-version.outputs.final_tag }}
+          body: ${{ needs.calculate-version.outputs.changelog }}
+          prerelease: false
           draft: false
