@@ -89,6 +89,7 @@ export type TMDB_MovieInfo = {
   vote_count: number;
   videos: TMDB_Videos;
   release_dates: TMDB_ReleaseDates;
+  credits: Omit<TMDB_MovieCredits, 'id'>;
 };
 
 // /3/movie/${id}/credits

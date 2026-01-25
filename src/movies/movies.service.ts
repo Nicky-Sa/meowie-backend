@@ -7,7 +7,6 @@ import {
   MoviePosterInfo,
 } from 'src/movies/models/movie-info.model';
 import {
-  TMDB_MovieCredits,
   TMDB_MovieDetail,
   TMDB_MovieInfo,
   TMDB_MoviesList,
@@ -170,13 +169,13 @@ export class MoviesService {
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
     const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
       id,
-      'videos,release_dates',
+      'videos,release_dates,credits',
     );
 
     const posterPath = getImage(item.poster_path, 'poster');
     const posterProps = await this.generatePosterProps(posterPath);
     const ratings = await this.getMovieRatings(id, item.vote_average);
-    const credits = await this.getMovieCredits(id);
+    const credits = this.cleanupMovieCredits(item.credits);
 
     const data: MovieInfoResDto = {
       title: item.title,
@@ -247,19 +246,9 @@ export class MoviesService {
     return ratings;
   }
 
-  async getMovieCredits(id: number): Promise<Credits> {
-    const response = await axios.get<TMDB_MovieCredits>(
-      `${TMDB_BASE_URL}/3/movie/${id}/credits`,
-      {
-        params: {
-          api_key: this.TMDB_API_KEY,
-        },
-      },
-    );
-    const item = response.data;
-
+  cleanupMovieCredits(credits: TMDB_MovieInfo['credits']): Credits {
     // 1. Deduplicate first using a Map (Key = ID, Value = Object)
-    const uniqueCastMap = new Map(item.cast.map((cast) => [cast.id, cast]));
+    const uniqueCastMap = new Map(credits.cast.map((cast) => [cast.id, cast]));
     // 2. Convert back to array and chain your logic
     const casts: CastInfo[] = [...uniqueCastMap.values()]
       .filter((cast) => cast.known_for_department === 'Acting')
@@ -272,7 +261,7 @@ export class MoviesService {
         creditId: cast.credit_id,
         profilePath: getImage(cast.profile_path, 'person'),
       }));
-    let director = item.crew
+    let director = credits.crew
       .filter((crew) => crew.job === 'Director')
       .sort((a, b) => a.popularity - b.popularity)
       .slice(0, 1)
