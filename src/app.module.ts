@@ -15,6 +15,7 @@ import { ConstantsModule } from './constants/constants.module';
 import { PersonModule } from './person/person.module';
 import { SearchModule } from './search/search.module';
 import { MovieStatesModule } from './movie-states/movie-states.module';
+import { SeriesModule } from './series/series.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MovieStatesModule } from './movie-states/movie-states.module';
     PersonModule,
     SearchModule,
     MovieStatesModule,
+    SeriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
