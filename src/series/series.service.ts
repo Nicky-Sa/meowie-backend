@@ -1,20 +1,33 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EnvService } from '../env/env.service';
 import { CacheService } from '../cache/cache.service';
-import { TMDB_SeriesDetail, TMDB_SeriesList } from '../models/thirdparty/tmdb';
-import { SortOption } from '../movies/models/query.model';
+import {
+  TMDB_SeriesDetail,
+  TMDB_SeriesInfo,
+  TMDB_SeriesList,
+} from '../models/thirdparty/tmdb';
 import axios from 'axios';
 import { TMDB_BASE_URL } from '../utils/constants';
-import { InterestingSeriesIdsResDto, QueryParamsDto } from './dto/series.dto';
+import {
+  InterestingSeriesIdsResDto,
+  QueryParamsDto,
+  SeriesCredits,
+  SeriesInfoResDto,
+} from './dto/series.dto';
+import { Cacheable } from '../cache/cacheable.decorator';
+import { SortOption } from '../models/shared-query.model';
+import { MediaUtilsService } from '../media-utils/media-utils.service';
+import { getImage } from '../models/image.model';
+import { CastInfo } from '../models/info.model';
 
 @Injectable()
 export class SeriesService {
   private readonly TMDB_API_KEY: string;
-  private readonly logger = new Logger();
 
   constructor(
     private readonly env: EnvService,
     private readonly cacheService: CacheService,
+    private readonly mediaUtilsService: MediaUtilsService,
   ) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
   }
@@ -81,7 +94,86 @@ export class SeriesService {
     return data;
   }
 
+  @Cacheable({
+    key: (id: number, append_to_response = '') =>
+      `series-basic-info-${id}-{${append_to_response}}`,
+    ttl: 3600 * 24,
+  })
+  async getBasicSeriesInfo<T>(
+    id: number,
+    append_to_response: string = '',
+  ): Promise<T> {
+    const response = await axios.get<T>(`${TMDB_BASE_URL}/3/tv/${id}`, {
+      params: {
+        api_key: this.TMDB_API_KEY,
+        ...(append_to_response && { append_to_response }),
+      },
+    });
+    return response.data;
+  }
+
+  @Cacheable({
+    key: (id: number) => `series-info-${id}`,
+    ttl: 3600 * 24,
+  })
+  async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
+    const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(
+      id,
+      'videos,content_ratings,credits',
+    );
+    const posterPath = getImage(item.poster_path, 'poster');
+    const posterProps =
+      await this.mediaUtilsService.generatePosterProps(posterPath);
+    const ratings = await this.mediaUtilsService.getRatings(
+      'tvshow',
+      id,
+      item.vote_average,
+    );
+
+    const data: SeriesInfoResDto = {
+      title: item.name,
+      airingYears: `${item.first_air_date.slice(0, 4)} - ${item.last_air_date.slice(
+        0,
+        4,
+      )}`,
+      avgDuration: item.episode_run_time[0] + ' min',
+      contentRating: item.content_ratings.results[0].rating,
+      trailerKey: this.mediaUtilsService.findTrailerKey(item.videos),
+      posterPath,
+      overview: item.overview,
+      genres: this.mediaUtilsService.formatGenres(item.genres),
+      posterProps,
+      credits: this.constructSeriesCredits(item.credits, item.created_by),
+      ratings,
+    };
+    return data;
+  }
+
   private isSeriesValid(series: TMDB_SeriesDetail): boolean {
     return Boolean(series.name && series.overview);
+  }
+
+  private constructSeriesCredits(
+    credits: TMDB_SeriesInfo['credits'],
+    createdBy: TMDB_SeriesInfo['created_by'],
+  ): SeriesCredits {
+    return {
+      casts: this.mediaUtilsService.formatCasts(credits.cast),
+      creator: this.formatCreator(createdBy),
+    };
+  }
+
+  private formatCreator(createdBy: TMDB_SeriesInfo['created_by']): CastInfo {
+    const creator = createdBy[0];
+    if (!creator) {
+      return this.mediaUtilsService.emptyCast;
+    }
+    return {
+      id: creator.id,
+      name: creator.name,
+      character: 'Creator',
+      creditId: creator.credit_id,
+      profilePath: getImage(creator.profile_path, 'person'),
+    };
   }
 }

@@ -2,7 +2,7 @@ import {
   PERSON_FALLBACK_URL,
   POSTER_FALLBACK_URL,
   TMDB_IMAGE_BASE_URL,
-} from '../../utils/constants';
+} from '../utils/constants';
 
 export class PosterProps {
   primaryColorHex: string;

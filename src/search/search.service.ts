@@ -7,8 +7,8 @@ import {
 import { TMDB_BASE_URL } from '../utils/constants';
 import { EnvService } from '../env/env.service';
 import { MultiSearchResDto } from './dto/search.dto';
-import { getGenreName, searchGenres } from '../movies/models/genres.model';
-import { getImage } from '../movies/models/image.model';
+import { getGenreName, searchGenres } from '../models/genres.model';
+import { getImage } from '../models/image.model';
 import { extractYearFromDate } from '../utils/functions/dates';
 import { MultiSearchResults } from './models/search-results.model';
 

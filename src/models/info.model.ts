@@ -6,12 +6,7 @@ export class CastInfo {
   profilePath: string;
 }
 
-export class Credits {
-  casts: CastInfo[];
-  director: CastInfo;
-}
-
-export class MoviePosterInfo {
+export class PosterInfo {
   id: number;
   posterPath: string;
   blurhash: string;

@@ -4,7 +4,7 @@ import { TMDB_MovieCredits, TMDB_Person } from '../models/thirdparty/tmdb';
 import { EnvService } from '../env/env.service';
 import { TMDB_BASE_URL } from '../utils/constants';
 import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
-import { getImage } from '../movies/models/image.model';
+import { getImage } from '../models/image.model';
 import { CacheService } from 'src/cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
 

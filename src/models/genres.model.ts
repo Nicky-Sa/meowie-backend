@@ -1,4 +1,4 @@
-import { GENRES } from '../../constants/items/genres.constant';
+import { GENRES } from '../constants/items/genres.constant';
 
 export const getGenreName = (id: number) => {
   return GENRES.find((genre) => genre.id === id)?.name ?? '';

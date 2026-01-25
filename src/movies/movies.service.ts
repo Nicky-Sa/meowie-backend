@@ -1,64 +1,37 @@
 import axios from 'axios';
 import { EnvService } from 'src/env/env.service';
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  CastInfo,
-  Credits,
-  MoviePosterInfo,
-} from 'src/movies/models/movie-info.model';
+import { Injectable } from '@nestjs/common';
+import { CastInfo, PosterInfo } from 'src/models/info.model';
 import {
   TMDB_MovieDetail,
   TMDB_MovieInfo,
   TMDB_MoviesList,
+  TMDB_ReleaseDates,
 } from 'src/models/thirdparty/tmdb';
-import {
-  RATING_SOURCES,
-  Whatson_MediaItem,
-} from 'src/models/thirdparty/whatson';
-import {
-  cleanRating,
-  findCertification,
-  findTrailerKey,
-  formatDuration,
-  screeningStatus,
-} from 'src/movies/utils';
-import { Vibrant } from 'node-vibrant/node';
-import { getImage, PosterProps } from './models/image.model';
-import sharp from 'sharp';
-import { encode } from 'blurhash';
+import { getImage } from '../models/image.model';
 import {
   MovieInfoResDto,
   MoviePosterResDto,
   InterestingMovieIdsResDto,
   QueryParamsDto,
+  MovieCredits,
 } from './dto/movies.dto';
-import {
-  PERSON_FALLBACK_URL,
-  TMDB_BASE_URL,
-  WHATSON_BASE_URL,
-} from '../utils/constants';
+import { TMDB_BASE_URL } from '../utils/constants';
 import pLimit from 'p-limit';
-import { getGenreEmoji } from './models/genres.model';
-import { SortOption } from './models/query.model';
-import { RatingEntry } from './models/ratings.model';
 import { CacheService } from '../cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
+import { SortOption } from '../models/shared-query.model';
+import { MediaUtilsService } from '../media-utils/media-utils.service';
+import { extractYearFromDate } from '../utils/functions/dates';
 
 @Injectable()
 export class MoviesService {
   private readonly TMDB_API_KEY: string;
-  private readonly logger = new Logger();
-  private readonly emptyCast: CastInfo = {
-    id: -1,
-    name: 'N/A',
-    character: '',
-    creditId: '',
-    profilePath: PERSON_FALLBACK_URL,
-  };
 
   constructor(
     private readonly env: EnvService,
     private readonly cacheService: CacheService,
+    private readonly mediaUtilsService: MediaUtilsService,
   ) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
   }
@@ -173,95 +146,42 @@ export class MoviesService {
     );
 
     const posterPath = getImage(item.poster_path, 'poster');
-    const posterProps = await this.generatePosterProps(posterPath);
-    const ratings = await this.getMovieRatings(id, item.vote_average);
-    const credits = this.cleanupMovieCredits(item.credits);
+    const posterProps =
+      await this.mediaUtilsService.generatePosterProps(posterPath);
+    const ratings = await this.mediaUtilsService.getRatings(
+      'movie',
+      id,
+      item.vote_average,
+    );
 
     const data: MovieInfoResDto = {
       title: item.title,
-      screeningStatus: screeningStatus(item.release_date, item.release_dates),
+      screeningStatus: this.screeningStatus(
+        item.release_date,
+        item.release_dates,
+      ),
       overview: item.overview || 'N/A',
       posterPath,
-      duration: formatDuration(item.runtime),
-      certification: findCertification(item.release_dates),
-      trailerKey: findTrailerKey(item.videos),
-      genres: item.genres.map((genre) => ({
-        ...genre,
-        emoji: getGenreEmoji(genre.id),
-      })),
+      duration: this.mediaUtilsService.formatDuration(item.runtime),
+      certification: this.findCertification(item.release_dates),
+      trailerKey: this.mediaUtilsService.findTrailerKey(item.videos),
+      genres: this.mediaUtilsService.formatGenres(item.genres),
       ratings,
       posterProps,
-      credits,
+      credits: this.constructMovieCredits(item.credits),
     };
 
     return data;
   }
 
-  async getMovieRatings(
-    id: number,
-    tmdbVoteAverage: number,
-  ): Promise<RatingEntry[]> {
-    let ratings: RatingEntry[] = [];
-
-    try {
-      const response = await axios.get<Whatson_MediaItem>(
-        `${WHATSON_BASE_URL}/movie/${id}`,
-      );
-      const item = response.data;
-      // 1. IMDb ⭐
-      ratings.push({
-        source: 'IMDb',
-        value: item.imdb?.users_rating ? `${item.imdb.users_rating}` : 'N/A',
-      });
-
-      // 2. Rotten Tomatoes 🍅
-      // Prioritizing Critics' Rating (Tomatometer)
-      ratings.push({
-        source: 'Rotten Tomatoes',
-        value: cleanRating(item.rotten_tomatoes?.critics_rating, '%'),
-      });
-
-      // 3. Metacritic Ⓜ️
-      // Prioritizing Critics Rating (Metascore)
-      ratings.push({
-        source: 'Metacritic',
-        value: cleanRating(item.metacritic?.critics_rating),
-      });
-
-      // 4. TMDB 🎬
-      ratings.push({
-        source: 'TMDB',
-        value: cleanRating(item.tmdb?.users_rating || tmdbVoteAverage),
-      });
-    } catch {
-      ratings = RATING_SOURCES.map((source) => ({
-        source,
-        value: 'N/A',
-      }));
-      if (tmdbVoteAverage) {
-        ratings.find((rating) => rating.source === 'TMDB')!.value =
-          cleanRating(tmdbVoteAverage);
-      }
-    }
-    return ratings;
+  constructMovieCredits(credits: TMDB_MovieInfo['credits']): MovieCredits {
+    const casts = this.mediaUtilsService.formatCasts(credits.cast);
+    const director = this.findDirector(credits);
+    return { casts, director };
   }
 
-  cleanupMovieCredits(credits: TMDB_MovieInfo['credits']): Credits {
-    // 1. Deduplicate first using a Map (Key = ID, Value = Object)
-    const uniqueCastMap = new Map(credits.cast.map((cast) => [cast.id, cast]));
-    // 2. Convert back to array and chain your logic
-    const casts: CastInfo[] = [...uniqueCastMap.values()]
-      .filter((cast) => cast.known_for_department === 'Acting')
-      .sort((a, b) => a.order - b.order)
-      .slice(0, 5)
-      .map((cast) => ({
-        id: cast.id,
-        name: cast.name,
-        character: `${cast.known_for_department}: ${cast.character}`,
-        creditId: cast.credit_id,
-        profilePath: getImage(cast.profile_path, 'person'),
-      }));
-    let director = credits.crew
+  private findDirector(credits: TMDB_MovieInfo['credits']): CastInfo {
+    const director = credits.crew
       .filter((crew) => crew.job === 'Director')
       .sort((a, b) => a.popularity - b.popularity)
       .slice(0, 1)
@@ -273,9 +193,9 @@ export class MoviesService {
         profilePath: getImage(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
-      director = this.emptyCast;
+      return this.mediaUtilsService.emptyCast;
     }
-    return { casts, director };
+    return director;
   }
 
   getMoviesPoster(moviesList: TMDB_MoviesList): MoviePosterResDto {
@@ -288,7 +208,7 @@ export class MoviesService {
     return { results: moviePosterInfoResults, ...rest };
   }
 
-  private getMoviePosterSingle(movie: TMDB_MovieDetail): MoviePosterInfo {
+  private getMoviePosterSingle(movie: TMDB_MovieDetail): PosterInfo {
     const posterPath = getImage(movie.poster_path, 'poster');
     const blurhash = 'U11o;?of00of00of00of00of00of00of00of';
     const data = {
@@ -303,63 +223,77 @@ export class MoviesService {
     return Boolean(movie.title && movie.overview);
   }
 
-  @Cacheable({
-    key: (url: string) => `poster-props-${url}`,
-    ttl: 3600 * 24 * 30,
-  })
-  private async generatePosterProps(url: string): Promise<PosterProps> {
-    let primaryColorHex = '#1F3854';
-    let blurhash = 'U11o;?of00of00of00of00of00of00of00of';
+  private findCertification(
+    releaseDates: TMDB_ReleaseDates,
+    country: string = 'US',
+  ) {
+    const certification =
+      releaseDates.results.find((result) => result.iso_3166_1 === country)
+        ?.release_dates[0].certification || 'N/A';
 
-    try {
-      const response = await axios.get<ArrayBuffer>(url, {
-        responseType: 'arraybuffer',
-      });
-      const buffer = Buffer.from(response.data);
+    return certification;
+  }
 
-      const [hexResult, blurhashResult] = await Promise.allSettled([
-        this.getPrimaryColorHex(buffer),
-        this.getBlurhash(buffer),
-      ]);
+  private screeningStatus(
+    releaseDate: string,
+    releaseDates: TMDB_ReleaseDates,
+    country: string = 'US',
+  ): string {
+    const fallback = extractYearFromDate(releaseDate);
+    const data = releaseDates.results.find(
+      (result) => result.iso_3166_1 === country,
+    );
 
-      if (hexResult.status === 'fulfilled' && hexResult.value) {
-        primaryColorHex = hexResult.value;
+    if (!data) return fallback;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1. Check for Premiere Event (Type 1) - STRICTLY TODAY
+    const premiere = data.release_dates.find((d) => d.type === 1);
+    if (premiere) {
+      const premiereDate = new Date(premiere.release_date);
+      if (premiereDate.toDateString() === today.toDateString()) {
+        return 'Premiere';
       }
-
-      if (blurhashResult.status === 'fulfilled' && blurhashResult.value) {
-        blurhash = blurhashResult.value;
-      }
-
-      return { primaryColorHex, blurhash };
-    } catch (error) {
-      if (error instanceof AggregateError) {
-        this.logger.error(
-          `AggregateError generating poster props: ${error.message}\n`,
-          `Errors: ${error.errors.join('\n ')}`,
-        );
-      }
-      this.logger.error(`Error generating poster props: ${error}`);
     }
-    return {
-      primaryColorHex,
-      blurhash,
-    };
-  }
 
-  private async getPrimaryColorHex(
-    buffer: Buffer,
-  ): Promise<string | undefined> {
-    const palette = await Vibrant.from(buffer).getPalette();
-    return palette.LightVibrant?.hex;
-  }
+    // 2. Find the EARLIEST Public Release (Types 2, 3, 4, 5, 6)
+    // We filter out Type 1 (Premiere) because that doesn't count as "publicly released".
+    const publicReleases = data.release_dates
+      .filter((d) => d.type >= 2 && d.type <= 6)
+      .sort(
+        (a, b) =>
+          new Date(a.release_date).getTime() -
+          new Date(b.release_date).getTime(),
+      );
 
-  private async getBlurhash(buffer: Buffer): Promise<string | undefined> {
-    const { data, info } = await sharp(buffer)
-      .raw()
-      .ensureAlpha()
-      .resize(32, 32, { fit: 'inside' })
-      .toBuffer({ resolveWithObject: true });
+    if (publicReleases.length === 0) return fallback;
 
-    return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4);
+    const firstRelease = publicReleases[0];
+    const firstReleaseDate = new Date(firstRelease.release_date);
+
+    // 3. Upcoming Check (Applies to ANY release type)
+    if (firstReleaseDate > today) {
+      return 'Upcoming';
+    }
+
+    // 4. In Cinemas Check (Only applies if it WAS a theatrical release)
+    // We still need to find the specific theatrical entry to check the 60-day window.
+    const theatricalRelease =
+      data.release_dates.find((d) => d.type === 3) ||
+      data.release_dates.find((d) => d.type === 2);
+
+    if (theatricalRelease) {
+      const theatricalDate = new Date(theatricalRelease.release_date);
+      const diffTime = today.getTime() - theatricalDate.getTime();
+      const daysSinceRelease = diffTime / (1000 * 60 * 60 * 24);
+
+      if (daysSinceRelease >= 0 && daysSinceRelease <= 60) {
+        return 'In cinemas';
+      }
+    }
+
+    return extractYearFromDate(firstRelease.release_date);
   }
 }
