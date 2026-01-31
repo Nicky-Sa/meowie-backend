@@ -1,39 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-import { TMDB_MovieCredits, TMDB_Person } from '../models/thirdparty/tmdb';
-import { EnvService } from '../env/env.service';
-import { TMDB_BASE_URL } from '../utils/constants';
+import { TMDB_MovieCredits } from '../tmdb/tmdb.type';
 import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
-import { getImage } from '../models/image.model';
+import { getImage } from '../images/images.utils';
 import { CacheService } from 'src/cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
+import { TmdbService } from '../tmdb/tmdb.service';
 
 @Injectable()
 export class PersonService {
-  private readonly TMDB_API_KEY: string;
-
   constructor(
-    private readonly env: EnvService,
+    private readonly tmdbService: TmdbService,
     private readonly cacheService: CacheService,
-  ) {
-    this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
-  }
+  ) {}
 
   async getPersonInfo(id: number) {
     try {
-      const response = await axios.get<TMDB_Person>(
-        `${TMDB_BASE_URL}/3/person/${id}`,
-        {
-          params: {
-            api_key: this.TMDB_API_KEY,
-          },
-        },
-      );
+      const response = await this.tmdbService.getPerson(id);
       const data: PersonResDto = {
-        id: response.data.id,
-        name: response.data.name,
-        profilePath: getImage(response.data.profile_path, 'person'),
-        knownForDepartment: response.data.known_for_department.toLowerCase(),
+        id: response.id,
+        name: response.name,
+        profilePath: getImage(response.profile_path, 'person'),
+        knownForDepartment: response.known_for_department.toLowerCase(),
       };
       return data;
     } catch (error) {
@@ -51,15 +38,8 @@ export class PersonService {
     movieId: number,
   ): Promise<RoleInMovieResDto> {
     try {
-      const response = await axios.get<TMDB_MovieCredits>(
-        `${TMDB_BASE_URL}/3/movie/${movieId}/credits`,
-        {
-          params: {
-            api_key: this.TMDB_API_KEY,
-          },
-        },
-      );
-      const role = this.findRoleInCredits(response.data, personId);
+      const response = await this.tmdbService.getMovieCredits(movieId);
+      const role = this.findRoleInCredits(response, personId);
       return { role };
     } catch {
       return { role: 'N/A' };

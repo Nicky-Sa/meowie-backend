@@ -5,9 +5,3 @@ export class CastInfo {
   creditId: string;
   profilePath: string;
 }
-
-export class PosterInfo {
-  id: number;
-  posterPath: string;
-  blurhash: string;
-}

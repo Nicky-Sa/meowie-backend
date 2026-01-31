@@ -1,8 +1,16 @@
-import { Controller, Get, Header, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  Param,
+  UseInterceptors,
+} from '@nestjs/common';
 import { PersonService } from './person.service';
 import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
+import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
 
 @Controller('person')
+@UseInterceptors(TMDBErrorInterceptor)
 export class PersonController {
   constructor(private readonly personService: PersonService) {}
 

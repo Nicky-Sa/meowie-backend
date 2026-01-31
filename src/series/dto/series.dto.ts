@@ -1,11 +1,10 @@
-import { PaginatedResponse } from '../../models/paginated-results.model';
+import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { Browse, Filters } from '../../movies/models/query.model';
+import { Browse, Filters, Page, Sort } from '../../common/types/media-query';
 import { Genre } from '../../constants/items/genres.constant';
-import { PosterProps } from '../../models/image.model';
-import { CastInfo } from '../../models/info.model';
-import { RatingEntry } from '../../models/ratings.model';
-import { Page, Sort } from '../../models/shared-query.model';
+import { PosterProps } from '../../types/poster';
+import { CastInfo } from '../../types/cast';
+import { RatingEntry } from '../../ratings/types/rating.type';
 
 export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
@@ -21,6 +20,7 @@ export class SeriesCredits {
   casts: CastInfo[];
   creator: CastInfo;
 }
+
 export class SeriesInfoResDto {
   title: string;
   airingYears: `${string} - ${string}`;

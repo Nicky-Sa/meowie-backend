@@ -8,10 +8,12 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from '../../users/entities/users.entity';
+import { MediaType } from '../../types/media-type';
+import { LibraryCategory } from '../library.constants';
 
-@Entity('saved')
-@Unique(['userId', 'tmdbId']) // Ensures a user can only save a movie once
-export class Saved {
+@Entity('library_items')
+@Unique(['userId', 'tmdbId', 'mediaType', 'category'])
+export class LibraryItem {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -23,9 +25,17 @@ export class Saved {
   @Column({ type: 'int' })
   tmdbId: number;
 
+  @Index()
+  @Column()
+  mediaType: MediaType;
+
+  @Index()
+  @Column()
+  category: LibraryCategory;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.saved, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.libraryItems, { onDelete: 'CASCADE' })
   user: User;
 }

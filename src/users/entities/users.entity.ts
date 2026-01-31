@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Saved } from '../../movie-states/entities/saved.entity';
+import { LibraryItem } from '../../library/entities/library-item.entity';
 
 @Entity({
   name: 'users',
@@ -31,6 +31,6 @@ export class User {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @OneToMany(() => Saved, (saved) => saved.user)
-  saved: Saved[];
+  @OneToMany(() => LibraryItem, (item) => item.user)
+  libraryItems: LibraryItem[];
 }

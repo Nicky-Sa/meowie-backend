@@ -1,4 +1,4 @@
-import { PaginatedResponse } from '../paginated-results.model';
+import { PaginatedResponse } from '../common/types/paginated-response';
 
 //--------------------------------------------------
 // Movies
@@ -300,7 +300,7 @@ export type TMDB_SeriesInfo = {
   production_countries: TMDB_ProductionCountry[];
   seasons: Season[];
   spoken_languages: TMDB_SpokenLanguage[];
-  status: string;
+  status: 'Ended' | 'Returning Series';
   tagline: string;
   type: string;
   vote_average: number;
@@ -361,4 +361,44 @@ type Season = {
   poster_path: string;
   season_number: number;
   vote_average: number;
+};
+
+//--------------------------------------------------
+// Query Params
+
+export type TMDB_SortOption =
+  | 'popularity.desc'
+  | 'popularity.asc'
+  | 'vote_average.desc'
+  | 'vote_average.asc'
+  | 'primary_release_date.desc'
+  | 'primary_release_date.asc'
+  | 'vote_count.desc'
+  | 'vote_count.asc';
+
+export type TMDB_DiscoverQuery = {
+  page?: number;
+  sort_by?: TMDB_SortOption;
+  with_genres?: string;
+  with_people?: string | number;
+  with_original_language?: string;
+  'primary_release_date.gte'?: string;
+  'primary_release_date.lte'?: string;
+  'first_air_date.gte'?: string;
+  'first_air_date.lte'?: string;
+  'vote_average.gte'?: number | string;
+  'vote_average.lte'?: number | string;
+  'vote_count.gte'?: number | string;
+  'with_runtime.gte'?: number | string;
+  include_adult?: boolean;
+};
+
+export type TMDB_SearchQuery = {
+  query: string;
+  page?: number;
+  include_adult?: boolean;
+  region?: string;
+  year?: number;
+  primary_release_year?: number;
+  first_air_date_year?: number;
 };

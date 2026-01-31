@@ -10,10 +10,10 @@ import { MoviesService } from './movies.service';
 import {
   InterestingMovieIdsResDto,
   MovieInfoResDto,
-  MoviePosterResDto,
   QueryParamsDto,
 } from './dto/movies.dto';
-import { TMDBErrorInterceptor } from '../utils/tmdb-error.interceptor';
+import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
+import { PosterResDto } from '../common/dto/poster.dto';
 
 @Controller('movies')
 @UseInterceptors(TMDBErrorInterceptor)
@@ -34,13 +34,13 @@ export class MoviesController {
     return this.moviesService.getMovieInfo(id);
   }
 
-  @Get('/poster')
+  @Get('/posters')
   @Header('Cache-Control', 'public, max-age=3600')
   async getPostersInBulk(
     @Query() query: QueryParamsDto,
-  ): Promise<MoviePosterResDto> {
+  ): Promise<PosterResDto> {
     const discoveredMoviesList =
       await this.moviesService.getDiscoveredMovies(query);
-    return this.moviesService.getMoviesPoster(discoveredMoviesList);
+    return this.moviesService.getMoviesPosters(discoveredMoviesList);
   }
 }

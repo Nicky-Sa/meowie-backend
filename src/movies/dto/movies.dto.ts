@@ -1,11 +1,10 @@
-import { PosterProps } from '../../models/image.model';
-import { CastInfo, PosterInfo } from '../../models/info.model';
+import { PosterProps } from '../../types/poster';
+import { CastInfo } from '../../types/cast';
 import { Genre } from '../../constants/items/genres.constant';
-import { RatingEntry } from '../../models/ratings.model';
-import { PaginatedResponse } from '../../models/paginated-results.model';
+import { RatingEntry } from '../../ratings/types/rating.type';
+import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { Browse, Filters } from '../models/query.model';
-import { Page, Sort } from '../../models/shared-query.model';
+import { Browse, Filters, Page, Sort } from '../../common/types/media-query';
 
 export class InterestingMovieIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
@@ -22,7 +21,7 @@ export class MovieCredits {
   director: CastInfo;
 }
 
-// Combines MovieDetails and AllRatings into one parent class
+// Combines MovieDetails and Ratings into one parent class
 export class MovieInfoResDto {
   title: string;
   screeningStatus: string | null;
@@ -35,9 +34,4 @@ export class MovieInfoResDto {
   posterProps: PosterProps;
   credits: MovieCredits;
   ratings: RatingEntry[];
-}
-
-export class MoviePosterResDto extends PaginatedResponse<PosterInfo> {
-  @ApiProperty({ type: [PosterInfo] })
-  declare results: PosterInfo[];
 }

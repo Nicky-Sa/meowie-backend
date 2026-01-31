@@ -10,7 +10,7 @@ import { map } from 'rxjs/operators';
 import {
   LoggableObject,
   redactSensitiveInfo,
-} from './functions/redact-sensitive-info';
+} from '../../utils/redact-sensitive-info';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {

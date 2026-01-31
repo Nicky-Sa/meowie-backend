@@ -27,6 +27,7 @@ export const Cacheable = (options: CacheableOptions) => {
         );
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const cacheKey = options.key(...args);
 
       // Get from cache
@@ -36,7 +37,7 @@ export const Cacheable = (options: CacheableOptions) => {
       }
 
       // Call original method (using .call to preserve strict typing)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-argument
       const result = await originalMethod.call(this, ...args);
 
       // Set cache

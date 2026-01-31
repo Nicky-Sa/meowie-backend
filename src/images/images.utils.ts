@@ -2,12 +2,7 @@ import {
   PERSON_FALLBACK_URL,
   POSTER_FALLBACK_URL,
   TMDB_IMAGE_BASE_URL,
-} from '../utils/constants';
-
-export class PosterProps {
-  primaryColorHex: string;
-  blurhash: string;
-}
+} from '../common/app.constants';
 
 export const getImage = (
   path: string | null | undefined,

@@ -1,4 +1,4 @@
-import { loadEnv } from '../../env/env.config';
+import { loadEnv } from '../env/env.config';
 
 export type LoggableObject = Record<string, unknown>;
 const env = loadEnv();

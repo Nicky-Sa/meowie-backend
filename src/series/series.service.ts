@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { EnvService } from '../env/env.service';
 import { CacheService } from '../cache/cache.service';
 import {
   TMDB_SeriesDetail,
   TMDB_SeriesInfo,
   TMDB_SeriesList,
-} from '../models/thirdparty/tmdb';
-import axios from 'axios';
-import { TMDB_BASE_URL } from '../utils/constants';
+} from '../tmdb/tmdb.type';
 import {
   InterestingSeriesIdsResDto,
   QueryParamsDto,
@@ -15,22 +12,27 @@ import {
   SeriesInfoResDto,
 } from './dto/series.dto';
 import { Cacheable } from '../cache/cacheable.decorator';
-import { SortOption } from '../models/shared-query.model';
-import { MediaUtilsService } from '../media-utils/media-utils.service';
-import { getImage } from '../models/image.model';
-import { CastInfo } from '../models/info.model';
+import { SortOption } from '../common/types/media-query';
+import { getImage } from '../images/images.utils';
+import { CastInfo } from '../types/cast';
+import { TmdbService } from '../tmdb/tmdb.service';
+import { ImagesService } from '../images/images.service';
+import { RatingsService } from '../ratings/ratings.service';
+import {
+  findTrailerKey,
+  formatCasts,
+  formatGenres,
+  emptyCast,
+} from '../utils/media';
 
 @Injectable()
 export class SeriesService {
-  private readonly TMDB_API_KEY: string;
-
   constructor(
-    private readonly env: EnvService,
+    private readonly tmdb: TmdbService,
     private readonly cacheService: CacheService,
-    private readonly mediaUtilsService: MediaUtilsService,
-  ) {
-    this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
-  }
+    private readonly ratingsService: RatingsService,
+    private readonly imagesService: ImagesService,
+  ) {}
 
   async getDiscoveredSeries(
     query: QueryParamsDto,
@@ -40,41 +42,34 @@ export class SeriesService {
     const sort =
       query.sort === SortOption.RANDOM ? 'vote_count.desc' : query.sort;
 
-    const response = await axios.get<TMDB_SeriesList>(
-      `${TMDB_BASE_URL}/3/discover/tv`,
-      {
-        params: {
-          api_key: this.TMDB_API_KEY,
-          include_adult: false,
-          sort_by: sort,
-          ...(query.genres && {
-            with_genres: query.genres.replaceAll(',', '|'),
-          }),
-          ...(query.personId && {
-            with_people: query.personId,
-          }),
-          ...(query.languages && {
-            with_original_language: query.languages.replaceAll(',', '|'),
-          }),
-          ...(query.decade && {
-            'primary_release_date.gte': `${query.decade}-01-01`,
-            'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
-          }),
-          ...(query.tmdbRatings && {
-            'vote_average.gte': query.tmdbRatings.split(',')[0],
-            'vote_average.lte': query.tmdbRatings.split(',')[1],
-          }),
-          page: query.page ?? 1,
-          ...tmdbQuery,
-        },
-      },
-    );
+    const response = await this.tmdb.getDiscover<TMDB_SeriesList>('tv', {
+      sort_by: sort,
+      ...(query.genres && {
+        with_genres: query.genres.replaceAll(',', '|'),
+      }),
+      ...(query.personId && {
+        with_people: query.personId,
+      }),
+      ...(query.languages && {
+        with_original_language: query.languages.replaceAll(',', '|'),
+      }),
+      ...(query.decade && {
+        'primary_release_date.gte': `${query.decade}-01-01`,
+        'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
+      }),
+      ...(query.tmdbRatings && {
+        'vote_average.gte': query.tmdbRatings.split(',')[0],
+        'vote_average.lte': query.tmdbRatings.split(',')[1],
+      }),
+      page: query.page ?? 1,
+      ...tmdbQuery,
+    });
 
-    const validSeries = response.data.results.filter((series) =>
+    const validSeries = response.results.filter((series) =>
       this.isSeriesValid(series),
     );
     return {
-      ...response.data,
+      ...response,
       results: validSeries,
     };
   }
@@ -103,13 +98,7 @@ export class SeriesService {
     id: number,
     append_to_response: string = '',
   ): Promise<T> {
-    const response = await axios.get<T>(`${TMDB_BASE_URL}/3/tv/${id}`, {
-      params: {
-        api_key: this.TMDB_API_KEY,
-        ...(append_to_response && { append_to_response }),
-      },
-    });
-    return response.data;
+    return this.tmdb.getDetails<T>('tv', id, append_to_response);
   }
 
   @Cacheable({
@@ -123,8 +112,8 @@ export class SeriesService {
     );
     const posterPath = getImage(item.poster_path, 'poster');
     const posterProps =
-      await this.mediaUtilsService.generatePosterProps(posterPath);
-    const ratings = await this.mediaUtilsService.getRatings(
+      await this.imagesService.generatePosterProps(posterPath);
+    const ratings = await this.ratingsService.getRatings(
       'tvshow',
       id,
       item.vote_average,
@@ -132,16 +121,17 @@ export class SeriesService {
 
     const data: SeriesInfoResDto = {
       title: item.name,
-      airingYears: `${item.first_air_date.slice(0, 4)} - ${item.last_air_date.slice(
-        0,
-        4,
-      )}`,
-      avgDuration: item.episode_run_time[0] + ' min',
-      contentRating: item.content_ratings.results[0].rating,
-      trailerKey: this.mediaUtilsService.findTrailerKey(item.videos),
+      airingYears: this.constructAiringYears(
+        item.first_air_date,
+        item.last_air_date,
+        item.status,
+      ),
+      avgDuration: `${item.episode_run_time[0] || 'N/A'} min`,
+      contentRating: this.findContentRating(item.content_ratings),
+      trailerKey: findTrailerKey(item.videos),
       posterPath,
       overview: item.overview,
-      genres: this.mediaUtilsService.formatGenres(item.genres),
+      genres: formatGenres(item.genres),
       posterProps,
       credits: this.constructSeriesCredits(item.credits, item.created_by),
       ratings,
@@ -158,7 +148,7 @@ export class SeriesService {
     createdBy: TMDB_SeriesInfo['created_by'],
   ): SeriesCredits {
     return {
-      casts: this.mediaUtilsService.formatCasts(credits.cast),
+      casts: formatCasts(credits.cast),
       creator: this.formatCreator(createdBy),
     };
   }
@@ -166,7 +156,7 @@ export class SeriesService {
   private formatCreator(createdBy: TMDB_SeriesInfo['created_by']): CastInfo {
     const creator = createdBy[0];
     if (!creator) {
-      return this.mediaUtilsService.emptyCast;
+      return emptyCast;
     }
     return {
       id: creator.id,
@@ -175,5 +165,26 @@ export class SeriesService {
       creditId: creator.credit_id,
       profilePath: getImage(creator.profile_path, 'person'),
     };
+  }
+
+  private findContentRating(
+    contentRatings: TMDB_SeriesInfo['content_ratings'],
+    country: string = 'US',
+  ) {
+    return (
+      contentRatings.results.find((result) => result.iso_3166_1 === country)
+        ?.rating || 'N/A'
+    );
+  }
+
+  private constructAiringYears(
+    firstAirDate: string,
+    lastAirDate: string,
+    status: TMDB_SeriesInfo['status'],
+  ): `${string} - ${string}` {
+    if (status === 'Returning Series') {
+      return `${firstAirDate.slice(0, 4)} - Present`;
+    }
+    return `${firstAirDate.slice(0, 4)} - ${lastAirDate.slice(0, 4)}`;
   }
 }

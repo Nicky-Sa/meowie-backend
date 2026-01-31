@@ -14,8 +14,10 @@ import { getDataSourceOptions } from './database/database.config';
 import { ConstantsModule } from './constants/constants.module';
 import { PersonModule } from './person/person.module';
 import { SearchModule } from './search/search.module';
-import { MovieStatesModule } from './movie-states/movie-states.module';
+import { LibraryModule } from './library/library.module';
 import { SeriesModule } from './series/series.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -34,9 +36,13 @@ import { SeriesModule } from './series/series.module';
     EmailModule,
     ConstantsModule,
     PersonModule,
+    ConstantsModule,
+    PersonModule,
     SearchModule,
-    MovieStatesModule,
+    LibraryModule,
     SeriesModule,
+    RatingsModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

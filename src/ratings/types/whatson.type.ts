@@ -175,12 +175,3 @@ type BoxOfficeMojoData = {
   url: string;
   lifetime_gross: number;
 };
-
-export const RATING_SOURCES = [
-  'IMDb',
-  'Rotten Tomatoes',
-  'Metacritic',
-  'TMDB',
-] as const;
-
-export type Rating_Source = (typeof RATING_SOURCES)[number];

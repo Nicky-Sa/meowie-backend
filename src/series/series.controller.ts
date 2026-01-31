@@ -7,7 +7,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { SeriesService } from './series.service';
-import { TMDBErrorInterceptor } from '../utils/tmdb-error.interceptor';
+import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
 import {
   InterestingSeriesIdsResDto,
   QueryParamsDto,

@@ -1,40 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-import {
-  TMDB_MultiSearch,
-  TMDB_MultiSearchDetail,
-} from '../models/thirdparty/tmdb';
-import { TMDB_BASE_URL } from '../utils/constants';
-import { EnvService } from '../env/env.service';
+import { TMDB_MultiSearchDetail } from '../tmdb/tmdb.type';
 import { MultiSearchResDto } from './dto/search.dto';
-import { getGenreName, searchGenres } from '../models/genres.model';
-import { getImage } from '../models/image.model';
-import { extractYearFromDate } from '../utils/functions/dates';
+import { getGenreName, searchGenres } from '../utils/genres';
+import { getImage } from '../images/images.utils';
+import { extractYearFromDate } from '../utils/dates';
 import { MultiSearchResults } from './models/search-results.model';
+
+import { TmdbService } from '../tmdb/tmdb.service';
 
 @Injectable()
 export class SearchService {
-  private readonly TMDB_API_KEY: string;
-
-  constructor(private readonly env: EnvService) {
-    this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
-  }
+  constructor(private readonly tmdbService: TmdbService) {}
 
   async multiSearch(query: string): Promise<MultiSearchResDto> {
     if (!query) {
       return { results: [] };
     }
-    const response = await axios.get<TMDB_MultiSearch>(
-      `${TMDB_BASE_URL}/3/search/multi`,
-      {
-        params: {
-          api_key: this.TMDB_API_KEY,
-          query,
-        },
-      },
-    );
+    const response = await this.tmdbService.multiSearch(query);
 
-    const results: MultiSearchResults[] = response.data.results
+    const results: MultiSearchResults[] = response.results
       .filter(
         (result) =>
           result.media_type === 'person' || result.media_type === 'movie',

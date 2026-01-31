@@ -1,40 +1,43 @@
-import axios from 'axios';
-import { EnvService } from 'src/env/env.service';
 import { Injectable } from '@nestjs/common';
-import { CastInfo, PosterInfo } from 'src/models/info.model';
+import { CastInfo } from 'src/types/cast';
 import {
   TMDB_MovieDetail,
   TMDB_MovieInfo,
   TMDB_MoviesList,
   TMDB_ReleaseDates,
-} from 'src/models/thirdparty/tmdb';
-import { getImage } from '../models/image.model';
+} from 'src/tmdb/tmdb.type';
+import { getImage } from '../images/images.utils';
 import {
   MovieInfoResDto,
-  MoviePosterResDto,
   InterestingMovieIdsResDto,
   QueryParamsDto,
   MovieCredits,
 } from './dto/movies.dto';
-import { TMDB_BASE_URL } from '../utils/constants';
-import pLimit from 'p-limit';
 import { CacheService } from '../cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
-import { SortOption } from '../models/shared-query.model';
-import { MediaUtilsService } from '../media-utils/media-utils.service';
-import { extractYearFromDate } from '../utils/functions/dates';
+import { SortOption } from '../common/types/media-query';
+import { extractYearFromDate } from '../utils/dates';
+import { TmdbService } from '../tmdb/tmdb.service';
+import { RatingsService } from '../ratings/ratings.service';
+import { ImagesService } from '../images/images.service';
+import {
+  findTrailerKey,
+  formatCasts,
+  formatDuration,
+  formatGenres,
+  emptyCast,
+} from '../utils/media';
+import { PosterInfo } from '../types/poster';
+import { PosterResDto } from '../common/dto/poster.dto';
 
 @Injectable()
 export class MoviesService {
-  private readonly TMDB_API_KEY: string;
-
   constructor(
-    private readonly env: EnvService,
+    private readonly tmdb: TmdbService,
     private readonly cacheService: CacheService,
-    private readonly mediaUtilsService: MediaUtilsService,
-  ) {
-    this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
-  }
+    private readonly ratingsService: RatingsService,
+    private readonly imagesService: ImagesService,
+  ) {}
 
   async getDiscoveredMovies(
     query: QueryParamsDto,
@@ -44,40 +47,33 @@ export class MoviesService {
     const sort =
       query.sort === SortOption.RANDOM ? 'vote_count.desc' : query.sort;
 
-    const response = await axios.get<TMDB_MoviesList>(
-      `${TMDB_BASE_URL}/3/discover/movie`,
-      {
-        params: {
-          api_key: this.TMDB_API_KEY,
-          include_adult: false,
-          sort_by: sort,
-          ...(query.genres && {
-            with_genres: query.genres.replaceAll(',', '|'),
-          }),
-          ...(query.personId && {
-            with_people: query.personId,
-          }),
-          ...(query.languages && {
-            with_original_language: query.languages.replaceAll(',', '|'),
-          }),
-          ...(query.decade && {
-            'primary_release_date.gte': `${query.decade}-01-01`,
-            'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
-          }),
-          ...(query.tmdbRatings && {
-            'vote_average.gte': query.tmdbRatings.split(',')[0],
-            'vote_average.lte': query.tmdbRatings.split(',')[1],
-          }),
-          page: query.page ?? 1,
-          ...tmdbQuery,
-        },
-      },
-    );
-    const validMovies = response.data.results.filter((movie) =>
+    const response = await this.tmdb.getDiscover<TMDB_MoviesList>('movie', {
+      sort_by: sort,
+      ...(query.genres && {
+        with_genres: query.genres.replaceAll(',', '|'),
+      }),
+      ...(query.personId && {
+        with_people: query.personId,
+      }),
+      ...(query.languages && {
+        with_original_language: query.languages.replaceAll(',', '|'),
+      }),
+      ...(query.decade && {
+        'primary_release_date.gte': `${query.decade}-01-01`,
+        'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
+      }),
+      ...(query.tmdbRatings && {
+        'vote_average.gte': query.tmdbRatings.split(',')[0],
+        'vote_average.lte': query.tmdbRatings.split(',')[1],
+      }),
+      page: query.page ?? 1,
+      ...tmdbQuery,
+    });
+    const validMovies = response.results.filter((movie) =>
       this.isMovieValid(movie),
     );
     return {
-      ...response.data,
+      ...response,
       results: validMovies,
     };
   }
@@ -108,31 +104,7 @@ export class MoviesService {
     id: number,
     append_to_response: string = '',
   ): Promise<T> {
-    const response = await axios.get<T>(`${TMDB_BASE_URL}/3/movie/${id}`, {
-      params: {
-        api_key: this.TMDB_API_KEY,
-        ...(append_to_response && { append_to_response }),
-      },
-    });
-    return response.data;
-  }
-
-  async getBasicMovieInfoBulk<T>(
-    ids: number[],
-    append_to_response?: string,
-  ): Promise<T[]> {
-    // Avoid bombarding TMDB by limiting the number of concurrent requests
-    const limit = pLimit(5);
-    const moviePromises = ids.map((id) =>
-      limit(() => {
-        return this.getBasicMovieInfo<T>(id, append_to_response);
-      }),
-    );
-    const allResults = await Promise.allSettled(moviePromises);
-    const results = allResults
-      .filter((result) => result.status === 'fulfilled')
-      .map((result) => result.value);
-    return results;
+    return this.tmdb.getDetails<T>('movie', id, append_to_response);
   }
 
   @Cacheable({
@@ -147,8 +119,8 @@ export class MoviesService {
 
     const posterPath = getImage(item.poster_path, 'poster');
     const posterProps =
-      await this.mediaUtilsService.generatePosterProps(posterPath);
-    const ratings = await this.mediaUtilsService.getRatings(
+      await this.imagesService.generatePosterProps(posterPath);
+    const ratings = await this.ratingsService.getRatings(
       'movie',
       id,
       item.vote_average,
@@ -162,10 +134,10 @@ export class MoviesService {
       ),
       overview: item.overview || 'N/A',
       posterPath,
-      duration: this.mediaUtilsService.formatDuration(item.runtime),
+      duration: formatDuration(item.runtime),
       certification: this.findCertification(item.release_dates),
-      trailerKey: this.mediaUtilsService.findTrailerKey(item.videos),
-      genres: this.mediaUtilsService.formatGenres(item.genres),
+      trailerKey: findTrailerKey(item.videos),
+      genres: formatGenres(item.genres),
       ratings,
       posterProps,
       credits: this.constructMovieCredits(item.credits),
@@ -175,7 +147,7 @@ export class MoviesService {
   }
 
   constructMovieCredits(credits: TMDB_MovieInfo['credits']): MovieCredits {
-    const casts = this.mediaUtilsService.formatCasts(credits.cast);
+    const casts = formatCasts(credits.cast);
     const director = this.findDirector(credits);
     return { casts, director };
   }
@@ -193,12 +165,12 @@ export class MoviesService {
         profilePath: getImage(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
-      return this.mediaUtilsService.emptyCast;
+      return emptyCast;
     }
     return director;
   }
 
-  getMoviesPoster(moviesList: TMDB_MoviesList): MoviePosterResDto {
+  getMoviesPosters(moviesList: TMDB_MoviesList): PosterResDto {
     const { results: movies, ...rest } = moviesList;
 
     const moviePosterInfoResults = movies.map((movie) =>
