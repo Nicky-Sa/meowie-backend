@@ -6,6 +6,7 @@ import { encode } from 'blurhash';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
 import { PosterProps } from '../types/poster';
+import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
 export class ImagesService {
@@ -15,7 +16,7 @@ export class ImagesService {
 
   @Cacheable({
     key: (url: string) => `poster-props-${url}`,
-    ttl: 3600 * 24 * 30,
+    ttl: CacheDuration.ONE_MONTH,
   })
   async generatePosterProps(url: string): Promise<PosterProps> {
     let primaryColorHex = '#1F3854';

@@ -25,6 +25,7 @@ import {
   formatGenres,
   emptyCast,
 } from '../utils/media';
+import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
 export class SeriesService {
@@ -92,7 +93,7 @@ export class SeriesService {
   @Cacheable({
     key: (id: number, append_to_response = '') =>
       `series-basic-info-${id}-{${append_to_response}}`,
-    ttl: 3600 * 24,
+    ttl: CacheDuration.ONE_DAY,
   })
   async getBasicSeriesInfo<T>(
     id: number,
@@ -103,7 +104,7 @@ export class SeriesService {
 
   @Cacheable({
     key: (id: number) => `series-info-${id}`,
-    ttl: 3600 * 24,
+    ttl: CacheDuration.ONE_DAY,
   })
   async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
     const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(

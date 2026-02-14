@@ -30,6 +30,7 @@ import {
 } from '../utils/media';
 import { PosterInfo } from '../types/poster';
 import { PosterResDto } from '../common/dto/poster.dto';
+import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
 export class MoviesService {
@@ -98,7 +99,7 @@ export class MoviesService {
   @Cacheable({
     key: (id: number, append_to_response = '') =>
       `movie-basic-info-${id}-{${append_to_response}}`,
-    ttl: 3600 * 24,
+    ttl: CacheDuration.ONE_DAY,
   })
   async getBasicMovieInfo<T>(
     id: number,
@@ -109,7 +110,7 @@ export class MoviesService {
 
   @Cacheable({
     key: (id: number) => `movie-info-${id}`,
-    ttl: 3600 * 24,
+    ttl: CacheDuration.ONE_DAY,
   })
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
     const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
