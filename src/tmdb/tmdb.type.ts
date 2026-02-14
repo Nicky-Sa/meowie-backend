@@ -149,11 +149,222 @@ export type TMDB_Person = {
 };
 
 // /3/discover/movie
-export class TMDB_MoviesList extends PaginatedResponse<TMDB_MovieDetail> {
-  declare results: TMDB_MovieDetail[];
+
+export type TMDB_MovieSortOption =
+  | 'original_title.asc'
+  | 'original_title.desc'
+  | 'popularity.asc'
+  | 'popularity.desc'
+  | 'revenue.asc'
+  | 'revenue.desc'
+  | 'primary_release_date.asc'
+  | 'title.asc'
+  | 'title.desc'
+  | 'primary_release_date.desc'
+  | 'vote_average.asc'
+  | 'vote_average.desc'
+  | 'vote_count.asc'
+  | 'vote_count.desc';
+
+export type TMDB_DiscoverSeriesQuery = {
+  // --- CORE PARAMS ---
+  /**
+   * Specify the page of results to query.
+   * @default 1
+   */
+  page?: number;
+
+  /**
+   * Specify a language to query translatable fields with.
+   * Pattern: ISO 639-1 (e.g. 'en-US', 'es-ES')
+   * @default 'en-US'
+   */
+  language?: string;
+
+  /**
+   * Choose a sort option for the list of results.
+   * @default 'popularity.desc'
+   */
+  sort_by?: TMDB_SeriesSortOption;
+
+  /**
+   * Used in conjunction with the air_date.gte/lte filter to calculate the proper UTC offset.
+   * @default "America/New_York"
+   */
+  timezone?: string;
+
+  // --- FILTERS: AIR DATES ---
+  /**
+   * Filter and only include TV shows that have a first air date year
+   * that is equal to the specified value.
+   */
+  first_air_date_year?: number;
+
+  /**
+   * Filter and only include TV shows that have a first air date
+   * that is greater or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'first_air_date.gte'?: string;
+
+  /**
+   * Filter and only include TV shows that have a first air date
+   * that is less than or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'first_air_date.lte'?: string;
+
+  /**
+   * Filter and only include TV shows that have an air date (for any episode)
+   * that is greater or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'air_date.gte'?: string;
+
+  /**
+   * Filter and only include TV shows that have an air date (for any episode)
+   * that is less than or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'air_date.lte'?: string;
+
+  /**
+   * Use this filter to include TV shows that don't have an air date
+   * while using any of the "first_air_date" filters.
+   * @default false
+   */
+  include_null_first_air_dates?: boolean;
+
+  // --- FILTERS: RATINGS & VOTES ---
+  /**
+   * Filter and only include TV shows that have a vote count
+   * that is greater or equal to the specified value.
+   */
+  'vote_count.gte'?: number;
+
+  /**
+   * Filter and only include TV shows that have a rating
+   * that is greater or equal to the specified value.
+   */
+  'vote_average.gte'?: number;
+
+  /**
+   * Filter and only include TV shows that have a rating
+   * that is less than or equal to the specified value.
+   */
+  'vote_average.lte'?: number;
+
+  // --- FILTERS: GENRES & NETWORKS ---
+  /**
+   * Comma separated value of genre ids that you want to include in the results.
+   * ',' = AND
+   * '|' = OR
+   */
+  with_genres?: string;
+
+  /**
+   * Comma separated value of genre ids that you want to exclude from the results.
+   */
+  without_genres?: string;
+
+  /**
+   * Comma separated value of network ids that you want to include in the results.
+   * ',' = OR
+   * '|' = AND
+   */
+  with_networks?: string;
+
+  /**
+   * Comma separated value of keyword ids that you want to include in the results.
+   */
+  with_keywords?: string;
+
+  /**
+   * Comma separated value of keyword ids that you want to exclude from the results.
+   */
+  without_keywords?: string;
+
+  // --- FILTERS: STATUS & TYPE ---
+  /**
+   * Comma separated value of status types to include.
+   * 0: Returning Series
+   * 1: Planned
+   * 2: In Production
+   * 3: Ended
+   * 4: Canceled
+   * 5: Pilot
+   */
+  with_status?: string;
+
+  /**
+   * Comma separated value of show types to include.
+   * 0: Documentary
+   * 1: News
+   * 2: Miniseries
+   * 3: Reality
+   * 4: Scripted
+   * 5: Talk Show
+   * 6: Video
+   */
+  with_type?: string;
+
+  /**
+   * Filter and only include TV shows that have been screened theatrically.
+   */
+  screened_theatrically?: boolean;
+
+  // --- FILTERS: CONTENT & ORIGIN ---
+  /**
+   * Filter and only include TV shows that have a runtime
+   * that is greater or equal to a value (in minutes).
+   */
+  'with_runtime.gte'?: number;
+
+  /**
+   * Filter and only include TV shows that have a runtime
+   * that is less than or equal to a value (in minutes).
+   */
+  'with_runtime.lte'?: number;
+
+  /**
+   * Specify an original language to filter results by.
+   */
+  with_original_language?: string;
+
+  /**
+   * Specify an origin country to filter results by.
+   */
+  with_origin_country?: string;
+
+  /**
+   * A comma-separated list of company IDs.
+   */
+  with_companies?: string;
+
+  // --- FILTERS: STREAMING ---
+  /**
+   * A comma-separated list of Watch Provider IDs.
+   * Used in conjunction with `watch_region`.
+   */
+  with_watch_providers?: string;
+
+  /**
+   * An ISO 3166-1 code. Defines the country to check for watch providers.
+   * Required when using `with_watch_providers`.
+   */
+  watch_region?: string;
+
+  /**
+   * Filter by monetization type.
+   */
+  with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
+};
+
+export class TMDB_DiscoveredMoviesList extends PaginatedResponse<TMDB_DiscoveredMovieDetail> {
+  declare results: TMDB_DiscoveredMovieDetail[];
 }
 
-export type TMDB_MovieDetail = {
+export type TMDB_DiscoveredMovieDetail = {
   adult: boolean;
   backdrop_path: string;
   genre_ids: number[];
@@ -250,11 +461,257 @@ export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> 
 // Series
 
 // /3/discover/tv
-export class TMDB_SeriesList extends PaginatedResponse<TMDB_SeriesDetail> {
-  declare results: TMDB_SeriesDetail[];
+export type TMDB_DiscoverMovieQuery = {
+  // --- CORE PARAMS ---
+  /**
+   * Specify the page of results to query.
+   * @default 1
+   */
+  page?: number;
+
+  /**
+   * Specify a language to query translatable fields with.
+   * Pattern: ISO 639-1 (e.g. 'en-US', 'es-ES')
+   * @default 'en-US'
+   */
+  language?: string;
+
+  /**
+   * Specify a region to query release dates and content ratings.
+   * Pattern: ISO 3166-1 (e.g. 'US', 'DE')
+   */
+  region?: string;
+
+  /**
+   * Choose a sort option for the list of results.
+   * @default 'popularity.desc'
+   */
+  sort_by?: TMDB_MovieSortOption;
+
+  // --- FILTERS: CERTIFICATION & AUDIENCE ---
+  /**
+   * A filter and include or exclude items that have a certification.
+   * Used in conjunction with `certification_country`.
+   */
+  certification?: string;
+
+  /**
+   * Filter and only include movies that have a certification that is
+   * less than or equal to the specified value.
+   */
+  'certification.lte'?: string;
+
+  /**
+   * Filter and only include movies that have a certification that is
+   * greater than or equal to the specified value.
+   */
+  'certification.gte'?: string;
+
+  /**
+   * Specify a country with a valid certification.
+   * Used in conjunction with the `certification` filter.
+   */
+  certification_country?: string;
+
+  /**
+   * A filter to include or exclude adult movies.
+   * @default false
+   */
+  include_adult?: boolean;
+
+  /**
+   * A filter to include or exclude videos.
+   * @default false
+   */
+  include_video?: boolean;
+
+  // --- FILTERS: DATES ---
+  /**
+   * A filter to include or exclude movies based on a primary release year.
+   */
+  primary_release_year?: number;
+
+  /**
+   * Filter and only include movies that have a primary release date
+   * that is greater or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'primary_release_date.gte'?: string;
+
+  /**
+   * Filter and only include movies that have a primary release date
+   * that is less than or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'primary_release_date.lte'?: string;
+
+  /**
+   * Filter and only include movies that have a release date (of any type)
+   * that is greater or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'release_date.gte'?: string;
+
+  /**
+   * Filter and only include movies that have a release date (of any type)
+   * that is less than or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'release_date.lte'?: string;
+
+  /**
+   * Specify a bitmask to filter release types.
+   * 1: Premiere, 2: Theatrical (limited), 3: Theatrical, 4: Digital, 5: Physical, 6: TV
+   * Example: 2|3 (Theatrical limited OR Theatrical)
+   */
+  with_release_type?: number | string;
+
+  /**
+   * A filter to include or exclude movies based on a year.
+   * (Matches strictly the release year).
+   */
+  year?: number;
+
+  // --- FILTERS: RATINGS ---
+  /**
+   * Filter and only include movies that have a vote count
+   * that is greater or equal to the specified value.
+   */
+  'vote_count.gte'?: number;
+
+  /**
+   * Filter and only include movies that have a vote count
+   * that is less than or equal to the specified value.
+   */
+  'vote_count.lte'?: number;
+
+  /**
+   * Filter and only include movies that have a rating
+   * that is greater or equal to the specified value.
+   */
+  'vote_average.gte'?: number;
+
+  /**
+   * Filter and only include movies that have a rating
+   * that is less than or equal to the specified value.
+   */
+  'vote_average.lte'?: number;
+
+  // --- FILTERS: PEOPLE & COMPANIES ---
+  /**
+   * A comma-separated list of person IDs.
+   * Only include movies that have one of the ID's added as a an actor.
+   * Logic: OR (comma) / AND (pipe) logic varies by field, usually comma is OR for people.
+   */
+  with_cast?: string;
+
+  /**
+   * A comma-separated list of person IDs.
+   * Only include movies that have one of the ID's added as a crew member.
+   */
+  with_crew?: string;
+
+  /**
+   * A comma-separated list of person IDs.
+   * Only include movies that have one of the ID's added as a actor OR crew member.
+   */
+  with_people?: string;
+
+  /**
+   * A comma-separated list of production company IDs.
+   * Only include movies that have one of the ID's added as a production company.
+   */
+  with_companies?: string;
+
+  // --- FILTERS: GENRES & KEYWORDS ---
+  /**
+   * Comma separated value of genre ids that you want to include in the results.
+   * ',' = AND (all genres must be present)
+   * '|' = OR (at least one genre must be present)
+   */
+  with_genres?: string;
+
+  /**
+   * Comma separated value of genre ids that you want to exclude from the results.
+   */
+  without_genres?: string;
+
+  /**
+   * Comma separated value of keyword ids that you want to include in the results.
+   * ',' = AND
+   * '|' = OR
+   */
+  with_keywords?: string;
+
+  /**
+   * Comma separated value of keyword ids that you want to exclude from the results.
+   */
+  without_keywords?: string;
+
+  // --- FILTERS: TECHNICAL & ORIGIN ---
+  /**
+   * Filter and only include movies that have a runtime
+   * that is greater or equal to a value (in minutes).
+   */
+  'with_runtime.gte'?: number;
+
+  /**
+   * Filter and only include movies that have a runtime
+   * that is less than or equal to a value (in minutes).
+   */
+  'with_runtime.lte'?: number;
+
+  /**
+   * Specify an original language to filter results by.
+   */
+  with_original_language?: string;
+
+  /**
+   * Specify an origin country to filter results by.
+   * Pattern: ISO 3166-1 (e.g. 'US', 'KR')
+   */
+  with_origin_country?: string;
+
+  // --- FILTERS: STREAMING (WATCH PROVIDERS) ---
+  /**
+   * A comma-separated list of Watch Provider IDs (e.g. 8 for Netflix).
+   * Used in conjunction with `watch_region`.
+   * ',' = OR
+   * '|' = AND
+   */
+  with_watch_providers?: string;
+
+  /**
+   * An ISO 3166-1 code. Defines the country to check for watch providers.
+   * Required when using `with_watch_providers`.
+   */
+  watch_region?: string;
+
+  /**
+   * Filter by monetization type.
+   */
+  with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
+};
+
+export type TMDB_SeriesSortOption =
+  | 'first_air_date.asc'
+  | 'first_air_date.desc'
+  | 'name.asc'
+  | 'name.desc'
+  | 'original_name.asc'
+  | 'original_name.desc'
+  | 'popularity.asc'
+  | 'popularity.desc'
+  | 'vote_average.asc'
+  | 'vote_average.desc'
+  | 'vote_count.asc'
+  | 'vote_count.desc';
+
+export class TMDB_DiscoveredSeriesList extends PaginatedResponse<TMDB_DiscoveredSeriesDetail> {
+  declare results: TMDB_DiscoveredSeriesDetail[];
 }
 
-export type TMDB_SeriesDetail = {
+export type TMDB_DiscoveredSeriesDetail = {
   adult: boolean;
   backdrop_path: string;
   genre_ids: number[];
@@ -365,33 +822,6 @@ type Season = {
 
 //--------------------------------------------------
 // Query Params
-
-export type TMDB_SortOption =
-  | 'popularity.desc'
-  | 'popularity.asc'
-  | 'vote_average.desc'
-  | 'vote_average.asc'
-  | 'primary_release_date.desc'
-  | 'primary_release_date.asc'
-  | 'vote_count.desc'
-  | 'vote_count.asc';
-
-export type TMDB_DiscoverQuery = {
-  page?: number;
-  sort_by?: TMDB_SortOption;
-  with_genres?: string;
-  with_people?: string | number;
-  with_original_language?: string;
-  'primary_release_date.gte'?: string;
-  'primary_release_date.lte'?: string;
-  'first_air_date.gte'?: string;
-  'first_air_date.lte'?: string;
-  'vote_average.gte'?: number | string;
-  'vote_average.lte'?: number | string;
-  'vote_count.gte'?: number | string;
-  'with_runtime.gte'?: number | string;
-  include_adult?: boolean;
-};
 
 export type TMDB_SearchQuery = {
   query: string;

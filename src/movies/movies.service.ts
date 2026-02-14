@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CastInfo } from 'src/types/cast';
 import {
-  TMDB_MovieDetail,
+  TMDB_DiscoverMovieQuery,
+  TMDB_DiscoveredMovieDetail,
   TMDB_MovieInfo,
-  TMDB_MoviesList,
+  TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
 } from 'src/tmdb/tmdb.type';
 import { getImage } from '../images/images.utils';
@@ -41,14 +42,13 @@ export class MoviesService {
 
   async getDiscoveredMovies(
     query: QueryParamsDto,
-    tmdbQuery?: Record<string, string | number>,
-  ): Promise<TMDB_MoviesList> {
-    // Sort defaults to popularity.desc by TMDB
-    const sort =
-      query.sort === SortOption.RANDOM ? 'vote_count.desc' : query.sort;
-
-    const response = await this.tmdb.getDiscover<TMDB_MoviesList>('movie', {
-      sort_by: sort,
+    tmdbQuery?: TMDB_DiscoverMovieQuery,
+  ): Promise<TMDB_DiscoveredMoviesList> {
+    const response = await this.tmdb.getDiscover<
+      TMDB_DiscoveredMoviesList,
+      TMDB_DiscoverMovieQuery
+    >('movie', {
+      sort_by: this.constructSort(query.sort),
       ...(query.genres && {
         with_genres: query.genres.replaceAll(',', '|'),
       }),
@@ -63,8 +63,8 @@ export class MoviesService {
         'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
       }),
       ...(query.tmdbRatings && {
-        'vote_average.gte': query.tmdbRatings.split(',')[0],
-        'vote_average.lte': query.tmdbRatings.split(',')[1],
+        'vote_average.gte': Number(query.tmdbRatings.split(',')[0]),
+        'vote_average.lte': Number(query.tmdbRatings.split(',')[1]),
       }),
       page: query.page ?? 1,
       ...tmdbQuery,
@@ -170,7 +170,7 @@ export class MoviesService {
     return director;
   }
 
-  getMoviesPosters(moviesList: TMDB_MoviesList): PosterResDto {
+  getMoviesPosters(moviesList: TMDB_DiscoveredMoviesList): PosterResDto {
     const { results: movies, ...rest } = moviesList;
 
     const moviePosterInfoResults = movies.map((movie) =>
@@ -180,7 +180,7 @@ export class MoviesService {
     return { results: moviePosterInfoResults, ...rest };
   }
 
-  private getMoviePosterSingle(movie: TMDB_MovieDetail): PosterInfo {
+  private getMoviePosterSingle(movie: TMDB_DiscoveredMovieDetail): PosterInfo {
     const posterPath = getImage(movie.poster_path, 'poster');
     const blurhash = 'U11o;?of00of00of00of00of00of00of00of';
     const data = {
@@ -191,7 +191,7 @@ export class MoviesService {
     return data;
   }
 
-  private isMovieValid(movie: TMDB_MovieDetail): boolean {
+  private isMovieValid(movie: TMDB_DiscoveredMovieDetail): boolean {
     return Boolean(movie.title && movie.overview);
   }
 
@@ -267,5 +267,18 @@ export class MoviesService {
     }
 
     return extractYearFromDate(firstRelease.release_date);
+  }
+
+  private constructSort(sort: SortOption) {
+    switch (sort) {
+      case SortOption.RANDOM:
+        return 'vote_count.desc';
+      case SortOption.NEWEST:
+        return 'primary_release_date.desc';
+      case SortOption.POPULARITY:
+        return 'popularity.desc';
+      default:
+        return sort;
+    }
   }
 }

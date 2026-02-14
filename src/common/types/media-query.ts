@@ -10,8 +10,8 @@ export class Page {
 }
 
 export enum SortOption {
-  POPULARITY = 'popularity.desc',
-  RELEASE_DATE = 'primary_release_date.desc',
+  POPULARITY = 'popularity',
+  NEWEST = 'newest',
   RANDOM = 'random',
 }
 

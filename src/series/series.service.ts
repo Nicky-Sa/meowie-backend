@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '../cache/cache.service';
 import {
-  TMDB_SeriesDetail,
+  TMDB_DiscoverSeriesQuery,
+  TMDB_DiscoveredSeriesDetail,
   TMDB_SeriesInfo,
-  TMDB_SeriesList,
+  TMDB_DiscoveredSeriesList,
 } from '../tmdb/tmdb.type';
 import {
   InterestingSeriesIdsResDto,
@@ -36,14 +37,13 @@ export class SeriesService {
 
   async getDiscoveredSeries(
     query: QueryParamsDto,
-    tmdbQuery?: Record<string, string | number>,
-  ): Promise<TMDB_SeriesList> {
-    // Sort defaults to popularity.desc by TMDB
-    const sort =
-      query.sort === SortOption.RANDOM ? 'vote_count.desc' : query.sort;
-
-    const response = await this.tmdb.getDiscover<TMDB_SeriesList>('tv', {
-      sort_by: sort,
+    tmdbQuery?: TMDB_DiscoverSeriesQuery,
+  ): Promise<TMDB_DiscoveredSeriesList> {
+    const response = await this.tmdb.getDiscover<
+      TMDB_DiscoveredSeriesList,
+      TMDB_DiscoverSeriesQuery
+    >('tv', {
+      sort_by: this.constructSort(query.sort),
       ...(query.genres && {
         with_genres: query.genres.replaceAll(',', '|'),
       }),
@@ -58,8 +58,8 @@ export class SeriesService {
         'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
       }),
       ...(query.tmdbRatings && {
-        'vote_average.gte': query.tmdbRatings.split(',')[0],
-        'vote_average.lte': query.tmdbRatings.split(',')[1],
+        'vote_average.gte': Number(query.tmdbRatings.split(',')[0]),
+        'vote_average.lte': Number(query.tmdbRatings.split(',')[1]),
       }),
       page: query.page ?? 1,
       ...tmdbQuery,
@@ -139,7 +139,7 @@ export class SeriesService {
     return data;
   }
 
-  private isSeriesValid(series: TMDB_SeriesDetail): boolean {
+  private isSeriesValid(series: TMDB_DiscoveredSeriesDetail): boolean {
     return Boolean(series.name && series.overview);
   }
 
@@ -186,5 +186,18 @@ export class SeriesService {
       return `${firstAirDate.slice(0, 4)} - Present`;
     }
     return `${firstAirDate.slice(0, 4)} - ${lastAirDate.slice(0, 4)}`;
+  }
+
+  private constructSort(sort: SortOption) {
+    switch (sort) {
+      case SortOption.RANDOM:
+        return 'vote_count.desc';
+      case SortOption.NEWEST:
+        return 'first_air_date.desc';
+      case SortOption.POPULARITY:
+        return 'popularity.desc';
+      default:
+        return sort;
+    }
   }
 }

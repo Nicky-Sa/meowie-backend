@@ -9,7 +9,7 @@ import {
   ToggleLibraryItemReqDto,
 } from './dto/library.dto';
 import { TmdbService } from '../tmdb/tmdb.service';
-import { TMDB_MovieDetail } from '../tmdb/tmdb.type';
+import { TMDB_DiscoveredMovieDetail } from '../tmdb/tmdb.type';
 import { getImage } from '../images/images.utils';
 import { MediaType } from '../types/media-type';
 import { LibraryCategory } from './library.constants';
@@ -85,10 +85,11 @@ export class LibraryService {
 
     const results = await Promise.all(
       items.map(async (item) => {
-        const details = await this.tmdbService.getDetails<TMDB_MovieDetail>(
-          item.mediaType,
-          item.tmdbId,
-        );
+        const details =
+          await this.tmdbService.getDetails<TMDB_DiscoveredMovieDetail>(
+            item.mediaType,
+            item.tmdbId,
+          );
         const posterPath = getImage(details.poster_path, 'poster');
         const blurhash = 'U11o;?of00of00of00of00of00of00of00of';
         return {

@@ -5,7 +5,8 @@ import axios from 'axios';
 import { TMDB_BASE_URL } from '../common/app.constants';
 import { MediaType } from '../types/media-type';
 import {
-  TMDB_DiscoverQuery,
+  TMDB_DiscoverMovieQuery,
+  TMDB_DiscoverSeriesQuery,
   TMDB_MovieCredits,
   TMDB_MultiSearch,
   TMDB_Person,
@@ -53,11 +54,11 @@ export class TmdbService {
     });
   }
 
-  async getDiscover<T>(
-    mediaType: MediaType,
-    params: TMDB_DiscoverQuery,
-  ): Promise<T> {
-    return this.get<T, TMDB_DiscoverQuery>(`discover/${mediaType}`, params);
+  async getDiscover<
+    T,
+    Q extends TMDB_DiscoverMovieQuery | TMDB_DiscoverSeriesQuery,
+  >(mediaType: MediaType, params: Q): Promise<T> {
+    return this.get<T, Q>(`discover/${mediaType}`, params);
   }
 
   private async get<
