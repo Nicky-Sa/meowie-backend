@@ -107,12 +107,14 @@ jobs:
       # --- Build & Push ---
       - name: Build and Push Docker image
         run: |
-          docker build \
+          # Use buildx to build and push in one go (required for multi-arch/cross-compile)
+          docker buildx build \
             --platform linux/arm64 \
+            --provenance=false \
             --build-arg BUILD_ENV=${{ env.BUILD_ENV }} \
             -t ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }} \
+            --push \
             .
-          docker push ${{ env.ECR_BASE_URL }}/${{ secrets.ECR_REPO }}:${{ env.IMAGE_TAG }}
 
       # --- DEPLOYMENT STEP ---
       # --- STEP 1: Update the Code (Image) ---
@@ -132,29 +134,38 @@ jobs:
       # --- STEP 2: Update the Environment Variables ---
       - name: Update Environment Variables
         run: |
+          echo "Generating config JSON..."
+          
+          # Generating a JSON file is safer for AWS CLI than inline strings
+          cat <<EOF > env_vars.json
+          {
+            "Variables": {
+              "TMDB_API_KEY": "${{ secrets.TMDB_API_KEY }}",
+              "SENTRY_AUTH_TOKEN": "${{ secrets.SENTRY_AUTH_TOKEN }}",
+              "PORT": "${{ vars.PORT }}",
+              "BUILD_ENV": "${{ env.BUILD_ENV }}",
+              "DB_NAME": "${{ secrets.DB_NAME }}",
+              "DB_PORT": "${{ secrets.DB_PORT }}",
+              "DB_APP_USER": "${{ secrets.DB_APP_USER }}",
+              "DB_APP_PASSWORD": "${{ secrets.DB_APP_PASSWORD }}",
+              "DB_HOST_POOLING": "${{ secrets.DB_HOST_POOLING }}",
+              "DB_MIGRATOR_USER": "${{ secrets.DB_MIGRATOR_USER }}",
+              "DB_MIGRATOR_PASSWORD": "${{ secrets.DB_MIGRATOR_PASSWORD }}",
+              "DB_HOST_MIGRATOR": "${{ secrets.DB_HOST_MIGRATOR }}",
+              "REDIS_ENDPOINT": "${{ secrets.REDIS_ENDPOINT }}",
+              "SENDER_EMAIL": "${{ vars.SENDER_EMAIL }}",
+              "JWT_SECRET": "${{ secrets.JWT_SECRET }}",
+              "JWT_REFRESH_SECRET": "${{ secrets.JWT_REFRESH_SECRET }}",
+              "JWT_REFRESH_EXPIRY": "${{ vars.JWT_REFRESH_EXPIRY }}"
+            }
+          }
+          EOF
+
           echo "Updating environment variables..."
           
           aws lambda update-function-configuration \
             --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
-            --environment "Variables={ \
-              TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}, \
-              SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}, \
-              PORT=${{ vars.PORT }}, \
-              BUILD_ENV=${{ env.BUILD_ENV }}, \
-              DB_NAME=${{ secrets.DB_NAME }}, \
-              DB_PORT=${{ secrets.DB_PORT }}, \
-              DB_APP_USER=${{ secrets.DB_APP_USER }}, \
-              DB_APP_PASSWORD=${{ secrets.DB_APP_PASSWORD }}, \
-              DB_HOST_POOLING=${{ secrets.DB_HOST_POOLING }}, \
-              DB_MIGRATOR_USER=${{ secrets.DB_MIGRATOR_USER }}, \
-              DB_MIGRATOR_PASSWORD=${{ secrets.DB_MIGRATOR_PASSWORD }}, \
-              DB_HOST_MIGRATOR=${{ secrets.DB_HOST_MIGRATOR }}, \
-              REDIS_ENDPOINT=${{ secrets.REDIS_ENDPOINT }}, \
-              SENDER_EMAIL=${{ vars.SENDER_EMAIL }}, \
-              JWT_SECRET=${{ secrets.JWT_SECRET }}, \
-              JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}, \
-              JWT_REFRESH_EXPIRY=${{ vars.JWT_REFRESH_EXPIRY }}, \
-            }"
+            --environment file://env_vars.json
           
           # Wait again to ensure the config change is applied before finishing
           aws lambda wait function-updated \
