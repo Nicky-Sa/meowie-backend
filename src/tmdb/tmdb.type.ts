@@ -1,5 +1,13 @@
 import { PaginatedResponse } from '../common/types/paginated-response';
 
+export type TMDB_Genre = {
+  id: number;
+  name: string;
+};
+export type TMDB_GenresList = {
+  genres: TMDB_Genre[];
+};
+
 //--------------------------------------------------
 // Movies
 
@@ -9,11 +17,6 @@ type TMDB_BelongsToCollection = {
   name: string;
   poster_path: string;
   backdrop_path: string;
-};
-
-export type TMDB_Genre = {
-  id: number;
-  name: string;
 };
 
 type TMDB_ProductionCompany = {

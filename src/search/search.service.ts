@@ -1,22 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { TMDB_MultiSearchDetail } from '../tmdb/tmdb.type';
 import { MultiSearchResDto } from './dto/search.dto';
-import { getGenreName, searchGenres } from '../utils/genres';
 import { getImage } from '../images/images.utils';
 import { extractYearFromDate } from '../utils/dates';
 import { MultiSearchResults } from './models/search-results.model';
 
 import { TmdbService } from '../tmdb/tmdb.service';
+import { ConstantsService } from '../constants/constants.service';
 
 @Injectable()
 export class SearchService {
-  constructor(private readonly tmdbService: TmdbService) {}
+  constructor(
+    private readonly tmdbService: TmdbService,
+    private readonly constantsService: ConstantsService,
+  ) {}
 
   async multiSearch(query: string): Promise<MultiSearchResDto> {
     if (!query) {
       return { results: [] };
     }
-    const response = await this.tmdbService.multiSearch(query);
+    const [response, genresRes] = await Promise.all([
+      this.tmdbService.multiSearch(query),
+      this.constantsService.getGenres(),
+    ]);
+
+    const { movieGenres, seriesGenres } = genresRes;
+    const movieGenresMap = new Map(movieGenres.map((g) => [g.id, g.name]));
 
     const results: MultiSearchResults[] = response.results
       .filter(
@@ -41,18 +50,31 @@ export class SearchService {
               title: result.title,
               posterPath: getImage(result.poster_path, 'poster'),
               genres: result.genre_ids
-                .map((id) => getGenreName(id))
-                .filter(Boolean),
+                .map((id) => movieGenresMap.get(id))
+                .filter(Boolean) as string[],
               releaseYear: extractYearFromDate(result.release_date),
             };
         }
       });
-    const matchingGenres = searchGenres(query);
+    const matchingMovieGenres = movieGenres.filter((genre) =>
+      genre.name.toLowerCase().includes(query.toLowerCase()),
+    );
+    const matchingSeriesGenres = seriesGenres.filter((genre) =>
+      genre.name.toLowerCase().includes(query.toLowerCase()),
+    );
 
-    if (matchingGenres.length > 0) {
+    if (matchingMovieGenres.length > 0) {
       results.push(
-        ...matchingGenres.map((genre) => ({
-          mediaType: 'genre' as const,
+        ...matchingMovieGenres.map((genre) => ({
+          mediaType: 'movie-genre' as const,
+          ...genre,
+        })),
+      );
+    }
+    if (matchingSeriesGenres.length > 0) {
+      results.push(
+        ...matchingSeriesGenres.map((genre) => ({
+          mediaType: 'series-genre' as const,
           ...genre,
         })),
       );

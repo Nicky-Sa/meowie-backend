@@ -10,6 +10,7 @@ import {
   TMDB_MultiSearch,
   TMDB_Person,
   TMDB_SearchQuery,
+  TMDB_GenresList,
 } from './tmdb.type';
 
 @Injectable()
@@ -28,6 +29,14 @@ export class TmdbService {
 
   async getPerson(id: number): Promise<TMDB_Person> {
     return this.get<TMDB_Person>(`person/${id}`);
+  }
+
+  async getMovieGenres(): Promise<TMDB_GenresList> {
+    return this.get<TMDB_GenresList>('genre/movie/list');
+  }
+
+  async getSeriesGenres(): Promise<TMDB_GenresList> {
+    return this.get<TMDB_GenresList>('genre/tv/list');
   }
 
   async getMovieCredits(movieId: number): Promise<TMDB_MovieCredits> {

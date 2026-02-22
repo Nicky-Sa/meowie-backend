@@ -1,11 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { CHURN_REASONS } from './items/churn-reasons.constant';
 import { ChurnReasonsResDto, GenresResDto } from './constants.dto';
-import { GENRES } from './items/genres.constant';
+import { ConstantsService } from './constants.service';
 
 @Controller('constants')
 export class ConstantsController {
-  constructor() {}
+  constructor(private readonly constantsService: ConstantsService) {}
 
   @Get('churn-reasons')
   getChurnReasons(): ChurnReasonsResDto {
@@ -13,7 +13,7 @@ export class ConstantsController {
   }
 
   @Get('genres')
-  getGenres(): GenresResDto {
-    return { genres: GENRES };
+  async getGenres(): Promise<GenresResDto> {
+    return this.constantsService.getGenres();
   }
 }

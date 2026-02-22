@@ -1,4 +1,4 @@
-import { Genre } from '../../constants/items/genres.constant';
+import { Genre } from '../../constants/constants.dto';
 
 export class SearchResultPerson {
   id: number;
@@ -17,11 +17,16 @@ export class SearchResultMovie {
   releaseYear: string;
 }
 
-export class SearchResultGenre extends Genre {
-  mediaType: 'genre';
+export class SearchResultMovieGenre extends Genre {
+  mediaType: 'movie-genre';
+}
+
+export class SearchResultSeriesGenre extends Genre {
+  mediaType: 'series-genre';
 }
 
 export type MultiSearchResults =
   | SearchResultPerson
   | SearchResultMovie
-  | SearchResultGenre;
+  | SearchResultMovieGenre
+  | SearchResultSeriesGenre;
