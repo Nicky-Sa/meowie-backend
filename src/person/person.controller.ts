@@ -6,7 +6,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { PersonService } from './person.service';
-import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
+import { PersonResDto } from './dto/person.dto';
 import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
 import { PosterResDto } from '../common/dto/poster.dto';
 
@@ -25,14 +25,5 @@ export class PersonController {
   @Header('Cache-Control', 'public, max-age=3600')
   async getTvPostersInBulk(@Param('id') id: number): Promise<PosterResDto> {
     return this.personService.getCombinedPosters(id);
-  }
-
-  @Get(':personId/role/:movieId')
-  @Header('Cache-Control', 'public, max-age=3600')
-  async getRoleInMovie(
-    @Param('personId') personId: number,
-    @Param('movieId') movieId: number,
-  ): Promise<RoleInMovieResDto> {
-    return this.personService.getRoleInMovie(personId, movieId);
   }
 }

@@ -10,4 +10,5 @@ export class PosterInfo {
   posterPath: string;
   blurhash: string;
   mediaType: MediaType;
+  role?: string;
 }

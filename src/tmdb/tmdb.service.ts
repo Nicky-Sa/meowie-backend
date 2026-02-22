@@ -6,7 +6,6 @@ import { MediaType } from '../types/media-type';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoverTvQuery,
-  TMDB_Credits,
   TMDB_MultiSearch,
   TMDB_Person,
   TMDB_SearchQuery,
@@ -44,10 +43,6 @@ export class TmdbService {
     return this.get<TMDB_CombinedCredits>(
       `person/${personId}/combined_credits`,
     );
-  }
-
-  async getMovieCredits(movieId: number): Promise<TMDB_Credits> {
-    return this.get<TMDB_Credits>(`movie/${movieId}/credits`);
   }
 
   async getDetails<T>(

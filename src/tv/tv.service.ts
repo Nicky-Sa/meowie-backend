@@ -153,7 +153,7 @@ export class TvService {
   }
 
   private isTvValid(tvShow: TMDB_DiscoveredTvDetail): boolean {
-    return Boolean(tvShow.name && tvShow.overview);
+    return Boolean(tvShow.name && tvShow.overview && tvShow.first_air_date);
   }
 
   private constructTvCredits(
@@ -192,13 +192,18 @@ export class TvService {
 
   private constructAiringYears(
     firstAirDate: string,
-    lastAirDate: string,
+    lastAirDate: string | null,
     status: TMDB_TvInfo['status'],
-  ): `${string} - ${string}` {
+  ): `${string} - ${string}` | 'N/A' {
     if (status === 'Returning Series') {
-      return `${firstAirDate.slice(0, 4)} - Present`;
+      if (firstAirDate) {
+        return `${firstAirDate.slice(0, 4)} - Present`;
+      }
     }
-    return `${firstAirDate.slice(0, 4)} - ${lastAirDate.slice(0, 4)}`;
+    if (lastAirDate) {
+      return `${firstAirDate.slice(0, 4)} - ${lastAirDate.slice(0, 4)}`;
+    }
+    return `N/A`;
   }
 
   private constructSort(sort: SortOption) {

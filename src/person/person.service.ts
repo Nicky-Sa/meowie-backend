@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TMDB_Credits } from '../tmdb/tmdb.type';
-import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
+import { PersonResDto } from './dto/person.dto';
 import { getImage } from '../images/images.utils';
 import { CacheService } from 'src/cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
@@ -8,6 +7,7 @@ import { TmdbService } from '../tmdb/tmdb.service';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { MediaType } from '../types/media-type';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
+import { PosterInfo } from '../images/poster';
 
 @Injectable()
 export class PersonService {
@@ -32,61 +32,42 @@ export class PersonService {
   }
 
   @Cacheable({
-    key: (personId: number) => `person-combined-credits-${personId}`,
+    key: (personId: number) => `person-combined-posters-${personId}`,
     ttl: 3600 * 24,
   })
-  async getCombinedCredits(personId: number) {
-    return this.tmdbService.getCombinedCredits(personId);
-  }
-
-  @Cacheable({
-    key: (personId: number, mediaId: number) =>
-      `${personId}-role-in-${mediaId}`,
-    ttl: 3600 * 24,
-  })
-  async getRoleInMovie(
-    personId: number,
-    movieId: number,
-  ): Promise<RoleInMovieResDto> {
-    try {
-      const response = await this.tmdbService.getMovieCredits(movieId);
-      const role = this.findRoleInCredits(response, personId);
-      return { role };
-    } catch {
-      return { role: 'N/A' };
-    }
-  }
-
   async getCombinedPosters(personId: number): Promise<PosterResDto> {
-    const combinedCredits = await this.getCombinedCredits(personId);
+    const combinedCredits = await this.tmdbService.getCombinedCredits(personId);
     const { cast, crew } = combinedCredits;
-    const results = [...cast, ...crew].map((item) => ({
+    const castResults: PosterInfo[] = cast.map((item) => ({
       id: item.id,
       blurhash: DEFAULT_BLURHASH,
       posterPath: getImage(item.poster_path, 'poster'),
       mediaType: item.media_type as MediaType,
+      role: item.character ? `Performing as ${item.character}` : 'N/A',
     }));
-    return { results, page: 1, total_pages: 1, total_results: results.length };
-  }
+    const crewResults: PosterInfo[] = crew.map((item) => ({
+      id: item.id,
+      blurhash: DEFAULT_BLURHASH,
+      posterPath: getImage(item.poster_path, 'poster'),
+      mediaType: item.media_type as MediaType,
+      role: item.job,
+    }));
 
-  private findRoleInCredits(credits: TMDB_Credits, personId: number): string {
-    const cast = credits.cast.find((cast) => cast.id === personId);
-    if (cast && cast.character) {
-      return `Performing as ${cast.character}`;
-    }
-    const crewJobs = credits.crew.filter((crew) => crew.id === personId);
-    if (crewJobs.length > 0) {
-      const knownForDepartment = crewJobs[0].known_for_department;
-      // first, try to find the role which matches what they are known for
-      const primaryRole = crewJobs.find(
-        (crew) => crew.department === knownForDepartment,
-      );
-      if (primaryRole) {
-        return primaryRole.job;
+    // aggregated based on id which is media's id
+    const results = [...castResults, ...crewResults].reduce((acc, item) => {
+      const existingItem = acc.find((i) => i.id === item.id);
+      if (existingItem) {
+        if (existingItem.role === 'N/A') {
+          existingItem.role = item.role;
+        } else {
+          existingItem.role += `, and ${item.role}`;
+        }
+      } else {
+        acc.push(item);
       }
-      // if we can't find a role that matches what they are known for, return the first role
-      return crewJobs[0].job;
-    }
-    return 'N/A';
+      return acc;
+    }, [] as PosterInfo[]);
+
+    return { results, page: 1, total_pages: 1, total_results: results.length };
   }
 }

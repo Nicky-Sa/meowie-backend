@@ -8,8 +8,8 @@ export const emptyCast: CastInfo = {
   id: -1,
   name: 'N/A',
   character: '',
-  creditId: '',
   profilePath: PERSON_FALLBACK_URL,
+  creditId: '',
 };
 
 export const findTrailerKey = (videoList: TMDB_Videos): string => {

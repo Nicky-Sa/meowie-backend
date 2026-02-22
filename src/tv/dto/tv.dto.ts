@@ -23,7 +23,7 @@ export class TvCredits {
 
 export class TvInfoResDto {
   title: string;
-  airingYears: `${string} - ${string}`;
+  airingYears: `${string} - ${string}` | 'N/A';
   avgDuration: string;
   contentRating: string;
   trailerKey: string;

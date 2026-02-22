@@ -4,7 +4,3 @@ export class PersonResDto {
   profilePath: string;
   knownForDepartment: string;
 }
-
-export class RoleInMovieResDto {
-  role: string;
-}

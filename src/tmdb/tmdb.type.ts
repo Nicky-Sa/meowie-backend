@@ -94,10 +94,15 @@ export type TMDB_MovieInfo = {
   vote_count: number;
   release_dates: TMDB_ReleaseDates;
   videos: TMDB_Videos;
-  credits: Omit<TMDB_Credits, 'id'>;
+  credits: Omit<TMDB_MediaCredits, 'id'>;
 };
 
-// /3/movie/${id}/credits
+type TMDB_MediaCredits = {
+  id: number;
+  cast: TMDB_Cast[];
+  crew: TMDB_Crew[];
+};
+
 type TMDB_Cast = {
   adult: boolean;
   gender: number;
@@ -125,12 +130,6 @@ type TMDB_Crew = {
   credit_id: string;
   department: string;
   job: string;
-};
-
-export type TMDB_Credits = {
-  id: number;
-  cast: TMDB_Cast[];
-  crew: TMDB_Crew[];
 };
 
 // /3/person/${id}
@@ -802,7 +801,7 @@ export type TMDB_TvInfo = {
   id: number;
   in_production: boolean;
   languages: string[];
-  last_air_date: string;
+  last_air_date: string | null;
   last_episode_to_air: LastEpisodeToAir;
   name: string;
   next_episode_to_air: any;
@@ -825,7 +824,7 @@ export type TMDB_TvInfo = {
   vote_average: number;
   vote_count: number;
   videos: TMDB_Videos;
-  credits: Omit<TMDB_Credits, 'id'>;
+  credits: Omit<TMDB_MediaCredits, 'id'>;
   content_ratings: TMDB_ContentRatings;
 };
 
