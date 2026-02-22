@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MoviesModule } from './movies/movies.module';
+import { MovieModule } from './movie/movie.module';
 import { EnvModule } from './env/env.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -22,7 +22,7 @@ import { ImagesModule } from './images/images.module';
 @Module({
   imports: [
     SentryModule.forRoot(),
-    MoviesModule,
+    MovieModule,
     EnvModule,
     AuthModule,
     UsersModule,

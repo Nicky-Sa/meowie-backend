@@ -5,7 +5,7 @@ export class Genre {
 }
 
 export const GENRES: Genre[] = [
-  // Movies
+  // Movie
   { id: 28, name: 'Action', emoji: '💥' },
   { id: 12, name: 'Adventure', emoji: '🏕️' },
   { id: 14, name: 'Fantasy', emoji: '🧙‍♂️' },

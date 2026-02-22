@@ -13,7 +13,7 @@ import {
   InterestingMovieIdsResDto,
   QueryParamsDto,
   MovieCredits,
-} from './dto/movies.dto';
+} from './dto/movie.dto';
 import { CacheService } from '../cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { SortOption } from '../common/types/media-query';
@@ -32,7 +32,7 @@ import { PosterResDto } from '../common/dto/poster.dto';
 import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
-export class MoviesService {
+export class MovieService {
   constructor(
     private readonly tmdb: TmdbService,
     private readonly cacheService: CacheService,

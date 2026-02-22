@@ -6,32 +6,32 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { MoviesService } from './movies.service';
+import { MovieService } from './movie.service';
 import {
   InterestingMovieIdsResDto,
   MovieInfoResDto,
   QueryParamsDto,
-} from './dto/movies.dto';
+} from './dto/movie.dto';
 import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
 import { PosterResDto } from '../common/dto/poster.dto';
 
-@Controller('movies')
+@Controller('movie')
 @UseInterceptors(TMDBErrorInterceptor)
-export class MoviesController {
-  constructor(private readonly moviesService: MoviesService) {}
+export class MovieController {
+  constructor(private readonly movieService: MovieService) {}
 
   @Get('interesting-ids')
   @Header('Cache-Control', 'public, max-age=3600')
   async getInterestingMovieIds(
     @Query() query: QueryParamsDto,
   ): Promise<InterestingMovieIdsResDto> {
-    return this.moviesService.getInterestingMovieIds(query);
+    return this.movieService.getInterestingMovieIds(query);
   }
 
   @Get('/info/:id')
   @Header('Cache-Control', 'public, max-age=3600')
   async getMovieInfo(@Param('id') id: number): Promise<MovieInfoResDto> {
-    return this.moviesService.getMovieInfo(id);
+    return this.movieService.getMovieInfo(id);
   }
 
   @Get('/posters')
@@ -40,7 +40,7 @@ export class MoviesController {
     @Query() query: QueryParamsDto,
   ): Promise<PosterResDto> {
     const discoveredMoviesList =
-      await this.moviesService.getDiscoveredMovies(query);
-    return this.moviesService.getMoviesPosters(discoveredMoviesList);
+      await this.movieService.getDiscoveredMovies(query);
+    return this.movieService.getMoviesPosters(discoveredMoviesList);
   }
 }

@@ -9,7 +9,7 @@ export type TMDB_GenresList = {
 };
 
 //--------------------------------------------------
-// Movies
+// Movie
 
 // /3/movie/${id}
 type TMDB_BelongsToCollection = {
