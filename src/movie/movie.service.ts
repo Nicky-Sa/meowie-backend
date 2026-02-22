@@ -172,7 +172,7 @@ export class MovieService {
 
   getMoviesPosters(moviesList: TMDB_DiscoveredMoviesList): PosterResDto {
     const { results: movies, ...rest } = moviesList;
-    return { results: mapToPosters(movies), ...rest };
+    return { results: mapToPosters(movies, 'movie'), ...rest };
   }
 
   private isMovieValid(movie: TMDB_DiscoveredMovieDetail): boolean {

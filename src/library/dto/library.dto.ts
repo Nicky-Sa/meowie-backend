@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 import { MediaType } from '../../types/media-type';
 import {
   LIBRARY_CATEGORIES,
@@ -24,4 +24,8 @@ export class ToggleLibraryItemReqDto {
 
 export type LibraryStatusResDto = Partial<Record<LibraryCategory, boolean>>;
 
-export class LibraryItemQueryDto extends Page {}
+export class LibraryItemQueryDto extends Page {
+  @IsEnum(LIBRARY_MEDIA_TYPES)
+  @IsOptional()
+  mediaType?: MediaType;
+}

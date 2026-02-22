@@ -68,14 +68,13 @@ export class LibraryService {
   async getLibraryItemsPosters(
     userId: number,
     category: LibraryCategory,
-    mediaType: MediaType,
     query: LibraryItemQueryDto,
   ): Promise<PosterResDto> {
-    const { page } = query;
+    const { page, mediaType } = query;
     const skip = (page - 1) * LIMIT;
 
     const [items, total] = await this.libraryItemRepository.findAndCount({
-      where: { userId, category, mediaType },
+      where: { userId, category, ...(mediaType && { mediaType }) },
       order: {
         createdAt: 'DESC',
       },
@@ -96,6 +95,7 @@ export class LibraryService {
           id: details.id,
           posterPath,
           blurhash,
+          mediaType: item.mediaType,
         };
       }),
     );

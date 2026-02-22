@@ -21,11 +21,10 @@ export class LibraryController {
   constructor(private readonly libraryService: LibraryService) {}
 
   @OptionalAccessGuard()
-  @Get(':category/:mediaType')
+  @Get(':category')
   async getLibraryItemsPosters(
     @Req() req: OptionallyAuthenticatedRequest,
     @Param('category') category: LibraryCategory,
-    @Param('mediaType') mediaType: MediaType,
     @Query() query: LibraryItemQueryDto,
   ): Promise<PosterResDto> {
     if (!req.user?.id) {
@@ -34,7 +33,6 @@ export class LibraryController {
     return this.libraryService.getLibraryItemsPosters(
       req.user.id,
       category,
-      mediaType,
       query,
     );
   }

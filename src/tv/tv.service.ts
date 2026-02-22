@@ -141,7 +141,7 @@ export class TvService {
 
   getTvPosters(tvList: TMDB_DiscoveredTvList): PosterResDto {
     const { results: tvShows, ...rest } = tvList;
-    return { results: mapToPosters(tvShows), ...rest };
+    return { results: mapToPosters(tvShows, 'tv'), ...rest };
   }
 
   private isTvValid(tvShow: TMDB_DiscoveredTvDetail): boolean {
