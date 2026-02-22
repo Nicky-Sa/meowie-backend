@@ -4,7 +4,7 @@ import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheDuration } from '../cache/cache.constants';
 import { TMDB_GenresList } from '../tmdb/tmdb.type';
 import { Genre, GenresResDto } from './constants.dto';
-import { getGenreEmoji } from '../utils/genres';
+import { getGenreEmoji } from '../utils/media';
 import { CacheService } from '../cache/cache.service';
 
 @Injectable()

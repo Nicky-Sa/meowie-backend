@@ -1,8 +1,8 @@
 import { TMDB_Genre, TMDB_MovieInfo, TMDB_Videos } from '../tmdb/tmdb.type';
-import { getGenreEmoji } from './genres';
 import { CastInfo } from '../types/cast';
 import { PERSON_FALLBACK_URL } from '../common/app.constants';
 import { getImage } from '../images/images.utils';
+import { GENRES } from '../constants/items/genres.constant';
 
 export const emptyCast: CastInfo = {
   id: -1,
@@ -44,6 +44,10 @@ export const formatDuration = (minutes?: number) => {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return `${hours}h ${remainingMinutes}m`;
+};
+
+export const getGenreEmoji = (id: number) => {
+  return GENRES.find((genre) => genre.id === id)?.emoji ?? '🍿';
 };
 
 export const formatGenres = (genreIds: TMDB_Genre[]) => {
