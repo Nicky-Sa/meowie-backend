@@ -14,7 +14,7 @@ import {
 } from './dto/series.dto';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { SortOption } from '../common/types/media-query';
-import { getImage } from '../images/images.utils';
+import { getImage, mapToPosters } from '../images/images.utils';
 import { CastInfo } from '../types/cast';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { ImagesService } from '../images/images.service';
@@ -26,6 +26,7 @@ import {
   emptyCast,
 } from '../utils/media';
 import { CacheDuration } from '../cache/cache.constants';
+import { PosterResDto } from '../common/dto/poster.dto';
 
 @Injectable()
 export class SeriesService {
@@ -138,6 +139,11 @@ export class SeriesService {
       ratings,
     };
     return data;
+  }
+
+  getSeriesPosters(seriesList: TMDB_DiscoveredSeriesList): PosterResDto {
+    const { results: series, ...rest } = seriesList;
+    return { results: mapToPosters(series), ...rest };
   }
 
   private isSeriesValid(series: TMDB_DiscoveredSeriesDetail): boolean {

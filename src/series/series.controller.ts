@@ -13,6 +13,7 @@ import {
   QueryParamsDto,
   SeriesInfoResDto,
 } from './dto/series.dto';
+import { PosterResDto } from '../common/dto/poster.dto';
 
 @Controller('series')
 @UseInterceptors(TMDBErrorInterceptor)
@@ -30,5 +31,15 @@ export class SeriesController {
   @Header('Cache-Control', 'public, max-age=3600')
   async getSeriesInfo(@Param('id') id: number): Promise<SeriesInfoResDto> {
     return this.seriesService.getSeriesInfo(id);
+  }
+
+  @Get('/posters')
+  @Header('Cache-Control', 'public, max-age=3600')
+  async getPostersInBulk(
+    @Query() query: QueryParamsDto,
+  ): Promise<PosterResDto> {
+    const discoveredSeriesList =
+      await this.seriesService.getDiscoveredSeries(query);
+    return this.seriesService.getSeriesPosters(discoveredSeriesList);
   }
 }

@@ -1,4 +1,4 @@
-import { PosterProps } from '../../types/poster';
+import { PosterProps } from '../../images/poster';
 import { CastInfo } from '../../types/cast';
 import { Genre } from '../../constants/items/genres.constant';
 import { RatingEntry } from '../../ratings/types/rating.type';

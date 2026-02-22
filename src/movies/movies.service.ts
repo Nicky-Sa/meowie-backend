@@ -7,7 +7,7 @@ import {
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
 } from 'src/tmdb/tmdb.type';
-import { getImage } from '../images/images.utils';
+import { getImage, mapToPosters } from '../images/images.utils';
 import {
   MovieInfoResDto,
   InterestingMovieIdsResDto,
@@ -28,7 +28,7 @@ import {
   formatGenres,
   emptyCast,
 } from '../utils/media';
-import { PosterInfo } from '../types/poster';
+import { PosterInfo } from '../images/poster';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { CacheDuration } from '../cache/cache.constants';
 
@@ -173,23 +173,7 @@ export class MoviesService {
 
   getMoviesPosters(moviesList: TMDB_DiscoveredMoviesList): PosterResDto {
     const { results: movies, ...rest } = moviesList;
-
-    const moviePosterInfoResults = movies.map((movie) =>
-      this.getMoviePosterSingle(movie),
-    );
-
-    return { results: moviePosterInfoResults, ...rest };
-  }
-
-  private getMoviePosterSingle(movie: TMDB_DiscoveredMovieDetail): PosterInfo {
-    const posterPath = getImage(movie.poster_path, 'poster');
-    const blurhash = 'U11o;?of00of00of00of00of00of00of00of';
-    const data = {
-      id: movie.id,
-      posterPath,
-      blurhash,
-    };
-    return data;
+    return { results: mapToPosters(movies), ...rest };
   }
 
   private isMovieValid(movie: TMDB_DiscoveredMovieDetail): boolean {

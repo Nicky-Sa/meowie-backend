@@ -2,7 +2,7 @@ import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
 import { Browse, Filters, Page, Sort } from '../../common/types/media-query';
 import { Genre } from '../../constants/items/genres.constant';
-import { PosterProps } from '../../types/poster';
+import { PosterProps } from '../../images/poster';
 import { CastInfo } from '../../types/cast';
 import { RatingEntry } from '../../ratings/types/rating.type';
 

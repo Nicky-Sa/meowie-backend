@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { encode } from 'blurhash';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
-import { PosterProps } from '../types/poster';
+import { PosterProps } from './poster';
 import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
