@@ -7,6 +7,7 @@ import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
 import { PosterProps } from './poster';
 import { CacheDuration } from '../cache/cache.constants';
+import { DEFAULT_BLURHASH } from '../common/app.constants';
 
 @Injectable()
 export class ImagesService {
@@ -20,7 +21,7 @@ export class ImagesService {
   })
   async generatePosterProps(url: string): Promise<PosterProps> {
     let primaryColorHex = '#1F3854';
-    let blurhash = 'U11o;?of00of00of00of00of00of00of00of';
+    let blurhash = DEFAULT_BLURHASH;
 
     try {
       const response = await axios.get<ArrayBuffer>(url, {

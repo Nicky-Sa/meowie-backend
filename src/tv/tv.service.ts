@@ -14,7 +14,7 @@ import {
 } from './dto/tv.dto';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { SortOption } from '../common/types/media-query';
-import { getImage, mapToPosters } from '../images/images.utils';
+import { getImage } from '../images/images.utils';
 import { CastInfo } from '../types/cast';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { ImagesService } from '../images/images.service';
@@ -27,6 +27,7 @@ import {
 } from '../utils/media';
 import { CacheDuration } from '../cache/cache.constants';
 import { PosterResDto } from '../common/dto/poster.dto';
+import { DEFAULT_BLURHASH } from '../common/app.constants';
 
 @Injectable()
 export class TvService {
@@ -139,9 +140,16 @@ export class TvService {
     return data;
   }
 
-  getTvPosters(tvList: TMDB_DiscoveredTvList): PosterResDto {
-    const { results: tvShows, ...rest } = tvList;
-    return { results: mapToPosters(tvShows, 'tv'), ...rest };
+  async getTvPosters(query: QueryParamsDto): Promise<PosterResDto> {
+    const discoveredTvList = await this.getDiscoveredTv(query);
+    const { results: tvShows, ...rest } = discoveredTvList;
+    const results = tvShows.map((movie) => ({
+      id: movie.id,
+      posterPath: getImage(movie.poster_path, 'poster'),
+      blurhash: DEFAULT_BLURHASH,
+      mediaType: 'tv' as const,
+    }));
+    return { results, ...rest };
   }
 
   private isTvValid(tvShow: TMDB_DiscoveredTvDetail): boolean {

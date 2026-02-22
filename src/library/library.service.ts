@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LibraryItem } from './entities/library-item.entity';
 import { Repository } from 'typeorm';
-import { LIMIT } from '../common/app.constants';
+import { DEFAULT_BLURHASH, LIMIT } from '../common/app.constants';
 import {
   LibraryItemQueryDto,
   LibraryStatusResDto,
@@ -90,11 +90,10 @@ export class LibraryService {
             item.tmdbId,
           );
         const posterPath = getImage(details.poster_path, 'poster');
-        const blurhash = 'U11o;?of00of00of00of00of00of00of00of';
         return {
           id: details.id,
           posterPath,
-          blurhash,
+          blurhash: DEFAULT_BLURHASH,
           mediaType: item.mediaType,
         };
       }),

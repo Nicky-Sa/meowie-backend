@@ -8,6 +8,7 @@ import {
 import { PersonService } from './person.service';
 import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
 import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
+import { PosterResDto } from '../common/dto/poster.dto';
 
 @Controller('person')
 @UseInterceptors(TMDBErrorInterceptor)
@@ -18,6 +19,12 @@ export class PersonController {
   @Header('Cache-Control', 'public, max-age=3600')
   async getPersonInfo(@Param('id') id: number): Promise<PersonResDto> {
     return this.personService.getPersonInfo(id);
+  }
+
+  @Get(':id/posters')
+  @Header('Cache-Control', 'public, max-age=3600')
+  async getTvPostersInBulk(@Param('id') id: number): Promise<PosterResDto> {
+    return this.personService.getCombinedPosters(id);
   }
 
   @Get(':personId/role/:movieId')

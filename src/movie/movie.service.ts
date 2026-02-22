@@ -7,7 +7,7 @@ import {
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
 } from 'src/tmdb/tmdb.type';
-import { getImage, mapToPosters } from '../images/images.utils';
+import { getImage } from '../images/images.utils';
 import {
   MovieInfoResDto,
   InterestingMovieIdsResDto,
@@ -30,6 +30,7 @@ import {
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { CacheDuration } from '../cache/cache.constants';
+import { DEFAULT_BLURHASH } from '../common/app.constants';
 
 @Injectable()
 export class MovieService {
@@ -170,9 +171,16 @@ export class MovieService {
     return director;
   }
 
-  getMoviesPosters(moviesList: TMDB_DiscoveredMoviesList): PosterResDto {
-    const { results: movies, ...rest } = moviesList;
-    return { results: mapToPosters(movies, 'movie'), ...rest };
+  async getMoviesPosters(query: QueryParamsDto): Promise<PosterResDto> {
+    const discoveredMoviesList = await this.getDiscoveredMovies(query);
+    const { results: movies, ...rest } = discoveredMoviesList;
+    const results = movies.map((movie) => ({
+      id: movie.id,
+      posterPath: getImage(movie.poster_path, 'poster'),
+      blurhash: DEFAULT_BLURHASH,
+      mediaType: 'movie' as const,
+    }));
+    return { results, ...rest };
   }
 
   private isMovieValid(movie: TMDB_DiscoveredMovieDetail): boolean {

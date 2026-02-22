@@ -36,11 +36,9 @@ export class MovieController {
 
   @Get('/posters')
   @Header('Cache-Control', 'public, max-age=3600')
-  async getPostersInBulk(
+  async getMoviePostersInBulk(
     @Query() query: QueryParamsDto,
   ): Promise<PosterResDto> {
-    const discoveredMoviesList =
-      await this.movieService.getDiscoveredMovies(query);
-    return this.movieService.getMoviesPosters(discoveredMoviesList);
+    return this.movieService.getMoviesPosters(query);
   }
 }

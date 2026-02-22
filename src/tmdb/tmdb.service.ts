@@ -6,11 +6,12 @@ import { MediaType } from '../types/media-type';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoverTvQuery,
-  TMDB_MovieCredits,
+  TMDB_Credits,
   TMDB_MultiSearch,
   TMDB_Person,
   TMDB_SearchQuery,
   TMDB_GenresList,
+  TMDB_CombinedCredits,
 } from './tmdb.type';
 
 @Injectable()
@@ -39,8 +40,14 @@ export class TmdbService {
     return this.get<TMDB_GenresList>('genre/tv/list');
   }
 
-  async getMovieCredits(movieId: number): Promise<TMDB_MovieCredits> {
-    return this.get<TMDB_MovieCredits>(`movie/${movieId}/credits`);
+  async getCombinedCredits(personId: number): Promise<TMDB_CombinedCredits> {
+    return this.get<TMDB_CombinedCredits>(
+      `person/${personId}/combined_credits`,
+    );
+  }
+
+  async getMovieCredits(movieId: number): Promise<TMDB_Credits> {
+    return this.get<TMDB_Credits>(`movie/${movieId}/credits`);
   }
 
   async getDetails<T>(

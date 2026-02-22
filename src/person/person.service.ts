@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { TMDB_MovieCredits } from '../tmdb/tmdb.type';
+import { TMDB_Credits } from '../tmdb/tmdb.type';
 import { PersonResDto, RoleInMovieResDto } from './dto/person.dto';
 import { getImage } from '../images/images.utils';
 import { CacheService } from 'src/cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { TmdbService } from '../tmdb/tmdb.service';
+import { PosterResDto } from '../common/dto/poster.dto';
+import { MediaType } from '../types/media-type';
+import { DEFAULT_BLURHASH } from '../common/app.constants';
 
 @Injectable()
 export class PersonService {
@@ -29,8 +32,16 @@ export class PersonService {
   }
 
   @Cacheable({
-    key: (personId: number, movieId: number) =>
-      `person-role-in-movie-${personId}-${movieId}`,
+    key: (personId: number) => `person-combined-credits-${personId}`,
+    ttl: 3600 * 24,
+  })
+  async getCombinedCredits(personId: number) {
+    return this.tmdbService.getCombinedCredits(personId);
+  }
+
+  @Cacheable({
+    key: (personId: number, mediaId: number) =>
+      `${personId}-role-in-${mediaId}`,
     ttl: 3600 * 24,
   })
   async getRoleInMovie(
@@ -46,10 +57,19 @@ export class PersonService {
     }
   }
 
-  private findRoleInCredits(
-    credits: TMDB_MovieCredits,
-    personId: number,
-  ): string {
+  async getCombinedPosters(personId: number): Promise<PosterResDto> {
+    const combinedCredits = await this.getCombinedCredits(personId);
+    const { cast, crew } = combinedCredits;
+    const results = [...cast, ...crew].map((item) => ({
+      id: item.id,
+      blurhash: DEFAULT_BLURHASH,
+      posterPath: getImage(item.poster_path, 'poster'),
+      mediaType: item.media_type as MediaType,
+    }));
+    return { results, page: 1, total_pages: 1, total_results: results.length };
+  }
+
+  private findRoleInCredits(credits: TMDB_Credits, personId: number): string {
     const cast = credits.cast.find((cast) => cast.id === personId);
     if (cast && cast.character) {
       return `Performing as ${cast.character}`;

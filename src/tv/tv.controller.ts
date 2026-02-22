@@ -35,10 +35,9 @@ export class TvController {
 
   @Get('/posters')
   @Header('Cache-Control', 'public, max-age=3600')
-  async getPostersInBulk(
+  async getTvPostersInBulk(
     @Query() query: QueryParamsDto,
   ): Promise<PosterResDto> {
-    const discoveredTvList = await this.tvService.getDiscoveredTv(query);
-    return this.tvService.getTvPosters(discoveredTvList);
+    return this.tvService.getTvPosters(query);
   }
 }

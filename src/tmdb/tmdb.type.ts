@@ -94,7 +94,7 @@ export type TMDB_MovieInfo = {
   vote_count: number;
   release_dates: TMDB_ReleaseDates;
   videos: TMDB_Videos;
-  credits: Omit<TMDB_MovieCredits, 'id'>;
+  credits: Omit<TMDB_Credits, 'id'>;
 };
 
 // /3/movie/${id}/credits
@@ -127,7 +127,7 @@ type TMDB_Crew = {
   job: string;
 };
 
-export type TMDB_MovieCredits = {
+export type TMDB_Credits = {
   id: number;
   cast: TMDB_Cast[];
   crew: TMDB_Crew[];
@@ -149,6 +149,65 @@ export type TMDB_Person = {
   place_of_birth: string;
   popularity: number;
   profile_path: string;
+};
+
+// /3/person/${id}/combined_credits
+export type TMDB_CombinedCredits = {
+  cast: TMDB_CombinedCreditsCast[];
+  crew: TMDB_CombinedCreditsCrew[];
+  id: number;
+};
+
+export type TMDB_CombinedCreditsCast = {
+  adult: boolean;
+  backdrop_path?: string;
+  genre_ids: number[];
+  id: number;
+  original_language: string;
+  original_title?: string;
+  overview: string;
+  popularity: number;
+  poster_path?: string;
+  release_date?: string;
+  title?: string;
+  video?: boolean;
+  vote_average: number;
+  vote_count: number;
+  character: string;
+  credit_id: string;
+  order?: number;
+  media_type: string;
+  origin_country?: string[];
+  original_name?: string;
+  first_air_date?: string;
+  name?: string;
+  episode_count?: number;
+};
+
+export type TMDB_CombinedCreditsCrew = {
+  adult: boolean;
+  backdrop_path?: string;
+  genre_ids: number[];
+  id: number;
+  original_language: string;
+  original_title?: string;
+  overview: string;
+  popularity: number;
+  poster_path?: string;
+  release_date?: string;
+  title?: string;
+  video?: boolean;
+  vote_average: number;
+  vote_count: number;
+  credit_id: string;
+  department: string;
+  job: string;
+  media_type: string;
+  origin_country?: string[];
+  original_name?: string;
+  first_air_date?: string;
+  name?: string;
+  episode_count?: number;
 };
 
 // /3/discover/movie
@@ -766,7 +825,7 @@ export type TMDB_TvInfo = {
   vote_average: number;
   vote_count: number;
   videos: TMDB_Videos;
-  credits: Omit<TMDB_MovieCredits, 'id'>;
+  credits: Omit<TMDB_Credits, 'id'>;
   content_ratings: TMDB_ContentRatings;
 };
 
