@@ -27,11 +27,11 @@ export class ConstantsService {
   }
 
   @Cacheable({
-    key: () => 'series-genres',
+    key: () => 'tv-genres',
     ttl: CacheDuration.ONE_MONTH,
   })
-  async getSeriesGenres(): Promise<Genre[]> {
-    const list: TMDB_GenresList = await this.tmdb.getSeriesGenres();
+  async getTvGenres(): Promise<Genre[]> {
+    const list: TMDB_GenresList = await this.tmdb.getTvGenres();
     return list.genres.map((genre) => ({
       ...genre,
       emoji: getGenreEmoji(genre.id),
@@ -39,13 +39,13 @@ export class ConstantsService {
   }
 
   async getGenres(): Promise<GenresResDto> {
-    const [movieGenres, seriesGenres] = await Promise.all([
+    const [movieGenres, tvGenres] = await Promise.all([
       this.getMovieGenres(),
-      this.getSeriesGenres(),
+      this.getTvGenres(),
     ]);
     return {
       movieGenres,
-      seriesGenres,
+      tvGenres,
     };
   }
 }

@@ -169,7 +169,7 @@ export type TMDB_MovieSortOption =
   | 'vote_count.asc'
   | 'vote_count.desc';
 
-export type TMDB_DiscoverSeriesQuery = {
+export type TMDB_DiscoverTvQuery = {
   // --- CORE PARAMS ---
   /**
    * Specify the page of results to query.
@@ -188,7 +188,7 @@ export type TMDB_DiscoverSeriesQuery = {
    * Choose a sort option for the list of results.
    * @default 'popularity.desc'
    */
-  sort_by?: TMDB_SeriesSortOption;
+  sort_by?: TMDB_TvSortOption;
 
   /**
    * Used in conjunction with the air_date.gte/lte filter to calculate the proper UTC offset.
@@ -461,7 +461,7 @@ export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> 
 }
 
 //--------------------------------------------------
-// Series
+// Tv
 
 // /3/discover/tv
 export type TMDB_DiscoverMovieQuery = {
@@ -696,7 +696,7 @@ export type TMDB_DiscoverMovieQuery = {
   with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
 };
 
-export type TMDB_SeriesSortOption =
+export type TMDB_TvSortOption =
   | 'first_air_date.asc'
   | 'first_air_date.desc'
   | 'name.asc'
@@ -710,11 +710,11 @@ export type TMDB_SeriesSortOption =
   | 'vote_count.asc'
   | 'vote_count.desc';
 
-export class TMDB_DiscoveredSeriesList extends PaginatedResponse<TMDB_DiscoveredSeriesDetail> {
-  declare results: TMDB_DiscoveredSeriesDetail[];
+export class TMDB_DiscoveredTvList extends PaginatedResponse<TMDB_DiscoveredTvDetail> {
+  declare results: TMDB_DiscoveredTvDetail[];
 }
 
-export type TMDB_DiscoveredSeriesDetail = {
+export type TMDB_DiscoveredTvDetail = {
   adult: boolean;
   backdrop_path: string;
   genre_ids: number[];
@@ -732,7 +732,7 @@ export type TMDB_DiscoveredSeriesDetail = {
 };
 
 // /3/tv/${id}
-export type TMDB_SeriesInfo = {
+export type TMDB_TvInfo = {
   adult: boolean;
   backdrop_path: string;
   created_by: CreatedBy[];

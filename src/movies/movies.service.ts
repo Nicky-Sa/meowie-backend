@@ -28,7 +28,6 @@ import {
   formatGenres,
   emptyCast,
 } from '../utils/media';
-import { PosterInfo } from '../images/poster';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { CacheDuration } from '../cache/cache.constants';
 

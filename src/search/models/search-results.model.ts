@@ -21,12 +21,12 @@ export class SearchResultMovieGenre extends Genre {
   mediaType: 'movie-genre';
 }
 
-export class SearchResultSeriesGenre extends Genre {
-  mediaType: 'series-genre';
+export class SearchResultTvGenre extends Genre {
+  mediaType: 'tv-genre';
 }
 
 export type MultiSearchResults =
   | SearchResultPerson
   | SearchResultMovie
   | SearchResultMovieGenre
-  | SearchResultSeriesGenre;
+  | SearchResultTvGenre;

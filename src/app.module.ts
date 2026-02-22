@@ -15,7 +15,7 @@ import { ConstantsModule } from './constants/constants.module';
 import { PersonModule } from './person/person.module';
 import { SearchModule } from './search/search.module';
 import { LibraryModule } from './library/library.module';
-import { SeriesModule } from './series/series.module';
+import { TvModule } from './tv/tv.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { ImagesModule } from './images/images.module';
 
@@ -40,7 +40,7 @@ import { ImagesModule } from './images/images.module';
     PersonModule,
     SearchModule,
     LibraryModule,
-    SeriesModule,
+    TvModule,
     RatingsModule,
     ImagesModule,
   ],

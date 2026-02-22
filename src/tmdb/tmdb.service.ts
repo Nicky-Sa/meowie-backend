@@ -5,7 +5,7 @@ import { TMDB_BASE_URL } from '../common/app.constants';
 import { MediaType } from '../types/media-type';
 import {
   TMDB_DiscoverMovieQuery,
-  TMDB_DiscoverSeriesQuery,
+  TMDB_DiscoverTvQuery,
   TMDB_MovieCredits,
   TMDB_MultiSearch,
   TMDB_Person,
@@ -35,7 +35,7 @@ export class TmdbService {
     return this.get<TMDB_GenresList>('genre/movie/list');
   }
 
-  async getSeriesGenres(): Promise<TMDB_GenresList> {
+  async getTvGenres(): Promise<TMDB_GenresList> {
     return this.get<TMDB_GenresList>('genre/tv/list');
   }
 
@@ -55,7 +55,7 @@ export class TmdbService {
 
   async getDiscover<
     T,
-    Q extends TMDB_DiscoverMovieQuery | TMDB_DiscoverSeriesQuery,
+    Q extends TMDB_DiscoverMovieQuery | TMDB_DiscoverTvQuery,
   >(mediaType: MediaType, params: Q): Promise<T> {
     return this.get<T, Q>(`discover/${mediaType}`, params);
   }

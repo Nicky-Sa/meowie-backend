@@ -18,7 +18,7 @@ export const GENRES: Genre[] = [
   { id: 53, name: 'Thriller', emoji: '🤯' },
   { id: 10752, name: 'War', emoji: '⚔️' },
 
-  // Series
+  // Tv
   { id: 10759, name: 'Action & Adventure', emoji: '🦸‍♂️' },
   { id: 10762, name: 'Kids', emoji: '🧸' },
   { id: 10763, name: 'News', emoji: '📰' },

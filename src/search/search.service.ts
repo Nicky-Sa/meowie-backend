@@ -24,7 +24,7 @@ export class SearchService {
       this.constantsService.getGenres(),
     ]);
 
-    const { movieGenres, seriesGenres } = genresRes;
+    const { movieGenres, tvGenres } = genresRes;
     const movieGenresMap = new Map(movieGenres.map((g) => [g.id, g.name]));
 
     const results: MultiSearchResults[] = response.results
@@ -59,7 +59,7 @@ export class SearchService {
     const matchingMovieGenres = movieGenres.filter((genre) =>
       genre.name.toLowerCase().includes(query.toLowerCase()),
     );
-    const matchingSeriesGenres = seriesGenres.filter((genre) =>
+    const matchingTvGenres = tvGenres.filter((genre) =>
       genre.name.toLowerCase().includes(query.toLowerCase()),
     );
 
@@ -71,10 +71,10 @@ export class SearchService {
         })),
       );
     }
-    if (matchingSeriesGenres.length > 0) {
+    if (matchingTvGenres.length > 0) {
       results.push(
-        ...matchingSeriesGenres.map((genre) => ({
-          mediaType: 'series-genre' as const,
+        ...matchingTvGenres.map((genre) => ({
+          mediaType: 'tv-genre' as const,
           ...genre,
         })),
       );
