@@ -18,7 +18,7 @@ import { PosterResDto } from '../common/dto/poster.dto';
 @Controller('tv')
 @UseInterceptors(TMDBErrorInterceptor)
 export class TvController {
-  constructor(private readonly tvService: TvService) { }
+  constructor(private readonly tvService: TvService) {}
 
   @Get('interesting-ids')
   async getInterestingTvIds(

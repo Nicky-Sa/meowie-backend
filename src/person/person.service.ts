@@ -24,7 +24,7 @@ export class PersonService {
       };
       return data;
     } catch (error) {
-      throw new Error(`Error fetching person info: ${error}`);
+      throw new Error('Error fetching person info', { cause: error });
     }
   }
 
@@ -51,7 +51,6 @@ export class PersonService {
     personId: number,
   ): string {
     const cast = credits.cast.find((cast) => cast.id === personId);
-    console.log({ cast });
     if (cast && cast.character) {
       return `Performing as ${cast.character}`;
     }
