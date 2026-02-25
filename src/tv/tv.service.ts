@@ -57,8 +57,8 @@ export class TvService {
         with_original_language: query.languages.replaceAll(',', '|'),
       }),
       ...(query.decade && {
-        'primary_release_date.gte': `${query.decade}-01-01`,
-        'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
+        'first_air_date.gte': `${query.decade}-01-01`,
+        'first_air_date.lte': `${Number(query.decade) + 9}-12-31`,
       }),
       ...(query.tmdbRatings && {
         'vote_average.gte': Number(query.tmdbRatings.split(',')[0]),
