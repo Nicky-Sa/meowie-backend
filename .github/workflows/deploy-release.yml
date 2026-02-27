@@ -10,49 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  # --- JOB 0: CALCULATE VERSION ---
-  calculate-version:
-    runs-on: ubuntu-latest
-    outputs:
-      final_tag: ${{ steps.format_tag.outputs.FINAL_TAG }}
-      clean_version: ${{ steps.calc_version.outputs.new_tag }}
-      changelog: ${{ steps.calc_version.outputs.changelog }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: '0'
-
-      # 1. Calculate the Next "Clean" Version (e.g., v1.0.2)
-      - name: Calculate Next Version
-        id: calc_version
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
-          tag_prefix: "v"
-          dry_run: true
-          release_branches: "preview,production"
-
-      # 2. Format the Final Tag Name
-      # - Production: v1.0.2
-      # - Preview: v1.0.2-beta
-      - name: Set Tag Name
-        id: format_tag
-        run: |
-          CLEAN_VER="${{ steps.calc_version.outputs.new_tag }}"
-          
-          if [[ "${{ github.ref_name }}" == "production" ]]; then
-            echo "FINAL_TAG=$CLEAN_VER" >> $GITHUB_OUTPUT
-            echo "Environment: Production ($CLEAN_VER)"
-          else
-            echo "FINAL_TAG=${CLEAN_VER}-beta" >> $GITHUB_OUTPUT
-            echo "Environment: Preview (${CLEAN_VER}-beta)"
-          fi
-
   # --- JOB 1: DEPLOY TO AWS ---
   deploy:
-    needs: calculate-version
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     env:
@@ -172,8 +131,8 @@ jobs:
             --function-name ${{ env.LAMBDA_FUNCTION_NAME }}
 
   # --- JOB 2: RELEASE (Runs only after Deploy succeeds) ---
-  smart-release:
-    needs: [ calculate-version, deploy ]
+  release:
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -181,12 +140,40 @@ jobs:
         with:
           fetch-depth: '0'
 
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Calculate Version
+        id: calc_version
+        uses: mathieudutour/github-tag-action@v6.2
         with:
-          tag_name: ${{ needs.calculate-version.outputs.final_tag }}
-          name: Release ${{ needs.calculate-version.outputs.final_tag }}
-          body: ${{ needs.calculate-version.outputs.changelog }}
-          prerelease: false
-          draft: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          tag_prefix: "v"
+          dry_run: ${{ github.ref_name != 'production' }}
+          release_branches: "preview,production"
+
+      - name: Manage Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VER: ${{ steps.calc_version.outputs.new_tag }}
+          CHANGELOG: ${{ steps.calc_version.outputs.changelog }}
+        run: |
+          if [[ "${{ github.ref_name }}" == "production" ]]; then
+            # 1. Create solid full release
+            FINAL_TAG="$NEW_VER"
+            gh release create "$FINAL_TAG" --title "Release $FINAL_TAG" --notes "$CHANGELOG" --repo ${{ github.repository }} --target ${{ github.sha }}
+          
+            # 2. Clean up beta release upon production deployment
+            BETA_TAG="${NEW_VER}-beta"
+            if gh release view "$BETA_TAG" --repo ${{ github.repository }} > /dev/null 2>&1; then
+               echo "Found existing beta release: $BETA_TAG. Deleting it to avoid duplicate releases..."
+               gh release delete "$BETA_TAG" --yes --cleanup-tag --repo ${{ github.repository }}
+            fi
+          else
+            # 1. Create beta prerelease
+            FINAL_TAG="${NEW_VER}-beta"
+            if gh release view "$FINAL_TAG" --repo ${{ github.repository }} > /dev/null 2>&1; then
+               echo "Found existing beta release. Deleting it so we can push the updated tag..."
+               gh release delete "$FINAL_TAG" --yes --cleanup-tag --repo ${{ github.repository }}
+               sleep 2
+            fi
+            gh release create "$FINAL_TAG" --title "Release $FINAL_TAG" --notes "$CHANGELOG" --prerelease --repo ${{ github.repository }} --target ${{ github.sha }}
+          fi
