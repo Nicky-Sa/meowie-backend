@@ -188,5 +188,5 @@ jobs:
           tag_name: ${{ needs.calculate-version.outputs.final_tag }}
           name: Release ${{ needs.calculate-version.outputs.final_tag }}
           body: ${{ needs.calculate-version.outputs.changelog }}
-          prerelease: false
+          prerelease: ${{ github.ref_name == 'preview' }}
           draft: false
