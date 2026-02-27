@@ -182,11 +182,29 @@ jobs:
           fetch-depth: '0'
 
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.calculate-version.outputs.final_tag }}
-          name: Release ${{ needs.calculate-version.outputs.final_tag }}
-          body: ${{ needs.calculate-version.outputs.changelog }}
-          prerelease: ${{ github.ref_name == 'preview' }}
-          draft: false
+      - name: Create or Update Release
+        run: |
+          # 1. First, create/update the current release with the final tag
+          # If we are on production, we create v1.0.2. If on preview, v1.0.2-beta
+          gh release create ${{ needs.calculate-version.outputs.final_tag }} \
+            --title "Release ${{ needs.calculate-version.outputs.final_tag }}" \
+            --notes "${{ needs.calculate-version.outputs.changelog }}" \
+            ${{ github.ref_name == 'preview' && '--prerelease' || '' }} \
+            --repo ${{ github.repository }}
+
+          # 2. If we are doing a production release, we want to look for the
+          # corresponding -beta tag that preceded this release in preview
+          if [[ "${{ github.ref_name }}" == "production" ]]; then
+            beta_tag="${{ needs.calculate-version.outputs.clean_version }}-beta"
+            
+            # Check if that beta tag exists as a release
+            if gh release view "$beta_tag" --repo ${{ github.repository }} > /dev/null 2>&1; then
+               echo "Found existing beta release: $beta_tag. Deleting it to avoid duplicate releases..."
+               # Delete the old beta release
+               gh release delete "$beta_tag" --yes --cleanup-tag --repo ${{ github.repository }}
+            else
+               echo "No preceding beta release ($beta_tag) found to clean up."
+            fi
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
