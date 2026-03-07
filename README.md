@@ -15,12 +15,12 @@ _Backend for a movie discovery app. Built with NestJS and deployed on AWS_
 - CloudFront for caching and SSL termination
 
 
-### Creat or Update OTP template
+### Create or Update OTP template
 
+1. Edit the HTML in `src/otp/otp.template.html`.
+2. Sync directly to AWS SES:
 ```bash
-aws ses create-template --cli-input-json file://src/otp/otp.template.json --region eu-central-1
-aws ses update-template --cli-input-json file://src/otp/otp.template.json --region eu-central-1
-
+npm run sync-email-template
 ```
 
 ### Port

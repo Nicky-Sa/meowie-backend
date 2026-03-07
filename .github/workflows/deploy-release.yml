@@ -66,6 +66,7 @@ jobs:
       # --- RUN DATABASE MIGRATIONS ---
       - name: Run Database Migrations
         env:
+          # Required envs can be found in dbMigratorEnvConfig in env.config.ts
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_MIGRATOR_USER: ${{ secrets.DB_MIGRATOR_USER }}

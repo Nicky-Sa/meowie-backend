@@ -1,7 +1,13 @@
 import { EmailService } from '../email.service';
-import { SendTemplatedEmailCommand, SESClient } from '@aws-sdk/client-ses';
+import {
+  SendTemplatedEmailCommand,
+  SESClient,
+  UpdateTemplateCommand,
+  CreateTemplateCommand,
+} from '@aws-sdk/client-ses';
 import { EnvService } from '../../env/env.service';
 import { Injectable, Logger } from '@nestjs/common';
+import { EmailTemplateConfig } from '../email.types';
 
 @Injectable()
 export class SesService extends EmailService {
@@ -42,6 +48,36 @@ export class SesService extends EmailService {
     } catch (error) {
       this.logger.error('Failed to send email: ', error);
       throw error;
+    }
+  }
+
+  async syncTemplates(config: EmailTemplateConfig) {
+    const templateData = {
+      Template: {
+        TemplateName: config.templateName,
+        SubjectPart: config.subject,
+        HtmlPart: config.htmlContent,
+        TextPart: config.textContent,
+      },
+    };
+
+    try {
+      await this.sesClient.send(new UpdateTemplateCommand(templateData));
+      this.logger.log(
+        `✅ Template "${config.templateName}" updated successfully in AWS SES.`,
+      );
+    } catch (error: any) {
+      if (
+        error instanceof Error &&
+        error.name === 'TemplateDoesNotExistException'
+      ) {
+        await this.sesClient.send(new CreateTemplateCommand(templateData));
+        this.logger.log(
+          `✨ Template "${config.templateName}" created in AWS SES.`,
+        );
+      } else {
+        this.logger.error('❌ Error syncing template to SES:', error);
+      }
     }
   }
 }

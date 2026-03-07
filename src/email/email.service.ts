@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EmailTemplateConfig } from './email.types';
 
 @Injectable()
 export abstract class EmailService {
@@ -11,4 +12,6 @@ export abstract class EmailService {
       data: Record<string, string>;
     },
   ): Promise<void>;
+
+  abstract syncTemplates(config: EmailTemplateConfig): Promise<void>;
 }
