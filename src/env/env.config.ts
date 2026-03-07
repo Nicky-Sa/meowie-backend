@@ -53,8 +53,27 @@ export const envConfig = z.object({
     ),
 });
 
+export const dbMigratorEnvConfig = z.object({
+  DB_NAME: z.string().min(1, { message: 'DB_NAME is required' }),
+  DB_PORT: z.coerce.number({ message: 'DB_PORT is required' }),
+  DB_MIGRATOR_USER: z
+    .string()
+    .min(1, { message: 'DB_MIGRATOR_USER is required' }),
+  DB_MIGRATOR_PASSWORD: z.string().min(1, {
+    message: 'DB_MIGRATOR_PASSWORD is required',
+  }),
+  DB_HOST_MIGRATOR: z.string().min(1, {
+    message: 'DB_HOST_MIGRATOR with no pooling for migrations is required',
+  }),
+});
+
 export type Env = z.infer<typeof envConfig>;
+export type DbMigratorEnv = z.infer<typeof dbMigratorEnvConfig>;
 
 export function loadEnv(): Env {
   return envConfig.parse(process.env);
+}
+
+export function loadDbMigratorEnv(): DbMigratorEnv {
+  return dbMigratorEnvConfig.parse(process.env);
 }

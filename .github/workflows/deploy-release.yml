@@ -63,6 +63,17 @@ jobs:
           npm run build
           npm run sentry:sourcemaps
 
+      # --- RUN DATABASE MIGRATIONS ---
+      - name: Run Database Migrations
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_MIGRATOR_USER: ${{ secrets.DB_MIGRATOR_USER }}
+          DB_MIGRATOR_PASSWORD: ${{ secrets.DB_MIGRATOR_PASSWORD }}
+          DB_HOST_MIGRATOR: ${{ secrets.DB_HOST_MIGRATOR }}
+        run: npm run migration:run
+
+
       # --- Build & Push ---
       - name: Build and Push Docker image
         run: |
