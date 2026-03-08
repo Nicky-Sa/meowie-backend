@@ -118,7 +118,7 @@ export class MovieService {
       'videos,release_dates,credits',
     );
 
-    const posterPath = getImage(item.poster_path, 'poster');
+    const posterPath = getImage(item.poster_path, 'movie_poster');
     const posterProps =
       await this.imagesService.generatePosterProps(posterPath);
     const ratings = await this.ratingsService.getRatings(
@@ -176,7 +176,7 @@ export class MovieService {
     const { results: movies, ...rest } = discoveredMoviesList;
     const results = movies.map((movie) => ({
       id: movie.id,
-      posterPath: getImage(movie.poster_path, 'poster'),
+      posterPath: getImage(movie.poster_path, 'movie_poster'),
       blurhash: DEFAULT_BLURHASH,
       mediaType: 'movie' as const,
     }));

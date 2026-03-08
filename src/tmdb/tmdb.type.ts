@@ -1,4 +1,5 @@
 import { PaginatedResponse } from '../common/types/paginated-response';
+import { MediaType } from '../types/media-type';
 
 export type TMDB_Genre = {
   id: number;
@@ -175,7 +176,7 @@ export type TMDB_CombinedCreditsCast = {
   character: string;
   credit_id: string;
   order?: number;
-  media_type: string;
+  media_type: MediaType;
   origin_country?: string[];
   original_name?: string;
   first_air_date?: string;
@@ -201,7 +202,7 @@ export type TMDB_CombinedCreditsCrew = {
   credit_id: string;
   department: string;
   job: string;
-  media_type: string;
+  media_type: MediaType;
   origin_country?: string[];
   original_name?: string;
   first_air_date?: string;
@@ -512,7 +513,29 @@ type SearchResultMovie = {
   vote_count: number;
 };
 
-export type TMDB_MultiSearchDetail = SearchResultPerson | SearchResultMovie;
+// media_type: tv
+type SearchResultTv = {
+  adult: boolean;
+  backdrop_path: string;
+  id: number;
+  name: string;
+  original_name: string;
+  overview: string;
+  poster_path: string;
+  media_type: 'tv';
+  original_language: string;
+  genre_ids: number[];
+  popularity: number;
+  first_air_date: string;
+  origin_country: string[];
+  vote_average: number;
+  vote_count: number;
+};
+
+export type TMDB_MultiSearchDetail =
+  | SearchResultPerson
+  | SearchResultMovie
+  | SearchResultTv;
 
 export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
   declare results: TMDB_MultiSearchDetail[];

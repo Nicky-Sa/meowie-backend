@@ -41,15 +41,15 @@ export class PersonService {
     const castResults: PosterInfo[] = cast.map((item) => ({
       id: item.id,
       blurhash: DEFAULT_BLURHASH,
-      posterPath: getImage(item.poster_path, 'poster'),
-      mediaType: item.media_type as MediaType,
+      posterPath: getImage(item.poster_path, `${item.media_type}_poster`),
+      mediaType: item.media_type,
       role: item.character ? `Performing as ${item.character}` : 'N/A',
     }));
     const crewResults: PosterInfo[] = crew.map((item) => ({
       id: item.id,
       blurhash: DEFAULT_BLURHASH,
-      posterPath: getImage(item.poster_path, 'poster'),
-      mediaType: item.media_type as MediaType,
+      posterPath: getImage(item.poster_path, `${item.media_type}_poster`),
+      mediaType: item.media_type,
       role: item.job,
     }));
 

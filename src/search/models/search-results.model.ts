@@ -17,6 +17,15 @@ export class SearchResultMovie {
   releaseYear: string;
 }
 
+export class SearchResultTv {
+  id: number;
+  title: string;
+  posterPath: string;
+  mediaType: 'tv';
+  genres: string[];
+  firstAirDate: string;
+}
+
 export class SearchResultMovieGenre extends Genre {
   mediaType: 'movie-genre';
 }
@@ -28,5 +37,6 @@ export class SearchResultTvGenre extends Genre {
 export type MultiSearchResults =
   | SearchResultPerson
   | SearchResultMovie
+  | SearchResultTv
   | SearchResultMovieGenre
   | SearchResultTvGenre;

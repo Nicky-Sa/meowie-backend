@@ -28,6 +28,7 @@ import {
 import { CacheDuration } from '../cache/cache.constants';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
+import { extractYearFromDate } from '../utils/dates';
 
 @Injectable()
 export class TvService {
@@ -111,7 +112,7 @@ export class TvService {
       id,
       'videos,content_ratings,credits',
     );
-    const posterPath = getImage(item.poster_path, 'poster');
+    const posterPath = getImage(item.poster_path, 'tv_poster');
     const posterProps =
       await this.imagesService.generatePosterProps(posterPath);
     const ratings = await this.ratingsService.getRatings(
@@ -145,7 +146,7 @@ export class TvService {
     const { results: tvShows, ...rest } = discoveredTvList;
     const results = tvShows.map((movie) => ({
       id: movie.id,
-      posterPath: getImage(movie.poster_path, 'poster'),
+      posterPath: getImage(movie.poster_path, 'tv_poster'),
       blurhash: DEFAULT_BLURHASH,
       mediaType: 'tv' as const,
     }));
@@ -197,11 +198,13 @@ export class TvService {
   ): `${string} - ${string}` | 'N/A' {
     if (status === 'Returning Series') {
       if (firstAirDate) {
-        return `${firstAirDate.slice(0, 4)} - Present`;
+        return `${extractYearFromDate(firstAirDate)} - Present`;
       }
     }
     if (lastAirDate) {
-      return `${firstAirDate.slice(0, 4)} - ${lastAirDate.slice(0, 4)}`;
+      return `${extractYearFromDate(firstAirDate)} - ${extractYearFromDate(
+        lastAirDate,
+      )}`;
     }
     return `N/A`;
   }

@@ -4,7 +4,6 @@ import { MultiSearchResDto } from './dto/search.dto';
 import { getImage } from '../images/images.utils';
 import { extractYearFromDate } from '../utils/dates';
 import { MultiSearchResults } from './models/search-results.model';
-
 import { TmdbService } from '../tmdb/tmdb.service';
 import { ConstantsService } from '../constants/constants.service';
 
@@ -26,11 +25,14 @@ export class SearchService {
 
     const { movieGenres, tvGenres } = genresRes;
     const movieGenresMap = new Map(movieGenres.map((g) => [g.id, g.name]));
+    const tvGenresMap = new Map(tvGenres.map((g) => [g.id, g.name]));
 
     const results: MultiSearchResults[] = response.results
       .filter(
         (result) =>
-          result.media_type === 'person' || result.media_type === 'movie',
+          result.media_type === 'person' ||
+          result.media_type === 'movie' ||
+          result.media_type === 'tv',
       )
       .filter((result) => this.isResultValid(result))
       .map((result) => {
@@ -48,14 +50,26 @@ export class SearchService {
               mediaType: result.media_type,
               id: result.id,
               title: result.title,
-              posterPath: getImage(result.poster_path, 'poster'),
+              posterPath: getImage(result.poster_path, 'movie_poster'),
               genres: result.genre_ids
                 .map((id) => movieGenresMap.get(id))
                 .filter(Boolean) as string[],
               releaseYear: extractYearFromDate(result.release_date),
             };
+          case 'tv':
+            return {
+              mediaType: result.media_type,
+              id: result.id,
+              title: result.name,
+              posterPath: getImage(result.poster_path, 'tv_poster'),
+              genres: result.genre_ids
+                .map((id) => tvGenresMap.get(id))
+                .filter(Boolean) as string[],
+              firstAirDate: extractYearFromDate(result.first_air_date),
+            };
         }
-      });
+      })
+      .filter(Boolean);
     const matchingMovieGenres = movieGenres.filter((genre) =>
       genre.name.toLowerCase().includes(query.toLowerCase()),
     );
@@ -90,6 +104,10 @@ export class SearchService {
       case 'movie':
         return Boolean(
           result.title && result.genre_ids.length > 0 && result.release_date,
+        );
+      case 'tv':
+        return Boolean(
+          result.name && result.genre_ids.length > 0 && result.first_air_date,
         );
     }
     return false;

@@ -89,7 +89,10 @@ export class LibraryService {
             item.mediaType,
             item.tmdbId,
           );
-        const posterPath = getImage(details.poster_path, 'poster');
+        const posterPath = getImage(
+          details.poster_path,
+          `${item.mediaType}_poster`,
+        );
         return {
           id: details.id,
           posterPath,
