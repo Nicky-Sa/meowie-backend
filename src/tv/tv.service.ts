@@ -47,7 +47,10 @@ export class TvService {
       TMDB_DiscoveredTvList,
       TMDB_DiscoverTvQuery
     >('tv', {
-      sort_by: this.constructSort(query.sort),
+      ...tmdbQuery,
+      ...(this.constructSortRelatedParams(
+        query.sort,
+      ) as Partial<TMDB_DiscoverTvQuery>),
       ...(query.genres && {
         with_genres: query.genres.replaceAll(',', '|'),
       }),
@@ -66,7 +69,6 @@ export class TvService {
         'vote_average.lte': Number(query.tmdbRatings.split(',')[1]),
       }),
       page: query.page ?? 1,
-      ...tmdbQuery,
     });
 
     const validTv = response.results.filter((tvShow) => this.isTvValid(tvShow));
@@ -209,16 +211,26 @@ export class TvService {
     return `N/A`;
   }
 
-  private constructSort(sort: SortOption) {
+  private constructSortRelatedParams(sort: SortOption) {
     switch (sort) {
       case SortOption.RANDOM:
-        return 'vote_count.desc';
+        return {
+          sort_by: 'vote_count.desc',
+        };
       case SortOption.NEWEST:
-        return 'first_air_date.desc';
+        return {
+          sort_by: 'first_air_date.desc',
+        };
       case SortOption.POPULARITY:
-        return 'popularity.desc';
+        return {
+          sort_by: 'popularity.desc',
+          'vote_average.gte': 7,
+          'vote_count.gte': 300,
+        };
       default:
-        return sort;
+        return {
+          sort_by: sort,
+        };
     }
   }
 }

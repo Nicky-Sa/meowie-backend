@@ -49,7 +49,10 @@ export class MovieService {
       TMDB_DiscoveredMoviesList,
       TMDB_DiscoverMovieQuery
     >('movie', {
-      sort_by: this.constructSort(query.sort),
+      ...tmdbQuery,
+      ...(this.constructSortRelatedParams(
+        query.sort,
+      ) as Partial<TMDB_DiscoverMovieQuery>),
       ...(query.genres && {
         with_genres: query.genres.replaceAll(',', '|'),
       }),
@@ -68,7 +71,6 @@ export class MovieService {
         'vote_average.lte': Number(query.tmdbRatings.split(',')[1]),
       }),
       page: query.page ?? 1,
-      ...tmdbQuery,
     });
     const validMovies = response.results.filter((movie) =>
       this.isMovieValid(movie),
@@ -261,16 +263,26 @@ export class MovieService {
     return extractYearFromDate(firstRelease.release_date);
   }
 
-  private constructSort(sort: SortOption) {
+  private constructSortRelatedParams(sort: SortOption) {
     switch (sort) {
       case SortOption.RANDOM:
-        return 'vote_count.desc';
+        return {
+          sort_by: 'vote_count.desc',
+        };
       case SortOption.NEWEST:
-        return 'primary_release_date.desc';
+        return {
+          sort_by: 'primary_release_date.desc',
+        };
       case SortOption.POPULARITY:
-        return 'popularity.desc';
+        return {
+          sort_by: 'popularity.desc',
+          'vote_average.gte': 7,
+          'vote_count.gte': 300,
+        };
       default:
-        return sort;
+        return {
+          sort_by: sort,
+        };
     }
   }
 }
