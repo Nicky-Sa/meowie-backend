@@ -10,8 +10,31 @@ permissions:
   contents: write
 
 jobs:
+  # --- JOB 0: PREPARE (Calculate Version) ---
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.calc_version.outputs.new_tag }}
+      changelog: ${{ steps.calc_version.outputs.changelog }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: '0'
+
+      - name: Calculate Version
+        id: calc_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          tag_prefix: "v"
+          dry_run: true
+          release_branches: "preview,production"
+
   # --- JOB 1: DEPLOY TO AWS ---
   deploy:
+    needs: prepare
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     env:
@@ -26,6 +49,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: '0'
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -61,6 +86,7 @@ jobs:
       - name: Upload source maps to Sentry
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: meowie-backend@${{ needs.prepare.outputs.new_tag }}
         run: |
           npm run build
           npm run sentry:sourcemaps
@@ -115,6 +141,7 @@ jobs:
             "Variables": {
               "TMDB_API_KEY": "${{ secrets.TMDB_API_KEY }}",
               "SENTRY_AUTH_TOKEN": "${{ secrets.SENTRY_AUTH_TOKEN }}",
+              "SENTRY_RELEASE": "meowie-backend@${{ needs.prepare.outputs.new_tag }}",
               "PORT": "${{ vars.PORT }}",
               "BUILD_ENV": "${{ env.BUILD_ENV }}",
               "DB_NAME": "${{ secrets.DB_NAME }}",
@@ -146,7 +173,7 @@ jobs:
 
   # --- JOB 2: RELEASE (Runs only after Deploy succeeds) ---
   release:
-    needs: deploy
+    needs: [prepare, deploy]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -154,21 +181,11 @@ jobs:
         with:
           fetch-depth: '0'
 
-      - name: Calculate Version
-        id: calc_version
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
-          tag_prefix: "v"
-          dry_run: ${{ github.ref_name != 'production' }}
-          release_branches: "preview,production"
-
       - name: Manage Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEW_VER: ${{ steps.calc_version.outputs.new_tag }}
-          CHANGELOG: ${{ steps.calc_version.outputs.changelog }}
+          NEW_VER: ${{ needs.prepare.outputs.new_tag }}
+          CHANGELOG: ${{ needs.prepare.outputs.changelog }}
         run: |
           if [[ "${{ github.ref_name }}" == "production" ]]; then
             # 1. Create solid full release
