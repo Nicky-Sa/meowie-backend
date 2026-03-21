@@ -8,4 +8,4 @@ export const TV_POSTER_FALLBACK_URL =
 export const PERSON_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/person-fallback.png';
 export const LIMIT = 20;
-export const DEFAULT_BLURHASH = 'U11o;?of00of00of00of00of00of00of00of';
+export const DEFAULT_BLURHASH = 'L18z.G~qRkxakWofofkCD%RjNGj[';
