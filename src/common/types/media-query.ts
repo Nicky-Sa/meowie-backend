@@ -18,7 +18,7 @@ export enum SortOption {
 export class Sort {
   @IsOptional()
   @IsEnum(SortOption)
-  sort: SortOption = SortOption.POPULARITY;
+  sort: SortOption;
 }
 
 export class Browse {
