@@ -130,7 +130,7 @@ export class TvService {
         item.last_air_date,
         item.status,
       ),
-      avgDuration: `${item.episode_run_time[0] || 'N/A'} min`,
+      numberOfSeasons: item.number_of_seasons,
       contentRating: this.findContentRating(item.content_ratings),
       trailerKey: findTrailerKey(item.videos),
       posterPath,
@@ -200,7 +200,7 @@ export class TvService {
   ): `${string} - ${string}` | 'N/A' {
     if (status === 'Returning Series') {
       if (firstAirDate) {
-        return `${extractYearFromDate(firstAirDate)} - Present`;
+        return `${extractYearFromDate(firstAirDate)} - Now`;
       }
     }
     if (lastAirDate) {
