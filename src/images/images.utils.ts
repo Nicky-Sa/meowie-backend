@@ -7,13 +7,13 @@ import {
 
 export const getImage = (
   path: string | null | undefined,
-  type: 'movie_poster' | 'tv_poster' | 'person',
+  type: 'movie_poster' | 'series_poster' | 'person',
 ) => {
   if (!path) {
     switch (type) {
       case 'movie_poster':
         return MOVIE_POSTER_FALLBACK_URL;
-      case 'tv_poster':
+      case 'series_poster':
         return TV_POSTER_FALLBACK_URL;
       case 'person':
         return PERSON_FALLBACK_URL;

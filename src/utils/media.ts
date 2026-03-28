@@ -1,8 +1,14 @@
-import { TMDB_Genre, TMDB_MovieInfo, TMDB_Videos } from '../tmdb/tmdb.type';
+import {
+  TMDB_Genre,
+  TMDB_MediaType,
+  TMDB_MovieInfo,
+  TMDB_Videos,
+} from '../tmdb/tmdb.type';
 import { CastInfo } from '../types/cast';
 import { PERSON_FALLBACK_URL } from '../common/app.constants';
 import { getImage } from '../images/images.utils';
 import { GENRES } from '../constants/items/genres.constant';
+import { MediaType } from '../types/media-type';
 
 export const emptyCast: CastInfo = {
   id: -1,
@@ -74,4 +80,15 @@ export const formatCasts = (
       creditId: cast.credit_id,
       profilePath: getImage(cast.profile_path, 'person'),
     }));
+};
+
+export const TmdbMediaTypeToAppMediaType = (
+  tmdbMediaType: TMDB_MediaType,
+): MediaType => {
+  switch (tmdbMediaType) {
+    case 'tv':
+      return 'series';
+    default:
+      return tmdbMediaType;
+  }
 };

@@ -1,5 +1,4 @@
 import { PaginatedResponse } from '../common/types/paginated-response';
-import { MediaType } from '../types/media-type';
 
 export type TMDB_Genre = {
   id: number;
@@ -8,6 +7,8 @@ export type TMDB_Genre = {
 export type TMDB_GenresList = {
   genres: TMDB_Genre[];
 };
+
+export type TMDB_MediaType = 'movie' | 'tv';
 
 //--------------------------------------------------
 // Movie
@@ -176,7 +177,7 @@ export type TMDB_CombinedCreditsCast = {
   character: string;
   credit_id: string;
   order?: number;
-  media_type: MediaType;
+  media_type: TMDB_MediaType;
   origin_country?: string[];
   original_name?: string;
   first_air_date?: string;
@@ -202,7 +203,7 @@ export type TMDB_CombinedCreditsCrew = {
   credit_id: string;
   department: string;
   job: string;
-  media_type: MediaType;
+  media_type: TMDB_MediaType;
   origin_country?: string[];
   original_name?: string;
   first_air_date?: string;
@@ -228,7 +229,7 @@ export type TMDB_MovieSortOption =
   | 'vote_count.asc'
   | 'vote_count.desc';
 
-export type TMDB_DiscoverTvQuery = {
+export type TMDB_DiscoverSeriesQuery = {
   // --- CORE PARAMS ---
   /**
    * Specify the page of results to query.
@@ -247,7 +248,7 @@ export type TMDB_DiscoverTvQuery = {
    * Choose a sort option for the list of results.
    * @default 'popularity.desc'
    */
-  sort_by?: TMDB_TvSortOption;
+  sort_by?: TMDB_SeriesSortOption;
 
   /**
    * Used in conjunction with the air_date.gte/lte filter to calculate the proper UTC offset.
@@ -257,41 +258,41 @@ export type TMDB_DiscoverTvQuery = {
 
   // --- FILTERS: AIR DATES ---
   /**
-   * Filter and only include TV shows that have a first air date year
+   * Filter and only include Series that have a first air date year
    * that is equal to the specified value.
    */
   first_air_date_year?: number;
 
   /**
-   * Filter and only include TV shows that have a first air date
+   * Filter and only include Series that have a first air date
    * that is greater or equal to the specified value.
    * Format: YYYY-MM-DD
    */
   'first_air_date.gte'?: string;
 
   /**
-   * Filter and only include TV shows that have a first air date
+   * Filter and only include Series that have a first air date
    * that is less than or equal to the specified value.
    * Format: YYYY-MM-DD
    */
   'first_air_date.lte'?: string;
 
   /**
-   * Filter and only include TV shows that have an air date (for any episode)
+   * Filter and only include Series that have an air date (for any episode)
    * that is greater or equal to the specified value.
    * Format: YYYY-MM-DD
    */
   'air_date.gte'?: string;
 
   /**
-   * Filter and only include TV shows that have an air date (for any episode)
+   * Filter and only include Series that have an air date (for any episode)
    * that is less than or equal to the specified value.
    * Format: YYYY-MM-DD
    */
   'air_date.lte'?: string;
 
   /**
-   * Use this filter to include TV shows that don't have an air date
+   * Use this filter to include Series that don't have an air date
    * while using any of the "first_air_date" filters.
    * @default false
    */
@@ -299,19 +300,19 @@ export type TMDB_DiscoverTvQuery = {
 
   // --- FILTERS: RATINGS & VOTES ---
   /**
-   * Filter and only include TV shows that have a vote count
+   * Filter and only include Series that have a vote count
    * that is greater or equal to the specified value.
    */
   'vote_count.gte'?: number;
 
   /**
-   * Filter and only include TV shows that have a rating
+   * Filter and only include Series that have a rating
    * that is greater or equal to the specified value.
    */
   'vote_average.gte'?: number;
 
   /**
-   * Filter and only include TV shows that have a rating
+   * Filter and only include Series that have a rating
    * that is less than or equal to the specified value.
    */
   'vote_average.lte'?: number;
@@ -371,19 +372,19 @@ export type TMDB_DiscoverTvQuery = {
   with_type?: string;
 
   /**
-   * Filter and only include TV shows that have been screened theatrically.
+   * Filter and only include Series that have been screened theatrically.
    */
   screened_theatrically?: boolean;
 
   // --- FILTERS: CONTENT & ORIGIN ---
   /**
-   * Filter and only include TV shows that have a runtime
+   * Filter and only include Series that have a runtime
    * that is greater or equal to a value (in minutes).
    */
   'with_runtime.gte'?: number;
 
   /**
-   * Filter and only include TV shows that have a runtime
+   * Filter and only include Series that have a runtime
    * that is less than or equal to a value (in minutes).
    */
   'with_runtime.lte'?: number;
@@ -514,7 +515,7 @@ type SearchResultMovie = {
 };
 
 // media_type: tv
-type SearchResultTv = {
+type SearchResultSeries = {
   adult: boolean;
   backdrop_path: string;
   id: number;
@@ -535,14 +536,14 @@ type SearchResultTv = {
 export type TMDB_MultiSearchDetail =
   | SearchResultPerson
   | SearchResultMovie
-  | SearchResultTv;
+  | SearchResultSeries;
 
 export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
   declare results: TMDB_MultiSearchDetail[];
 }
 
 //--------------------------------------------------
-// Tv
+// Series
 
 // /3/discover/tv
 export type TMDB_DiscoverMovieQuery = {
@@ -777,7 +778,7 @@ export type TMDB_DiscoverMovieQuery = {
   with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
 };
 
-export type TMDB_TvSortOption =
+export type TMDB_SeriesSortOption =
   | 'first_air_date.asc'
   | 'first_air_date.desc'
   | 'name.asc'
@@ -791,11 +792,11 @@ export type TMDB_TvSortOption =
   | 'vote_count.asc'
   | 'vote_count.desc';
 
-export class TMDB_DiscoveredTvList extends PaginatedResponse<TMDB_DiscoveredTvDetail> {
-  declare results: TMDB_DiscoveredTvDetail[];
+export class TMDB_DiscoveredSeriesList extends PaginatedResponse<TMDB_DiscoveredSeriesDetail> {
+  declare results: TMDB_DiscoveredSeriesDetail[];
 }
 
-export type TMDB_DiscoveredTvDetail = {
+export type TMDB_DiscoveredSeriesDetail = {
   adult: boolean;
   backdrop_path: string;
   genre_ids: number[];
@@ -812,8 +813,8 @@ export type TMDB_DiscoveredTvDetail = {
   vote_count: number;
 };
 
-// /3/tv/${id}
-export type TMDB_TvInfo = {
+// /3/series/${id}
+export type TMDB_SeriesInfo = {
   adult: boolean;
   backdrop_path: string;
   created_by: CreatedBy[];

@@ -23,7 +23,7 @@ export class PersonController {
 
   @Get(':id/posters')
   @Header('Cache-Control', 'public, max-age=3600')
-  async getTvPostersInBulk(@Param('id') id: number): Promise<PosterResDto> {
+  async getSeriesPostersInBulk(@Param('id') id: number): Promise<PosterResDto> {
     return this.personService.getCombinedPosters(id);
   }
 }

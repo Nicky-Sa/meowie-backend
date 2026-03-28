@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '../cache/cache.service';
 import {
-  TMDB_DiscoverTvQuery,
-  TMDB_DiscoveredTvDetail,
-  TMDB_TvInfo,
-  TMDB_DiscoveredTvList,
+  TMDB_DiscoverSeriesQuery,
+  TMDB_DiscoveredSeriesDetail,
+  TMDB_SeriesInfo,
+  TMDB_DiscoveredSeriesList,
 } from '../tmdb/tmdb.type';
 import {
-  InterestingTvIdsResDto,
+  InterestingSeriesIdsResDto,
   QueryParamsDto,
-  TvCredits,
-  TvInfoResDto,
-} from './dto/tv.dto';
+  SeriesCredits,
+  SeriesInfoResDto,
+} from './dto/series.dto';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { SortOption } from '../common/types/media-query';
 import { getImage } from '../images/images.utils';
@@ -31,7 +31,7 @@ import { DEFAULT_BLURHASH } from '../common/app.constants';
 import { extractYearFromDate } from '../utils/dates';
 
 @Injectable()
-export class TvService {
+export class SeriesService {
   constructor(
     private readonly tmdb: TmdbService,
     private readonly cacheService: CacheService,
@@ -39,18 +39,18 @@ export class TvService {
     private readonly imagesService: ImagesService,
   ) {}
 
-  async getDiscoveredTv(
+  async getDiscoveredSeries(
     query: QueryParamsDto,
-    tmdbQuery?: TMDB_DiscoverTvQuery,
-  ): Promise<TMDB_DiscoveredTvList> {
+    tmdbQuery?: TMDB_DiscoverSeriesQuery,
+  ): Promise<TMDB_DiscoveredSeriesList> {
     const response = await this.tmdb.getDiscover<
-      TMDB_DiscoveredTvList,
-      TMDB_DiscoverTvQuery
-    >('tv', {
+      TMDB_DiscoveredSeriesList,
+      TMDB_DiscoverSeriesQuery
+    >('series', {
       ...tmdbQuery,
       ...(this.constructSortRelatedParams(
         query.sort,
-      ) as Partial<TMDB_DiscoverTvQuery>),
+      ) as Partial<TMDB_DiscoverSeriesQuery>),
       ...(query.genres && {
         with_genres: query.genres.replaceAll(',', '|'),
       }),
@@ -71,23 +71,25 @@ export class TvService {
       page: query.page ?? 1,
     });
 
-    const validTv = response.results.filter((tvShow) => this.isTvValid(tvShow));
+    const validSeries = response.results.filter((tvShow) =>
+      this.isSeriesValid(tvShow),
+    );
     return {
       ...response,
-      results: validTv,
+      results: validSeries,
     };
   }
 
-  async getInterestingTvIds(
+  async getInterestingSeriesIds(
     query: Pick<QueryParamsDto, 'page' | 'sort'>,
-  ): Promise<InterestingTvIdsResDto> {
-    const discoveredTv = await this.getDiscoveredTv(query, {
+  ): Promise<InterestingSeriesIdsResDto> {
+    const discoveredSeries = await this.getDiscoveredSeries(query, {
       'vote_count.gte': 50,
     });
 
     const data = {
-      ...discoveredTv,
-      results: discoveredTv.results.map((tvShow) => tvShow.id),
+      ...discoveredSeries,
+      results: discoveredSeries.results.map((tvShow) => tvShow.id),
     };
 
     return data;
@@ -95,26 +97,26 @@ export class TvService {
 
   @Cacheable({
     key: (id: number, append_to_response = '') =>
-      `tv-basic-info-${id}-{${append_to_response}}`,
+      `series-basic-info-${id}-{${append_to_response}}`,
     ttl: CacheDuration.ONE_DAY,
   })
-  async getBasicTvInfo<T>(
+  async getBasicSeriesInfo<T>(
     id: number,
     append_to_response: string = '',
   ): Promise<T> {
-    return this.tmdb.getDetails<T>('tv', id, append_to_response);
+    return this.tmdb.getDetails<T>('series', id, append_to_response);
   }
 
   @Cacheable({
-    key: (id: number) => `tv-info-${id}`,
+    key: (id: number) => `series-info-${id}`,
     ttl: CacheDuration.ONE_DAY,
   })
-  async getTvInfo(id: number): Promise<TvInfoResDto> {
-    const item = await this.getBasicTvInfo<TMDB_TvInfo>(
+  async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
+    const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(
       id,
       'videos,content_ratings,credits',
     );
-    const posterPath = getImage(item.poster_path, 'tv_poster');
+    const posterPath = getImage(item.poster_path, 'series_poster');
     const posterProps =
       await this.imagesService.generatePosterProps(posterPath);
     const ratings = await this.ratingsService.getRatings(
@@ -123,7 +125,7 @@ export class TvService {
       item.vote_average,
     );
 
-    const data: TvInfoResDto = {
+    const data: SeriesInfoResDto = {
       title: item.name,
       airingYears: this.constructAiringYears(
         item.first_air_date,
@@ -137,39 +139,39 @@ export class TvService {
       overview: item.overview,
       genres: formatGenres(item.genres),
       posterProps,
-      credits: this.constructTvCredits(item.credits, item.created_by),
+      credits: this.constructSeriesCredits(item.credits, item.created_by),
       ratings,
     };
     return data;
   }
 
-  async getTvPosters(query: QueryParamsDto): Promise<PosterResDto> {
-    const discoveredTvList = await this.getDiscoveredTv(query);
-    const { results: tvShows, ...rest } = discoveredTvList;
-    const results = tvShows.map((movie) => ({
+  async getSeriesPosters(query: QueryParamsDto): Promise<PosterResDto> {
+    const discoveredSeriesList = await this.getDiscoveredSeries(query);
+    const { results: series, ...rest } = discoveredSeriesList;
+    const results = series.map((movie) => ({
       id: movie.id,
-      posterPath: getImage(movie.poster_path, 'tv_poster'),
+      posterPath: getImage(movie.poster_path, 'series_poster'),
       blurhash: DEFAULT_BLURHASH,
-      mediaType: 'tv' as const,
+      mediaType: 'series' as const,
     }));
     return { results, ...rest };
   }
 
-  private isTvValid(tvShow: TMDB_DiscoveredTvDetail): boolean {
+  private isSeriesValid(tvShow: TMDB_DiscoveredSeriesDetail): boolean {
     return Boolean(tvShow.name && tvShow.overview && tvShow.first_air_date);
   }
 
-  private constructTvCredits(
-    credits: TMDB_TvInfo['credits'],
-    createdBy: TMDB_TvInfo['created_by'],
-  ): TvCredits {
+  private constructSeriesCredits(
+    credits: TMDB_SeriesInfo['credits'],
+    createdBy: TMDB_SeriesInfo['created_by'],
+  ): SeriesCredits {
     return {
       casts: formatCasts(credits.cast),
       creator: this.formatCreator(createdBy),
     };
   }
 
-  private formatCreator(createdBy: TMDB_TvInfo['created_by']): CastInfo {
+  private formatCreator(createdBy: TMDB_SeriesInfo['created_by']): CastInfo {
     const creator = createdBy[0];
     if (!creator) {
       return emptyCast;
@@ -184,7 +186,7 @@ export class TvService {
   }
 
   private findContentRating(
-    contentRatings: TMDB_TvInfo['content_ratings'],
+    contentRatings: TMDB_SeriesInfo['content_ratings'],
     country: string = 'US',
   ) {
     return (
@@ -196,7 +198,7 @@ export class TvService {
   private constructAiringYears(
     firstAirDate: string,
     lastAirDate: string | null,
-    status: TMDB_TvInfo['status'],
+    status: TMDB_SeriesInfo['status'],
   ): `${string} - ${string}` | 'N/A' {
     if (status === 'Returning Series') {
       if (firstAirDate) {

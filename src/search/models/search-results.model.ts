@@ -17,11 +17,11 @@ export class SearchResultMovie {
   releaseYear: string;
 }
 
-export class SearchResultTv {
+export class SearchResultSeries {
   id: number;
   title: string;
   posterPath: string;
-  mediaType: 'tv';
+  mediaType: 'series';
   genres: string[];
   firstAirDate: string;
 }
@@ -30,13 +30,13 @@ export class SearchResultMovieGenre extends Genre {
   mediaType: 'movie-genre';
 }
 
-export class SearchResultTvGenre extends Genre {
-  mediaType: 'tv-genre';
+export class SearchResultSeriesGenre extends Genre {
+  mediaType: 'series-genre';
 }
 
 export type MultiSearchResults =
   | SearchResultPerson
   | SearchResultMovie
-  | SearchResultTv
+  | SearchResultSeries
   | SearchResultMovieGenre
-  | SearchResultTvGenre;
+  | SearchResultSeriesGenre;

@@ -13,5 +13,5 @@ export class Genre {
 
 export class GenresResDto {
   movieGenres: Genre[];
-  tvGenres: Genre[];
+  seriesGenres: Genre[];
 }

@@ -5,9 +5,9 @@ import { CacheService } from 'src/cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { PosterResDto } from '../common/dto/poster.dto';
-import { MediaType } from '../types/media-type';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
 import { PosterInfo } from '../images/poster';
+import { TmdbMediaTypeToAppMediaType } from '../utils/media';
 
 @Injectable()
 export class PersonService {
@@ -38,20 +38,26 @@ export class PersonService {
   async getCombinedPosters(personId: number): Promise<PosterResDto> {
     const combinedCredits = await this.tmdbService.getCombinedCredits(personId);
     const { cast, crew } = combinedCredits;
-    const castResults: PosterInfo[] = cast.map((item) => ({
-      id: item.id,
-      blurhash: DEFAULT_BLURHASH,
-      posterPath: getImage(item.poster_path, `${item.media_type}_poster`),
-      mediaType: item.media_type,
-      role: item.character ? `Performing as ${item.character}` : 'N/A',
-    }));
-    const crewResults: PosterInfo[] = crew.map((item) => ({
-      id: item.id,
-      blurhash: DEFAULT_BLURHASH,
-      posterPath: getImage(item.poster_path, `${item.media_type}_poster`),
-      mediaType: item.media_type,
-      role: item.job,
-    }));
+    const castResults: PosterInfo[] = cast.map((item) => {
+      const mediaType = TmdbMediaTypeToAppMediaType(item.media_type);
+      return {
+        id: item.id,
+        blurhash: DEFAULT_BLURHASH,
+        posterPath: getImage(item.poster_path, `${mediaType}_poster`),
+        mediaType,
+        role: item.character ? `Performing as ${item.character}` : 'N/A',
+      };
+    });
+    const crewResults: PosterInfo[] = crew.map((item) => {
+      const mediaType = TmdbMediaTypeToAppMediaType(item.media_type);
+      return {
+        id: item.id,
+        blurhash: DEFAULT_BLURHASH,
+        posterPath: getImage(item.poster_path, `${mediaType}_poster`),
+        mediaType: mediaType,
+        role: item.job,
+      };
+    });
 
     // aggregated based on id which is media's id
     const results = [...castResults, ...crewResults].reduce((acc, item) => {

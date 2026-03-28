@@ -6,7 +6,7 @@ import { PosterProps } from '../../images/poster';
 import { CastInfo } from '../../types/cast';
 import { RatingEntry } from '../../ratings/types/rating.type';
 
-export class InterestingTvIdsResDto extends PaginatedResponse<number> {
+export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
   declare results: number[];
 }
@@ -16,12 +16,12 @@ export class QueryParamsDto extends IntersectionType(
   IntersectionType(Filters, IntersectionType(Page, Sort)),
 ) {}
 
-export class TvCredits {
+export class SeriesCredits {
   casts: CastInfo[];
   creator: CastInfo;
 }
 
-export class TvInfoResDto {
+export class SeriesInfoResDto {
   title: string;
   airingYears: `${string} - ${string}` | 'N/A';
   numberOfSeasons: number;
@@ -31,6 +31,6 @@ export class TvInfoResDto {
   overview: string;
   genres: Genre[];
   posterProps: PosterProps;
-  credits: TvCredits;
+  credits: SeriesCredits;
   ratings: RatingEntry[];
 }

@@ -23,9 +23,9 @@ export class SearchService {
       this.constantsService.getGenres(),
     ]);
 
-    const { movieGenres, tvGenres } = genresRes;
+    const { movieGenres, seriesGenres } = genresRes;
     const movieGenresMap = new Map(movieGenres.map((g) => [g.id, g.name]));
-    const tvGenresMap = new Map(tvGenres.map((g) => [g.id, g.name]));
+    const seriesGenresMap = new Map(seriesGenres.map((g) => [g.id, g.name]));
 
     const results: MultiSearchResults[] = response.results
       .filter(
@@ -39,7 +39,7 @@ export class SearchService {
         switch (result.media_type) {
           case 'person':
             return {
-              mediaType: result.media_type,
+              mediaType: 'person' as const,
               id: result.id,
               name: result.name,
               knownForDepartment: result.known_for_department.toLowerCase(),
@@ -47,7 +47,7 @@ export class SearchService {
             };
           case 'movie':
             return {
-              mediaType: result.media_type,
+              mediaType: 'movie' as const,
               id: result.id,
               title: result.title,
               posterPath: getImage(result.poster_path, 'movie_poster'),
@@ -58,12 +58,12 @@ export class SearchService {
             };
           case 'tv':
             return {
-              mediaType: result.media_type,
+              mediaType: 'series' as const,
               id: result.id,
               title: result.name,
-              posterPath: getImage(result.poster_path, 'tv_poster'),
+              posterPath: getImage(result.poster_path, 'series_poster'),
               genres: result.genre_ids
-                .map((id) => tvGenresMap.get(id))
+                .map((id) => seriesGenresMap.get(id))
                 .filter(Boolean) as string[],
               firstAirDate: extractYearFromDate(result.first_air_date),
             };
@@ -73,7 +73,7 @@ export class SearchService {
     const matchingMovieGenres = movieGenres.filter((genre) =>
       genre.name.toLowerCase().includes(query.toLowerCase()),
     );
-    const matchingTvGenres = tvGenres.filter((genre) =>
+    const matchingSeriesGenres = seriesGenres.filter((genre) =>
       genre.name.toLowerCase().includes(query.toLowerCase()),
     );
 
@@ -85,10 +85,10 @@ export class SearchService {
         })),
       );
     }
-    if (matchingTvGenres.length > 0) {
+    if (matchingSeriesGenres.length > 0) {
       results.push(
-        ...matchingTvGenres.map((genre) => ({
-          mediaType: 'tv-genre' as const,
+        ...matchingSeriesGenres.map((genre) => ({
+          mediaType: 'series-genre' as const,
           ...genre,
         })),
       );

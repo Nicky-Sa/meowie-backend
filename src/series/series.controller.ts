@@ -6,38 +6,38 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { TvService } from './tv.service';
+import { SeriesService } from './series.service';
 import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
 import {
-  InterestingTvIdsResDto,
+  InterestingSeriesIdsResDto,
   QueryParamsDto,
-  TvInfoResDto,
-} from './dto/tv.dto';
+  SeriesInfoResDto,
+} from './dto/series.dto';
 import { PosterResDto } from '../common/dto/poster.dto';
 
-@Controller('tv')
+@Controller('series')
 @UseInterceptors(TMDBErrorInterceptor)
-export class TvController {
-  constructor(private readonly tvService: TvService) {}
+export class SeriesController {
+  constructor(private readonly seriesService: SeriesService) {}
 
   @Get('interesting-ids')
-  async getInterestingTvIds(
+  async getInterestingSeriesIds(
     @Query() query: QueryParamsDto,
-  ): Promise<InterestingTvIdsResDto> {
-    return this.tvService.getInterestingTvIds(query);
+  ): Promise<InterestingSeriesIdsResDto> {
+    return this.seriesService.getInterestingSeriesIds(query);
   }
 
   @Get('/info/:id')
   @Header('Cache-Control', 'public, max-age=3600')
-  async getTvInfo(@Param('id') id: number): Promise<TvInfoResDto> {
-    return this.tvService.getTvInfo(id);
+  async getSeriesInfo(@Param('id') id: number): Promise<SeriesInfoResDto> {
+    return this.seriesService.getSeriesInfo(id);
   }
 
   @Get('/posters')
   @Header('Cache-Control', 'public, max-age=3600')
-  async getTvPostersInBulk(
+  async getSeriesPostersInBulk(
     @Query() query: QueryParamsDto,
   ): Promise<PosterResDto> {
-    return this.tvService.getTvPosters(query);
+    return this.seriesService.getSeriesPosters(query);
   }
 }
