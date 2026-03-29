@@ -68,6 +68,12 @@ export class SeriesService {
         'vote_average.gte': Number(query.tmdbRatings.split(',')[0]),
         'vote_average.lte': Number(query.tmdbRatings.split(',')[1]),
       }),
+      ...(query.format === 'miniseries' && {
+        with_type: '2',
+      }),
+      ...(query.format === 'multiple-seasons' && {
+        with_type: `0|1|3|4|5|6`,
+      }),
       page: query.page ?? 1,
     });
 

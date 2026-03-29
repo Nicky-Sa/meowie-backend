@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class Page {
   @IsOptional()
@@ -38,9 +38,23 @@ export class Filters {
 
   @IsOptional()
   @IsString()
+  @Transform(({ value }): string | undefined =>
+    value === 'any' ? undefined : value,
+  )
   decade?: string;
 
   @IsOptional()
   @IsString()
   tmdbRatings?: string;
+}
+
+export class MovieFilters extends Filters {}
+
+export class SeriesFilters extends Filters {
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }): string | undefined =>
+    value === 'any' ? undefined : value,
+  )
+  format?: string;
 }

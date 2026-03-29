@@ -1,6 +1,11 @@
 import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { Browse, Filters, Page, Sort } from '../../common/types/media-query';
+import {
+  Browse,
+  SeriesFilters,
+  Page,
+  Sort,
+} from '../../common/types/media-query';
 import { Genre } from '../../constants/items/genres.constant';
 import { PosterProps } from '../../images/poster';
 import { CastInfo } from '../../types/cast';
@@ -13,7 +18,7 @@ export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
 
 export class QueryParamsDto extends IntersectionType(
   Browse,
-  IntersectionType(Filters, IntersectionType(Page, Sort)),
+  IntersectionType(SeriesFilters, IntersectionType(Page, Sort)),
 ) {}
 
 export class SeriesCredits {

@@ -4,7 +4,12 @@ import { Genre } from '../../constants/items/genres.constant';
 import { RatingEntry } from '../../ratings/types/rating.type';
 import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { Browse, Filters, Page, Sort } from '../../common/types/media-query';
+import {
+  Browse,
+  MovieFilters,
+  Page,
+  Sort,
+} from '../../common/types/media-query';
 
 export class InterestingMovieIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
@@ -13,7 +18,7 @@ export class InterestingMovieIdsResDto extends PaginatedResponse<number> {
 
 export class QueryParamsDto extends IntersectionType(
   Browse,
-  IntersectionType(Filters, IntersectionType(Page, Sort)),
+  IntersectionType(MovieFilters, IntersectionType(Page, Sort)),
 ) {}
 
 export class MovieCredits {
