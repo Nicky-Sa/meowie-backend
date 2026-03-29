@@ -205,16 +205,19 @@ export class SeriesService {
     firstAirDate: string,
     lastAirDate: string | null,
     status: TMDB_SeriesInfo['status'],
-  ): `${string} - ${string}` | 'N/A' {
+  ): string {
     if (status === 'Returning Series') {
       if (firstAirDate) {
         return `${extractYearFromDate(firstAirDate)} - Now`;
       }
     }
     if (lastAirDate) {
-      return `${extractYearFromDate(firstAirDate)} - ${extractYearFromDate(
-        lastAirDate,
-      )}`;
+      const startYear = extractYearFromDate(firstAirDate);
+      const endYear = extractYearFromDate(lastAirDate);
+      if (startYear === endYear) {
+        return startYear;
+      }
+      return `${startYear} - ${endYear}`;
     }
     return `N/A`;
   }

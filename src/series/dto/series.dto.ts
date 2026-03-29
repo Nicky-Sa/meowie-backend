@@ -28,7 +28,7 @@ export class SeriesCredits {
 
 export class SeriesInfoResDto {
   title: string;
-  airingYears: `${string} - ${string}` | 'N/A';
+  airingYears: string;
   numberOfSeasons: number;
   contentRating: string;
   trailerKey: string;
