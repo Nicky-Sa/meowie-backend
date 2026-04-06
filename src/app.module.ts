@@ -18,6 +18,7 @@ import { LibraryModule } from './library/library.module';
 import { SeriesModule } from './series/series.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { ImagesModule } from './images/images.module';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ImagesModule } from './images/images.module';
     SeriesModule,
     RatingsModule,
     ImagesModule,
+    CollectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

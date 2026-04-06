@@ -56,6 +56,23 @@ export class TmdbService {
     });
   }
 
+  async getList<
+    P extends Record<string, string | number | boolean> = Record<
+      string,
+      string | number | boolean
+    >,
+  >(
+    endpoint: string,
+    params: P = {} as P,
+  ): Promise<{
+    page: number;
+    results: Record<string, unknown>[];
+    total_pages: number;
+    total_results: number;
+  }> {
+    return this.get(endpoint, params);
+  }
+
   async getDiscover<
     T,
     Q extends TMDB_DiscoverMovieQuery | TMDB_DiscoverSeriesQuery,
