@@ -10,7 +10,7 @@ import { CacheService } from '../cache/cache.service';
 @Injectable()
 export class ConstantsService {
   constructor(
-    private readonly tmdb: TmdbService,
+    private readonly tmdbService: TmdbService,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -19,7 +19,7 @@ export class ConstantsService {
     ttl: CacheDuration.ONE_MONTH,
   })
   async getMovieGenres(): Promise<Genre[]> {
-    const list: TMDB_GenresList = await this.tmdb.getMovieGenres();
+    const list: TMDB_GenresList = await this.tmdbService.getMovieGenres();
     return list.genres.map((genre) => ({
       ...genre,
       emoji: getGenreEmoji(genre.id),
@@ -31,7 +31,7 @@ export class ConstantsService {
     ttl: CacheDuration.ONE_MONTH,
   })
   async getSeriesGenres(): Promise<Genre[]> {
-    const list: TMDB_GenresList = await this.tmdb.getSeriesGenres();
+    const list: TMDB_GenresList = await this.tmdbService.getSeriesGenres();
     return list.genres.map((genre) => ({
       ...genre,
       emoji: getGenreEmoji(genre.id),

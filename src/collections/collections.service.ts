@@ -22,10 +22,10 @@ import { MediaType } from '../types/media-type';
 export class CollectionsService {
   constructor(
     @InjectRepository(Collection)
-    private readonly collectionRepo: Repository<Collection>,
+    private readonly collectionRepository: Repository<Collection>,
     @InjectRepository(CollectionItem)
-    private readonly itemRepo: Repository<CollectionItem>,
-    private readonly tmdb: TmdbService,
+    private readonly collectionItemRepository: Repository<CollectionItem>,
+    private readonly tmdbService: TmdbService,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -39,7 +39,7 @@ export class CollectionsService {
         ? { parentId: IsNull(), isActive: true }
         : { parentId, isActive: true };
 
-    const collections = await this.collectionRepo.find({
+    const collections = await this.collectionRepository.find({
       where,
       order: { position: 'ASC' },
     });
@@ -48,7 +48,7 @@ export class CollectionsService {
   }
 
   async getCollectionItems(slug: string, page: number): Promise<PosterResDto> {
-    const collection = await this.collectionRepo.findOneBy({ slug });
+    const collection = await this.collectionRepository.findOneBy({ slug });
 
     if (!collection) {
       throw new NotFoundException(`Collection "${slug}" not found`);
@@ -77,7 +77,7 @@ export class CollectionsService {
       );
     }
 
-    const response = await this.tmdb.getList(collection.tmdbEndpoint, {
+    const response = await this.tmdbService.getList(collection.tmdbEndpoint, {
       ...(collection.tmdbParams ?? {}),
       page,
     });
@@ -111,7 +111,7 @@ export class CollectionsService {
     const take = LIMIT;
     const skip = (page - 1) * take;
 
-    const [items, total] = await this.itemRepo.findAndCount({
+    const [items, total] = await this.collectionItemRepository.findAndCount({
       where: { collectionId: collection.id },
       order: { position: 'ASC' },
       skip,
@@ -125,7 +125,7 @@ export class CollectionsService {
 
     const results = await Promise.all(
       items.map(async (item) => {
-        const details = await this.tmdb.getDetails<{
+        const details = await this.tmdbService.getDetails<{
           id: number;
           poster_path: string | null;
         }>(mediaType, item.tmdbId);

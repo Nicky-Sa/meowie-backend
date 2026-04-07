@@ -35,7 +35,7 @@ import { DEFAULT_BLURHASH } from '../common/app.constants';
 @Injectable()
 export class MovieService {
   constructor(
-    private readonly tmdb: TmdbService,
+    private readonly tmdbService: TmdbService,
     private readonly cacheService: CacheService,
     private readonly ratingsService: RatingsService,
     private readonly imagesService: ImagesService,
@@ -45,7 +45,7 @@ export class MovieService {
     query: QueryParamsDto,
     tmdbQuery?: TMDB_DiscoverMovieQuery,
   ): Promise<TMDB_DiscoveredMoviesList> {
-    const response = await this.tmdb.getDiscover<
+    const response = await this.tmdbService.getDiscover<
       TMDB_DiscoveredMoviesList,
       TMDB_DiscoverMovieQuery
     >('movie', {
@@ -107,7 +107,7 @@ export class MovieService {
     id: number,
     append_to_response: string = '',
   ): Promise<T> {
-    return this.tmdb.getDetails<T>('movie', id, append_to_response);
+    return this.tmdbService.getDetails<T>('movie', id, append_to_response);
   }
 
   @Cacheable({

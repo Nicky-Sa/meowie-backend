@@ -8,6 +8,7 @@ import { PosterResDto } from '../common/dto/poster.dto';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
 import { PosterInfo } from '../images/poster';
 import { TmdbMediaTypeToAppMediaType } from '../utils/media';
+import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
 export class PersonService {
@@ -33,7 +34,7 @@ export class PersonService {
 
   @Cacheable({
     key: (personId: number) => `person-combined-posters-${personId}`,
-    ttl: 3600 * 24,
+    ttl: CacheDuration.ONE_DAY,
   })
   async getCombinedPosters(personId: number): Promise<PosterResDto> {
     const combinedCredits = await this.tmdbService.getCombinedCredits(personId);

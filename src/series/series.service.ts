@@ -33,7 +33,7 @@ import { extractYearFromDate } from '../utils/dates';
 @Injectable()
 export class SeriesService {
   constructor(
-    private readonly tmdb: TmdbService,
+    private readonly tmdbService: TmdbService,
     private readonly cacheService: CacheService,
     private readonly ratingsService: RatingsService,
     private readonly imagesService: ImagesService,
@@ -43,7 +43,7 @@ export class SeriesService {
     query: QueryParamsDto,
     tmdbQuery?: TMDB_DiscoverSeriesQuery,
   ): Promise<TMDB_DiscoveredSeriesList> {
-    const response = await this.tmdb.getDiscover<
+    const response = await this.tmdbService.getDiscover<
       TMDB_DiscoveredSeriesList,
       TMDB_DiscoverSeriesQuery
     >('series', {
@@ -110,7 +110,7 @@ export class SeriesService {
     id: number,
     append_to_response: string = '',
   ): Promise<T> {
-    return this.tmdb.getDetails<T>('series', id, append_to_response);
+    return this.tmdbService.getDetails<T>('series', id, append_to_response);
   }
 
   @Cacheable({
