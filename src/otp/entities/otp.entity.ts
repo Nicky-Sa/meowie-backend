@@ -4,18 +4,16 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  Unique,
 } from 'typeorm';
 
 @Entity({
   name: 'otp',
 })
-@Unique(['email'])
 export class Otp {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()

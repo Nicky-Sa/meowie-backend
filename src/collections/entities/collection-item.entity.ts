@@ -1,4 +1,3 @@
-// src/collections/entities/collection-item.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,7 +10,7 @@ import {
 import { Collection } from './collection.entity';
 
 @Entity('collection_items')
-@Unique(['collectionId', 'tmdbId'])
+@Unique(['collectionId', 'tmdbId', 'position'])
 export class CollectionItem {
   @PrimaryGeneratedColumn()
   id: number;
@@ -23,7 +22,7 @@ export class CollectionItem {
   @Column({ name: 'tmdb_id', type: 'int' })
   tmdbId: number;
 
-  @Column({ type: 'int', unique: true })
+  @Column({ type: 'int' })
   position: number;
 
   @ManyToOne(() => Collection, (cat) => cat.items, { onDelete: 'CASCADE' })

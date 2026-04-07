@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MovieModule } from './movie/movie.module';
@@ -23,6 +24,7 @@ import { CollectionsModule } from './collections/collections.module';
 @Module({
   imports: [
     SentryModule.forRoot(),
+    ScheduleModule.forRoot(),
     MovieModule,
     EnvModule,
     AuthModule,

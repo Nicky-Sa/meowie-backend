@@ -11,6 +11,7 @@ import {
   TMDB_SearchQuery,
   TMDB_GenresList,
   TMDB_CombinedCredits,
+  TMDB_FindByExternalId,
 } from './tmdb.type';
 
 @Injectable()
@@ -79,6 +80,15 @@ export class TmdbService {
   >(mediaType: MediaType, params: Q): Promise<T> {
     const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
     return this.get<T, Q>(`discover/${tmdbMediaType}`, params);
+  }
+
+  async findByExternalId(
+    externalId: string,
+    external_source: string,
+  ): Promise<TMDB_FindByExternalId> {
+    return this.get<TMDB_FindByExternalId>(`find/${externalId}`, {
+      external_source,
+    });
   }
 
   private async get<

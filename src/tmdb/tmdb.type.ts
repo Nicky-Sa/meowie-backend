@@ -917,3 +917,15 @@ export type TMDB_SearchQuery = {
   primary_release_year?: number;
   first_air_date_year?: number;
 };
+
+//--------------------------------------------------
+// Other
+
+// /3/find/{external_id}
+export type TMDB_FindByExternalId = {
+  movie_results: TMDB_DiscoveredMovieDetail[];
+  tv_results: TMDB_DiscoveredSeriesDetail[];
+  person_results: unknown[];
+  tv_episode_results: unknown[];
+  tv_season_results: unknown[];
+};
