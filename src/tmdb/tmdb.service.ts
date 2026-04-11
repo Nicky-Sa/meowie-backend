@@ -91,6 +91,18 @@ export class TmdbService {
     });
   }
 
+  async searchMovie(
+    query: string,
+    year?: number,
+  ): Promise<{
+    results: { id: number; title: string; release_date: string }[];
+  }> {
+    return this.get('search/movie', {
+      query,
+      ...(year && { primary_release_year: year }),
+    });
+  }
+
   private async get<
     T,
     P extends Record<string, any> = Record<string, string | number | boolean>,

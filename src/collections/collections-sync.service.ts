@@ -5,7 +5,11 @@ import { Repository } from 'typeorm';
 import { Collection } from './entities/collection.entity';
 import { CollectionItem } from './entities/collection-item.entity';
 import { TmdbService } from '../tmdb/tmdb.service';
-import { scrapeImdbTop250, scrapeImdbTop250Series } from './utils/scrapers';
+import {
+  scrapeImdbTop250,
+  scrapeImdbTop250Series,
+  scrapeLetterboxdList,
+} from './utils/scrapers';
 
 @Injectable()
 export class CollectionsSyncService {
@@ -42,6 +46,29 @@ export class CollectionsSyncService {
       scraper: scrapeImdbTop250Series,
       mediaType: 'series',
       label: 'IMDB Top 250 Series',
+    });
+  }
+  /**
+   * Cron job that runs every week to sync the Letterboxd Top 250 Narrative list.
+   */
+  @Cron(CronExpression.EVERY_WEEK)
+  async syncLetterboxdTop250Narrative() {
+    await this.syncLetterboxdCollection({
+      slug: 'letterboxd-top-250-narratives',
+      url: 'https://letterboxd.com/official/list/the-2010s-top-250-narrative-features/',
+      label: 'Letterboxd Top 250 Narrative',
+    });
+  }
+
+  /**
+   * Cron job that runs every week to sync the Letterboxd Top 250 Documentaries list.
+   */
+  @Cron(CronExpression.EVERY_WEEK)
+  async syncLetterboxdTop250Documentaries() {
+    await this.syncLetterboxdCollection({
+      slug: 'letterboxd-top-250-documentaries',
+      url: 'https://letterboxd.com/official/list/top-250-documentary-films/',
+      label: 'Letterboxd Top 250 Documentaries',
     });
   }
 
@@ -105,6 +132,8 @@ export class CollectionsSyncService {
               tmdbId: result.id,
               rank: i + 1,
             });
+          } else {
+            this.logger.error(`⚠️ TMDB id for ${imdbId} in IMDB not found.`);
           }
         } catch (error) {
           this.logger.error(
@@ -119,35 +148,135 @@ export class CollectionsSyncService {
         }
       }
 
-      if (items.length > 0) {
-        // 4. Update the collection items within a transaction
-        await this.collectionItemRepository.manager.transaction(
-          async (transactionalEntityManager) => {
-            // Clear existing items for this collection to maintain freshness
-            await transactionalEntityManager.delete(CollectionItem, {
-              collectionId: collection.id,
-            });
-
-            const itemsToSave = items.map((item) => {
-              return this.collectionItemRepository.create({
-                collectionId: collection.id,
-                tmdbId: item.tmdbId,
-                position: item.rank,
-              });
-            });
-
-            await transactionalEntityManager.save(CollectionItem, itemsToSave);
-          },
-        );
-
-        this.logger.log(
-          `✅ Successfully synced ${items.length} items to "${collection.title}"`,
-        );
-      }
+      await this.saveItems(collection, items);
+      this.logger.log(
+        `✅ Successfully synced ${items.length} items to "${collection.title}"`,
+      );
     } catch (error) {
       this.logger.error(
         `💥 Critical error during ${label} synchronization:`,
         error,
+      );
+    }
+  }
+  /**
+   * Generic method to sync a Letterboxd collection.
+   */
+  private async syncLetterboxdCollection(options: {
+    slug: string;
+    url: string;
+    label: string;
+  }) {
+    const { slug, url, label } = options;
+    this.logger.log(`🚀 Starting ${label} sync sequence...`);
+
+    try {
+      // 1. Scrape Letterboxd for metadata
+      const films = await scrapeLetterboxdList(url);
+      if (!films.length) {
+        this.logger.warn(
+          `⚠️ No films found during scrape for ${label}. Aborting sync.`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `🔍 Scraped ${films.length} films for ${label}. Proceeding to TMDB search...`,
+      );
+
+      // 2. Ensure the collection exists
+      const collection = await this.collectionRepository.findOneBy({
+        slug,
+      });
+
+      if (!collection) {
+        this.logger.error(
+          `🤔 Collection with slug "${slug}" not found. Please make sure it exists in the database.`,
+        );
+        return;
+      }
+
+      // 3. Map Titles/Years to TMDB IDs
+      const items: { tmdbId: number; rank: number }[] = [];
+
+      for (let i = 0; i < films.length; i++) {
+        const film = films[i];
+
+        try {
+          // Attempt search with year for maximum accuracy
+          let searchRes = await this.tmdbService.searchMovie(
+            film.title,
+            film.year,
+          );
+          let result = searchRes.results?.[0];
+
+          // Fallback: If no results with year, try without year
+          // (Sometimes premiere years differ between Letterboxd and TMDB)
+          if (!result) {
+            searchRes = await this.tmdbService.searchMovie(film.title);
+            result = searchRes.results?.[0];
+          }
+
+          if (result) {
+            items.push({
+              tmdbId: result.id,
+              rank: i + 1,
+            });
+          } else {
+            this.logger.error(
+              `⚠️ TMDB id for ${film.title} in Letterboxd not found.`,
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `❌ Failed to find TMDB ID for Letterboxd film "${film.title}" (${film.year})`,
+            error,
+          );
+        }
+
+        // Small delay every 10 items to be polite to the API
+        if (i > 0 && i % 10 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
+      await this.saveItems(collection, items);
+      this.logger.log(
+        `✅ Successfully synced ${items.length} items to "${collection.title}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `💥 Critical error during ${label} synchronization:`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Generic method to save items to a collection.
+   */
+  private async saveItems(
+    collection: Collection,
+    items: { tmdbId: number; rank: number }[],
+  ) {
+    if (items.length > 0) {
+      await this.collectionItemRepository.manager.transaction(
+        async (transactionalEntityManager) => {
+          // Clear existing items for this collection settings
+          await transactionalEntityManager.delete(CollectionItem, {
+            collectionId: collection.id,
+          });
+
+          const itemsToSave = items.map((item) => {
+            return this.collectionItemRepository.create({
+              collectionId: collection.id,
+              tmdbId: item.tmdbId,
+              position: item.rank,
+            });
+          });
+
+          await transactionalEntityManager.save(CollectionItem, itemsToSave);
+        },
       );
     }
   }

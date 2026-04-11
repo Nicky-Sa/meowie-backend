@@ -96,3 +96,72 @@ export async function scrapeImdbTop250(): Promise<string[]> {
 export async function scrapeImdbTop250Series(): Promise<string[]> {
   return scrapeImdbChart('https://www.imdb.com/chart/toptv/');
 }
+
+/**
+ * Scrapes a Letterboxd list to extract film titles and years.
+ *
+ * @param baseUrl The Letterboxd list URL.
+ * @param limit Total number of films to fetch.
+ * @returns A promise that resolves to an array of { title, year } objects.
+ */
+export async function scrapeLetterboxdList(
+  baseUrl: string,
+  limit = 250,
+): Promise<{ title: string; year: number }[]> {
+  const items: { title: string; year: number }[] = [];
+  const filmsPerPage = 100;
+  const totalPages = Math.ceil(limit / filmsPerPage);
+
+  try {
+    const seen = new Set<string>();
+    for (let page = 1; page <= totalPages; page++) {
+      const url =
+        page === 1 ? baseUrl : `${baseUrl.replace(/\/$/, '')}/page/${page}/`;
+
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        },
+        timeout: 10000,
+      });
+
+      const html = response.data;
+      // Regex to find data-item-name="Title (Year)"
+      const regex = /data-item-name="([^"]+)\s\((\d{4})\)"/g;
+      let match;
+
+      while ((match = regex.exec(html)) !== null) {
+        const title = match[1]
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'")
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+
+        const yearStr = match[2];
+        const uniqueKey = `${title} (${yearStr})`;
+
+        if (!seen.has(uniqueKey)) {
+          seen.add(uniqueKey);
+          items.push({
+            title,
+            year: parseInt(yearStr, 10),
+          });
+        }
+        if (items.length >= limit) break;
+      }
+
+      if (items.length >= limit) break;
+
+      if (page < totalPages) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    return items;
+  } catch (error) {
+    console.error(`Scraping Letterboxd failed (${baseUrl}):`, error.message);
+    return items;
+  }
+}
