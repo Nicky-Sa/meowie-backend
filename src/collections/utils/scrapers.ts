@@ -6,11 +6,16 @@ import axios from 'axios';
  * @returns A promise that resolves to an array of IMDB IDs (e.g., ['tt0111161', ...])
  */
 
-export async function scrapeImdbTop250(): Promise<string[]> {
-  const IMDB_TOP_250_URL = 'https://www.imdb.com/chart/top/';
-
+/**
+ * Scrapes an IMDB chart page to extract IMDB IDs.
+ *
+ * @param url The IMDB chart URL to scrape.
+ * @param limit
+ * @returns A promise that resolves to an array of IMDB IDs.
+ */
+async function scrapeImdbChart(url: string, limit = 250): Promise<string[]> {
   try {
-    const response = await axios.get(IMDB_TOP_250_URL, {
+    const response = await axios.get(url, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
@@ -50,7 +55,7 @@ export async function scrapeImdbTop250(): Promise<string[]> {
       } catch {
         // Log error and fall through to Strategy B
         console.warn(
-          'Failed to parse JSON-LD from IMDB, falling back to regex.',
+          `Failed to parse JSON-LD from IMDB (${url}), falling back to regex.`,
         );
       }
     }
@@ -67,13 +72,27 @@ export async function scrapeImdbTop250(): Promise<string[]> {
           imdbIds.push(id);
           seen.add(id);
         }
-        if (imdbIds.length >= 250) break;
+        if (imdbIds.length >= limit) break;
       }
     }
 
-    return imdbIds.slice(0, 250);
+    return imdbIds.slice(0, limit);
   } catch (error) {
-    console.error('Scraping IMDB failed:', error.message);
+    console.error(`Scraping IMDB failed (${url}): `, error);
     return [];
   }
+}
+
+/**
+ * Scrapes the IMDB Top 250 movies page.
+ */
+export async function scrapeImdbTop250(): Promise<string[]> {
+  return scrapeImdbChart('https://www.imdb.com/chart/top/');
+}
+
+/**
+ * Scrapes the IMDB Top 250 TV shows page.
+ */
+export async function scrapeImdbTop250Series(): Promise<string[]> {
+  return scrapeImdbChart('https://www.imdb.com/chart/toptv/');
 }

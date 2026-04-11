@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Collection } from './entities/collection.entity';
 import { CollectionItem } from './entities/collection-item.entity';
 import { TmdbService } from '../tmdb/tmdb.service';
-import { scrapeImdbTop250 } from './utils/scrapers';
+import { scrapeImdbTop250, scrapeImdbTop250Series } from './utils/scrapers';
 
 @Injectable()
 export class CollectionsSyncService {
@@ -20,40 +20,70 @@ export class CollectionsSyncService {
   ) {}
 
   /**
-   * Cron job that runs every week to sync the IMDB Top 250 list.
-   * It scrapes the list from IMDB, maps IMDB IDs to TMDB IDs,
-   * and updates the manual collection.
+   * Cron job that runs every week to sync the IMDB Top 250 movies list.
    */
   @Cron(CronExpression.EVERY_WEEK)
-  async syncImdbTop250() {
-    const COLLECTION_SLUG = 'imdb-top-250-movies';
-    this.logger.log('🚀 Starting IMDB Top 250 sync sequence...');
+  async syncImdbTop250Movies() {
+    await this.syncImdbCollection({
+      slug: 'imdb-top-250-movies',
+      scraper: scrapeImdbTop250,
+      mediaType: 'movie',
+      label: 'IMDB Top 250 Movies',
+    });
+  }
+
+  /**
+   * Cron job that runs every week to sync the IMDB Top 250 series list.
+   */
+  @Cron(CronExpression.EVERY_WEEK)
+  async syncImdbTop250Series() {
+    await this.syncImdbCollection({
+      slug: 'imdb-top-250-series',
+      scraper: scrapeImdbTop250Series,
+      mediaType: 'series',
+      label: 'IMDB Top 250 Series',
+    });
+  }
+
+  /**
+   * Generic method to sync an IMDB collection.
+   */
+  private async syncImdbCollection(options: {
+    slug: string;
+    scraper: () => Promise<string[]>;
+    mediaType: 'movie' | 'series';
+    label: string;
+  }) {
+    const { slug, scraper, mediaType, label } = options;
+    this.logger.log(`🚀 Starting ${label} sync sequence...`);
 
     try {
-      // 1. Scrape IMDB Top 250 for IMDB IDs (ttXXXXXXX)
-      const imdbIds = await scrapeImdbTop250();
+      // 1. Scrape IMDB for IMDB IDs (ttXXXXXXX)
+      const imdbIds = await scraper();
       if (!imdbIds.length) {
-        this.logger.warn('⚠️ No IMDB IDs found during scrape. Aborting sync.');
+        this.logger.warn(
+          `⚠️ No IMDB IDs found during scrape for ${label}. Aborting sync.`,
+        );
         return;
       }
       this.logger.log(
-        `🔍 Scraped ${imdbIds.length} IMDB IDs. Proceeding to TMDB mapping...`,
+        `🔍 Scraped ${imdbIds.length} IMDB IDs for ${label}. Proceeding to TMDB mapping...`,
       );
 
-      // 2. Ensure the "Top 250 IMDB Movies" collection exists
+      // 2. Ensure the collection exists
       const collection = await this.collectionRepository.findOneBy({
-        slug: COLLECTION_SLUG,
+        slug,
       });
 
       if (!collection) {
         this.logger.error(
-          '🤔 Collection not found. Please make sure the collection exists, and then try again.',
+          `🤔 Collection with slug "${slug}" not found. Please make sure it exists in the database.`,
         );
         return;
       }
 
       // 3. Map IMDB IDs to TMDB IDs
-      const movieItems: { tmdbId: number; rank: number }[] = [];
+      const items: { tmdbId: number; rank: number }[] = [];
 
       // We process them in chunks to avoid overwhelming the TMDB API
       for (let i = 0; i < imdbIds.length; i++) {
@@ -64,17 +94,21 @@ export class CollectionsSyncService {
             imdbId,
             'imdb_id',
           );
-          const movie = findRes.movie_results?.[0];
 
-          if (movie) {
-            movieItems.push({
-              tmdbId: movie.id,
+          const result =
+            mediaType === 'movie'
+              ? findRes.movie_results?.[0]
+              : findRes.tv_results?.[0];
+
+          if (result) {
+            items.push({
+              tmdbId: result.id,
               rank: i + 1,
             });
           }
         } catch (error) {
           this.logger.error(
-            `❌ Failed to find TMDB ID for IMDB ID ${imdbId}`,
+            `❌ Failed to find TMDB ID for IMDB ID ${imdbId} (${mediaType})`,
             error,
           );
         }
@@ -85,7 +119,7 @@ export class CollectionsSyncService {
         }
       }
 
-      if (movieItems.length > 0) {
+      if (items.length > 0) {
         // 4. Update the collection items within a transaction
         await this.collectionItemRepository.manager.transaction(
           async (transactionalEntityManager) => {
@@ -94,7 +128,7 @@ export class CollectionsSyncService {
               collectionId: collection.id,
             });
 
-            const itemsToSave = movieItems.map((item) => {
+            const itemsToSave = items.map((item) => {
               return this.collectionItemRepository.create({
                 collectionId: collection.id,
                 tmdbId: item.tmdbId,
@@ -107,12 +141,12 @@ export class CollectionsSyncService {
         );
 
         this.logger.log(
-          `✅ Successfully synced ${movieItems.length} movies to "${collection.title}"`,
+          `✅ Successfully synced ${items.length} items to "${collection.title}"`,
         );
       }
     } catch (error) {
       this.logger.error(
-        '💥 Critical error during IMDB synchronization profile:',
+        `💥 Critical error during ${label} synchronization:`,
         error,
       );
     }
