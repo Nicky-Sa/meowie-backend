@@ -10,7 +10,7 @@ export class AppService {
     return {
       app: pkg.name,
       environment: this.env.get('BUILD_ENV'),
-      version: pkg.version,
+      version: this.env.get('APP_VERSION'),
     };
   }
 }

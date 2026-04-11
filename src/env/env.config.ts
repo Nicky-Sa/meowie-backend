@@ -51,6 +51,7 @@ export const envConfig = z.object({
       /^\d+[smhdwy]$/,
       "Invalid JWT_REFRESH_EXPIRY format. Use '1h', '2d', '365d', etc.",
     ),
+  APP_VERSION: z.string().default('1.0.0'),
 });
 
 export const dbMigratorEnvConfig = z.object({

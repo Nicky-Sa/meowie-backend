@@ -102,6 +102,12 @@ jobs:
           DB_HOST_MIGRATOR: ${{ secrets.DB_HOST_MIGRATOR }}
         run: npm run migration:run
 
+      - name: Format Version
+        id: format
+        run: |
+          RAW_TAG="${{ needs.prepare.outputs.new_tag }}"
+          CLEAN_VERSION="${RAW_TAG#v}"
+          echo "APP_VERSION=$CLEAN_VERSION" >> "$GITHUB_ENV"
 
       # --- Build & Push ---
       - name: Build and Push Docker image
@@ -156,7 +162,8 @@ jobs:
               "SENDER_EMAIL": "${{ vars.SENDER_EMAIL }}",
               "JWT_SECRET": "${{ secrets.JWT_SECRET }}",
               "JWT_REFRESH_SECRET": "${{ secrets.JWT_REFRESH_SECRET }}",
-              "JWT_REFRESH_EXPIRY": "${{ vars.JWT_REFRESH_EXPIRY }}"
+              "JWT_REFRESH_EXPIRY": "${{ vars.JWT_REFRESH_EXPIRY }}",
+              "APP_VERSION": "${{ env.APP_VERSION }}"
             }
           }
           EOF
