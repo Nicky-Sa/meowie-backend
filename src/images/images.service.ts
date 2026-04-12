@@ -50,7 +50,10 @@ export class ImagesService {
           `Errors: ${error.errors.join('\n ')}`,
         );
       }
-      this.logger.error(`Error generating poster props: ${error}`);
+      this.logger.error(
+        `Error generating poster props`,
+        error instanceof Error ? error.stack : String(error),
+      );
     }
     return {
       primaryColorHex,

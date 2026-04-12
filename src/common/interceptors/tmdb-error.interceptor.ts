@@ -94,17 +94,20 @@ export class TMDBErrorInterceptor implements NestInterceptor {
         } else {
           // Handle Network errors or unknown non-HTTP errors
           this.logger.error(
-            `[${method} ${url}] Network Error calling TMDB: ${error}`,
+            `[${method} ${url}] Network Error calling TMDB`,
+            error instanceof Error ? error.stack : String(error),
           );
         }
 
         // Default fallback for everything else
-        return throwError(
-          () =>
-            new InternalServerErrorException(
-              `[${method} ${url}] Unknown error happened while calling TMDB: ${error}`,
-            ),
-        );
+        return throwError(() => {
+          const message =
+            error instanceof Error ? error.message : 'Unknown error';
+          return new InternalServerErrorException(
+            `[${method} ${url}] Unknown error happened while calling TMDB: ${message}`,
+            { cause: error },
+          );
+        });
       }),
     );
   }

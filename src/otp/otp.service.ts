@@ -45,7 +45,10 @@ export class OtpService implements OnModuleInit {
         },
       });
     } catch (error) {
-      throw new InternalServerErrorException(`Failed to send OTP: ${error}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Failed to send OTP: ${message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -75,7 +78,11 @@ export class OtpService implements OnModuleInit {
       }
       return isValid;
     } catch (error) {
-      throw new InternalServerErrorException(`Failed to verify OTP: ${error}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(
+        `Failed to verify OTP: ${message}`,
+        { cause: error },
+      );
     }
   }
 

@@ -53,7 +53,13 @@ export class UsersService {
       await this.usersRepository.save(user);
       return user;
     } catch (error) {
-      throw new InternalServerErrorException(`Error creating user: ${error}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(
+        `Error creating user: ${message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
