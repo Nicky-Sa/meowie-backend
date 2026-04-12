@@ -5,7 +5,7 @@ export class Auto1775602393972 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "collection_items" DROP CONSTRAINT "UQ_eb3c651ff17d1254090114dbe9e"
+            ALTER TABLE "collection_items" DROP CONSTRAINT "UQ_fe41468b4b2f5b0b1f94d41d861"
         `);
         await queryRunner.query(`
             ALTER TABLE "collection_items"
@@ -19,7 +19,7 @@ export class Auto1775602393972 implements MigrationInterface {
         `);
         await queryRunner.query(`
             ALTER TABLE "collection_items"
-            ADD CONSTRAINT "UQ_eb3c651ff17d1254090114dbe9e" UNIQUE ("collection_id", "tmdb_id")
+            ADD CONSTRAINT "UQ_fe41468b4b2f5b0b1f94d41d861" UNIQUE ("collection_id", "tmdb_id")
         `);
     }
 
