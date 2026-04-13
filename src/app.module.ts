@@ -20,6 +20,7 @@ import { SeriesModule } from './series/series.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { ImagesModule } from './images/images.module';
 import { CollectionsModule } from './collections/collections.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { CollectionsModule } from './collections/collections.module';
     RatingsModule,
     ImagesModule,
     CollectionsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

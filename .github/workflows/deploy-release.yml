@@ -163,7 +163,8 @@ jobs:
               "JWT_SECRET": "${{ secrets.JWT_SECRET }}",
               "JWT_REFRESH_SECRET": "${{ secrets.JWT_REFRESH_SECRET }}",
               "JWT_REFRESH_EXPIRY": "${{ vars.JWT_REFRESH_EXPIRY }}",
-              "APP_VERSION": "${{ env.APP_VERSION }}"
+              "APP_VERSION": "${{ env.APP_VERSION }}",
+              "GEMINI_API_KEY": "${{secrets.GEMINI_API_KEY}}"
             }
           }
           EOF
@@ -180,7 +181,7 @@ jobs:
 
   # --- JOB 2: RELEASE (Runs only after Deploy succeeds) ---
   release:
-    needs: [prepare, deploy]
+    needs: [ prepare, deploy ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

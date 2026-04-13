@@ -95,7 +95,7 @@ export class TMDBErrorInterceptor implements NestInterceptor {
           // Handle Network errors or unknown non-HTTP errors
           this.logger.error(
             `[${method} ${url}] Network Error calling TMDB`,
-            error instanceof Error ? error.stack : String(error),
+            error,
           );
         }
 

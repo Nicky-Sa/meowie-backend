@@ -6,20 +6,24 @@ import { extractYearFromDate } from '../utils/dates';
 import { MultiSearchResults } from './models/search-results.model';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { ConstantsService } from '../constants/constants.service';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class SearchService {
   constructor(
     private readonly tmdbService: TmdbService,
     private readonly constantsService: ConstantsService,
+    private readonly aiService: AiService,
   ) {}
 
   async multiSearch(query: string): Promise<MultiSearchResDto> {
     if (!query) {
       return { results: [] };
     }
+    const correctedQuery = await this.aiService.textAutoCorrect(query);
+
     const [response, genresRes] = await Promise.all([
-      this.tmdbService.multiSearch(query),
+      this.tmdbService.multiSearch(correctedQuery),
       this.constantsService.getGenres(),
     ]);
 
@@ -71,10 +75,10 @@ export class SearchService {
       })
       .filter(Boolean);
     const matchingMovieGenres = movieGenres.filter((genre) =>
-      genre.name.toLowerCase().includes(query.toLowerCase()),
+      genre.name.toLowerCase().includes(correctedQuery.toLowerCase()),
     );
     const matchingSeriesGenres = seriesGenres.filter((genre) =>
-      genre.name.toLowerCase().includes(query.toLowerCase()),
+      genre.name.toLowerCase().includes(correctedQuery.toLowerCase()),
     );
 
     if (matchingMovieGenres.length > 0) {
