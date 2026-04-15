@@ -1,4 +1,5 @@
 import { MediaType } from '../types/media-type';
+import { Genre } from '../constants/items/genres.constant';
 
 export class PosterProps {
   primaryColorHex: string;
@@ -11,4 +12,9 @@ export class PosterInfo {
   blurhash: string;
   mediaType: MediaType;
   role?: string;
+  preview: {
+    title: string;
+    genres: Genre[];
+    overview: string;
+  };
 }

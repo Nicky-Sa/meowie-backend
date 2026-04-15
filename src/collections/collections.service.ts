@@ -17,6 +17,14 @@ import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
 import { CacheDuration } from '../cache/cache.constants';
 import { MediaType } from '../types/media-type';
+import { PosterInfo } from '../images/poster';
+import { GENRES } from '../constants/items/genres.constant';
+import {
+  TMDB_DiscoveredMovieDetail,
+  TMDB_DiscoveredSeriesDetail,
+  TMDB_MovieInfo,
+  TMDB_SeriesInfo,
+} from '../tmdb/tmdb.type';
 
 @Injectable()
 export class CollectionsService {
@@ -77,24 +85,36 @@ export class CollectionsService {
       );
     }
 
-    const response = await this.tmdbService.getList(collection.tmdbEndpoint, {
+    const response = await this.tmdbService.getList<
+      TMDB_DiscoveredMovieDetail | TMDB_DiscoveredSeriesDetail
+    >(collection.tmdbEndpoint, {
       ...(collection.tmdbParams ?? {}),
       page,
     });
 
-    const posterType =
-      collection.mediaType === 'series' ? 'series_poster' : 'movie_poster';
     const mediaType: MediaType =
       collection.mediaType === 'series' ? 'series' : 'movie';
+    const posterType =
+      mediaType === 'series' ? 'series_poster' : 'movie_poster';
 
-    const results = response.results
-      .filter((item) => item.poster_path && (item.title || item.name))
-      .map((item) => ({
-        id: item.id as number,
-        posterPath: getImage(item.poster_path as string, posterType),
-        blurhash: DEFAULT_BLURHASH,
-        mediaType,
-      }));
+    const results: PosterInfo[] = response.results
+      .filter((item) => item.poster_path && ('title' in item || 'name' in item))
+      .map((item) => {
+        const title = 'title' in item ? item.title : item.name;
+        const genreIds = item.genre_ids || [];
+
+        return {
+          id: item.id,
+          posterPath: getImage(item.poster_path, posterType),
+          blurhash: DEFAULT_BLURHASH,
+          mediaType,
+          preview: {
+            title,
+            genres: GENRES.filter((g) => genreIds.includes(g.id)),
+            overview: item.overview || '',
+          },
+        };
+      });
 
     return {
       page: response.page,
@@ -121,20 +141,28 @@ export class CollectionsService {
     const mediaType: MediaType =
       collection.mediaType === 'series' ? 'series' : 'movie';
     const posterType =
-      collection.mediaType === 'series' ? 'series_poster' : 'movie_poster';
+      mediaType === 'series' ? 'series_poster' : 'movie_poster';
 
     const results = await Promise.all(
       items.map(async (item) => {
-        const details = await this.tmdbService.getDetails<{
-          id: number;
-          poster_path: string | null;
-        }>(mediaType, item.tmdbId);
+        const details = await this.tmdbService.getDetails<
+          TMDB_MovieInfo | TMDB_SeriesInfo
+        >(mediaType, item.tmdbId);
+
+        const title = 'title' in details ? details.title : details.name;
 
         return {
           id: item.tmdbId,
           posterPath: getImage(details.poster_path, posterType),
           blurhash: DEFAULT_BLURHASH,
           mediaType,
+          preview: {
+            title,
+            genres: GENRES.filter((genre) =>
+              details.genres.some((g) => g.id === genre.id),
+            ),
+            overview: details.overview || '',
+          },
         };
       }),
     );

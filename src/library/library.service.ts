@@ -9,7 +9,8 @@ import {
   ToggleLibraryItemReqDto,
 } from './dto/library.dto';
 import { TmdbService } from '../tmdb/tmdb.service';
-import { TMDB_DiscoveredMovieDetail } from '../tmdb/tmdb.type';
+import { TMDB_MovieInfo, TMDB_SeriesInfo } from '../tmdb/tmdb.type';
+import { GENRES } from '../constants/items/genres.constant';
 import { getImage } from '../images/images.utils';
 import { MediaType } from '../types/media-type';
 import { LibraryCategory } from './library.constants';
@@ -84,20 +85,31 @@ export class LibraryService {
 
     const results = await Promise.all(
       items.map(async (item) => {
-        const details =
-          await this.tmdbService.getDetails<TMDB_DiscoveredMovieDetail>(
-            item.mediaType,
-            item.tmdbId,
-          );
+        const details = await this.tmdbService.getDetails<
+          TMDB_MovieInfo | TMDB_SeriesInfo
+        >(item.mediaType, item.tmdbId);
         const posterPath = getImage(
           details.poster_path,
           `${item.mediaType}_poster`,
         );
+
+        const title =
+          item.mediaType === 'movie'
+            ? (details as TMDB_MovieInfo).title
+            : (details as TMDB_SeriesInfo).name;
+
         return {
           id: details.id,
           posterPath,
           blurhash: DEFAULT_BLURHASH,
           mediaType: item.mediaType,
+          preview: {
+            title,
+            overview: details.overview,
+            genres: GENRES.filter((genre) =>
+              details.genres.some((g) => g.id === genre.id),
+            ),
+          },
         };
       }),
     );

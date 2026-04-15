@@ -30,6 +30,8 @@ import { PosterResDto } from '../common/dto/poster.dto';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
 import { extractYearFromDate } from '../utils/dates';
 
+import { GENRES } from '../constants/items/genres.constant';
+
 @Injectable()
 export class SeriesService {
   constructor(
@@ -154,11 +156,16 @@ export class SeriesService {
   async getSeriesPosters(query: QueryParamsDto): Promise<PosterResDto> {
     const discoveredSeriesList = await this.getDiscoveredSeries(query);
     const { results: series, ...rest } = discoveredSeriesList;
-    const results = series.map((movie) => ({
-      id: movie.id,
-      posterPath: getImage(movie.poster_path, 'series_poster'),
+    const results = series.map((tvShow) => ({
+      id: tvShow.id,
+      posterPath: getImage(tvShow.poster_path, 'series_poster'),
       blurhash: DEFAULT_BLURHASH,
       mediaType: 'series' as const,
+      preview: {
+        title: tvShow.name,
+        overview: tvShow.overview,
+        genres: GENRES.filter((genre) => tvShow.genre_ids.includes(genre.id)),
+      },
     }));
     return { results, ...rest };
   }

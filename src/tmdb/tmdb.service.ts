@@ -58,6 +58,7 @@ export class TmdbService {
   }
 
   async getList<
+    R = Record<string, unknown>,
     P extends Record<string, string | number | boolean> = Record<
       string,
       string | number | boolean
@@ -67,7 +68,7 @@ export class TmdbService {
     params: P = {} as P,
   ): Promise<{
     page: number;
-    results: Record<string, unknown>[];
+    results: R[];
     total_pages: number;
     total_results: number;
   }> {

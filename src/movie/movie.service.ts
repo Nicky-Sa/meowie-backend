@@ -32,6 +32,8 @@ import { PosterResDto } from '../common/dto/poster.dto';
 import { CacheDuration } from '../cache/cache.constants';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
 
+import { GENRES } from '../constants/items/genres.constant';
+
 @Injectable()
 export class MovieService {
   constructor(
@@ -181,6 +183,11 @@ export class MovieService {
       posterPath: getImage(movie.poster_path, 'movie_poster'),
       blurhash: DEFAULT_BLURHASH,
       mediaType: 'movie' as const,
+      preview: {
+        title: movie.title,
+        overview: movie.overview,
+        genres: GENRES.filter((genre) => movie.genre_ids.includes(genre.id)),
+      },
     }));
     return { results, ...rest };
   }

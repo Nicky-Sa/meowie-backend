@@ -7,7 +7,8 @@ import { TmdbService } from '../tmdb/tmdb.service';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { DEFAULT_BLURHASH } from '../common/app.constants';
 import { PosterInfo } from '../images/poster';
-import { TmdbMediaTypeToAppMediaType } from '../utils/media';
+import { formatGenres, TmdbMediaTypeToAppMediaType } from '../utils/media';
+import { GENRES } from '../constants/items/genres.constant';
 import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
@@ -41,22 +42,48 @@ export class PersonService {
     const { cast, crew } = combinedCredits;
     const castResults: PosterInfo[] = cast.map((item) => {
       const mediaType = TmdbMediaTypeToAppMediaType(item.media_type);
+      const posterType =
+        mediaType === 'series' ? 'series_poster' : 'movie_poster';
+
+      const genreIds = item.genre_ids || [];
+      const tmdbGenres = GENRES.filter((g) => genreIds.includes(g.id)).map(
+        (g) => ({ id: g.id, name: g.name }),
+      );
+
       return {
         id: item.id,
+        posterPath: getImage(item.poster_path as string, posterType),
         blurhash: DEFAULT_BLURHASH,
-        posterPath: getImage(item.poster_path, `${mediaType}_poster`),
         mediaType,
         role: item.character ? `Performing as ${item.character}` : 'N/A',
+        preview: {
+          title: item.title || item.name || '',
+          genres: formatGenres(tmdbGenres),
+          overview: item.overview || '',
+        },
       };
     });
     const crewResults: PosterInfo[] = crew.map((item) => {
       const mediaType = TmdbMediaTypeToAppMediaType(item.media_type);
+      const posterType =
+        mediaType === 'series' ? 'series_poster' : 'movie_poster';
+
+      const genreIds = item.genre_ids || [];
+      const tmdbGenres = GENRES.filter((g) => genreIds.includes(g.id)).map(
+        (g) => ({ id: g.id, name: g.name }),
+      );
+
       return {
         id: item.id,
+        posterPath: getImage(item.poster_path, posterType),
         blurhash: DEFAULT_BLURHASH,
-        posterPath: getImage(item.poster_path, `${mediaType}_poster`),
         mediaType: mediaType,
         role: item.job,
+        preview: {
+          title: item.title || item.name || '',
+          genres: formatGenres(tmdbGenres),
+          overview: item.overview || '',
+        },
       };
     });
 
