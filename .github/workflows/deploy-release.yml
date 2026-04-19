@@ -192,6 +192,34 @@ jobs:
               --env-file $WORKDIR/.env.local \
               $IMAGE_URI
             
+            
+            # --- Healthcheck Loop ---
+            echo "⏳ Waiting for container to become healthy..."
+            MAX_RETRIES=10
+            COUNT=0
+            
+            while [ $COUNT -lt $MAX_RETRIES ]; do
+              # Get the health status
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_NAME)
+            
+              if [ "$STATUS" == "healthy" ]; then
+                echo "✅ Container is healthy! Deployment successful."
+                exit 0
+              elif [ "$STATUS" == "unhealthy" ]; then
+                echo "❌ Container is unhealthy! Check logs below:"
+                docker logs $CONTAINER_NAME
+                exit 1
+              fi
+            
+              echo "Current status: $STATUS... waiting ($((COUNT+1))/$MAX_RETRIES)"
+              sleep 5
+              COUNT=$((COUNT+1))
+            done
+            
+            echo "❌ Healthcheck timed out after $MAX_RETRIES attempts."
+            docker logs $CONTAINER_NAME
+            exit 1
+            
             # Clean up old unused images to save disk space
             docker image prune -af
 
