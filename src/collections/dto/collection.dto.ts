@@ -4,7 +4,7 @@ import {
   CollectionSourceType,
 } from '../collections.constants';
 import { Page } from '../../common/types/media-query';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional } from 'class-validator';
 
 export class CollectionResDto {
   @ApiProperty()
