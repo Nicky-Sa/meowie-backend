@@ -1,13 +1,12 @@
 FROM node:24-alpine
 
 WORKDIR /app
-COPY . .
 
-RUN npm ci
+# 1. Copy package files and install ONLY production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-RUN npm run build
+# 2. Copy the pre-compiled dist folder from the GitHub runner
+COPY dist ./dist
 
-# This binary listens to Lambda events and forwards them to your app on HTTP
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.0 /lambda-adapter /opt/extensions/lambda-adapter
-
-CMD ["npm", "run","start:lambda"]
+CMD ["npm", "run","start:deployed"]

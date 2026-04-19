@@ -10,7 +10,7 @@ _Backend for a movie discovery app. Built with NestJS and deployed on AWS_
 - Env variables defined in GitHub secrets
 - Dockerfile for building an image
 - ECR for storing images
-- Lambda function for running the app
+- AWS Lightsail instance for running the app
 - GitHub actions for CI/CD
 - CloudFront for caching and SSL termination
 
@@ -18,16 +18,13 @@ _Backend for a movie discovery app. Built with NestJS and deployed on AWS_
 ### Create or Update OTP template
 
 1. Edit the HTML in `src/otp/otp.template.html`.
-2. Sync directly to AWS SES:
-```bash
-npm run sync-email-template
-```
+2. It will update that next time you run the app in `OnModuleInit` of the OTP Module.
+
 
 ### Port
 
 - Preview: 5001
 - Production: 5000
-- In case you need to change the port, it must be updated in two places: GitHub variables and nginx config
 
 
 ### Class vs type for DTOs
