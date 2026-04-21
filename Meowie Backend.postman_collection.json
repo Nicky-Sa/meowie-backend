@@ -1,0 +1,785 @@
+{
+  "info": {
+    "_postman_id": "cad1b92b-e374-4b34-9c9b-6728793e3510",
+    "name": "Meowie Backend",
+    "description": "Postman collection for Meowie Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "24260778"
+  },
+  "item": [
+    {
+      "name": "App",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"fatemesahraee2000@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/request-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "request-otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"your_refresh_token_here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh-token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/current-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "current-user"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\":=\"test@example.com\",\n  \"churnReasonId\": \"dont_like_app\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/delete-account",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "delete-account"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Constants",
+      "item": [
+        {
+          "name": "Get Churn Reasons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/constants/churn-reasons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "constants",
+                "churn-reasons"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Genres",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/constants/genres",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "constants",
+                "genres"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Library",
+      "item": [
+        {
+          "name": "Get Library Items",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTc4NTc4MywiZXhwIjoxNzcxNzg2NjgzfQ.V6jvOK9LFWxmv9cZV1NOLrVlM-KmKkDVZDKrI7lxNOg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/library/saved?page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "saved"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/library/status?tmdbId=550&mediaType=movie",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "tmdbId",
+                  "value": "550"
+                },
+                {
+                  "key": "mediaType",
+                  "value": "movie",
+                  "description": "Options: movie, tv"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark as Seen",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTc4NTc4MywiZXhwIjoxNzcxNzg2NjgzfQ.V6jvOK9LFWxmv9cZV1NOLrVlM-KmKkDVZDKrI7lxNOg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tmdbId\": 224372,\n  \"mediaType\": \"tv\",\n  \"rating\": 8\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/library/seen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "seen"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark as Saved",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTc4NTc4MywiZXhwIjoxNzcxNzg2NjgzfQ.V6jvOK9LFWxmv9cZV1NOLrVlM-KmKkDVZDKrI7lxNOg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tmdbId\": 224372,\n  \"mediaType\": \"tv\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/library/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "save"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Seen",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTc4NTc4MywiZXhwIjoxNzcxNzg2NjgzfQ.V6jvOK9LFWxmv9cZV1NOLrVlM-KmKkDVZDKrI7lxNOg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tmdbId\": 224372,\n  \"mediaType\": \"tv\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/library/seen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "seen"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Saved",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTc4NTc4MywiZXhwIjoxNzcxNzg2NjgzfQ.V6jvOK9LFWxmv9cZV1NOLrVlM-KmKkDVZDKrI7lxNOg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tmdbId\": 224372,\n  \"mediaType\": \"tv\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/library/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "save"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rating",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTc3MTc4NTc4MywiZXhwIjoxNzcxNzg2NjgzfQ.V6jvOK9LFWxmv9cZV1NOLrVlM-KmKkDVZDKrI7lxNOg",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tmdbId\": 224372,\n  \"mediaType\": \"tv\",\n  \"rating\": 9\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/library/rating",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "library",
+                "rating"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "Interesting IDs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movie/interesting-ids?page=1&sort=popularity&languages=fa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movie",
+                "interesting-ids"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "sort",
+                  "value": "popularity",
+                  "description": "Options: popularity.desc, primary_release_date.desc, random"
+                },
+                {
+                  "key": "personId",
+                  "value": "123",
+                  "disabled": true
+                },
+                {
+                  "key": "genres",
+                  "value": "28",
+                  "disabled": true
+                },
+                {
+                  "key": "languages",
+                  "value": "fa"
+                },
+                {
+                  "key": "decade",
+                  "value": "2020",
+                  "disabled": true
+                },
+                {
+                  "key": "tmdbRatings",
+                  "value": "8",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movie/info/550",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movie",
+                "info",
+                "550"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Posters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movie/posters?page=1&sort=popularity&personId=123&genres=28&languages=en&decade=2020&tmdbRatings=8",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "movie",
+                "posters"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "sort",
+                  "value": "popularity"
+                },
+                {
+                  "key": "personId",
+                  "value": "123"
+                },
+                {
+                  "key": "genres",
+                  "value": "28"
+                },
+                {
+                  "key": "languages",
+                  "value": "en"
+                },
+                {
+                  "key": "decade",
+                  "value": "2020"
+                },
+                {
+                  "key": "tmdbRatings",
+                  "value": "8"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Person",
+      "item": [
+        {
+          "name": "Get Person Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/person/287",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "person",
+                "287"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role In Movie",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/person/287/role/550",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "person",
+                "287",
+                "role",
+                "550"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Multi Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search/multi?query=friends",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search",
+                "multi"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "friends"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Series",
+      "item": [
+        {
+          "name": "Interesting IDs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/series/interesting-ids?page=1&sort=primary_release_date.desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "series",
+                "interesting-ids"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "sort",
+                  "value": "primary_release_date.desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/series/info/1399",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "series",
+                "info",
+                "1399"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "YOUR_ACCESS_TOKEN",
+      "type": "string"
+    }
+  ]
+}

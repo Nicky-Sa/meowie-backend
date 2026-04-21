@@ -1,10 +1,9 @@
 import { IsEnum, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 import { MediaType, MEDIA_TYPE_VALUES } from '../../types/media-type';
-import { LIBRARY_CATEGORIES, LibraryCategory } from '../library.constants';
+import { LibraryCategory } from '../library.constants';
 import { Page } from '../../common/types/media-query';
 
-// Input DTO for toggling (create/delete)
-export class ToggleLibraryItemReqDto {
+class LibraryItemIdentifier {
   @IsInt()
   @IsNotEmpty()
   tmdbId: number;
@@ -12,13 +11,27 @@ export class ToggleLibraryItemReqDto {
   @IsEnum(MEDIA_TYPE_VALUES)
   @IsNotEmpty()
   mediaType: MediaType;
-
-  @IsEnum(LIBRARY_CATEGORIES)
-  @IsNotEmpty()
-  category: LibraryCategory;
 }
 
-export type LibraryStatusResDto = Partial<Record<LibraryCategory, boolean>>;
+export class MarkSavedReqDto extends LibraryItemIdentifier {}
+
+export class RemoveItemReqDto extends LibraryItemIdentifier {}
+
+export class MarkSeenReqDto extends LibraryItemIdentifier {
+  @IsInt()
+  @IsOptional()
+  rating?: number;
+}
+
+export class UpdateRatingReqDto extends LibraryItemIdentifier {
+  @IsInt()
+  @IsOptional()
+  rating?: number;
+}
+
+export type LibraryStatusResDto = Record<LibraryCategory, boolean> & {
+  rating?: number | null;
+};
 
 export class LibraryItemQueryDto extends Page {
   @IsEnum(MEDIA_TYPE_VALUES)

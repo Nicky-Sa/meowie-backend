@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LibraryItem } from './entities/library-item.entity';
 import { Repository } from 'typeorm';
@@ -6,7 +6,10 @@ import { DEFAULT_BLURHASH, LIMIT } from '../common/app.constants';
 import {
   LibraryItemQueryDto,
   LibraryStatusResDto,
-  ToggleLibraryItemReqDto,
+  MarkSavedReqDto,
+  MarkSeenReqDto,
+  RemoveItemReqDto,
+  UpdateRatingReqDto,
 } from './dto/library.dto';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { TMDB_MovieInfo, TMDB_SeriesInfo } from '../tmdb/tmdb.type';
@@ -15,6 +18,7 @@ import { getImage } from '../images/images.utils';
 import { MediaType } from '../types/media-type';
 import { LibraryCategory } from './library.constants';
 import { PosterResDto } from '../common/dto/poster.dto';
+import { isUniqueConstraintViolation } from '../database/db-errors.util';
 
 @Injectable()
 export class LibraryService {
@@ -33,37 +37,126 @@ export class LibraryService {
       where: { userId, tmdbId, mediaType },
     });
 
-    return items.reduce((acc, item) => {
+    const initialStatus: LibraryStatusResDto = {
+      saved: false,
+      seen: false,
+    };
+
+    return items.reduce<LibraryStatusResDto>((acc, item) => {
       acc[item.category] = true;
+      if (item.category === 'seen') {
+        acc.rating = item.rating ?? null;
+      }
       return acc;
-    }, {});
+    }, initialStatus);
   }
 
-  async toggleItem(
+  async markAsSeen(
     userId: number,
-    dto: ToggleLibraryItemReqDto,
+    dto: MarkSeenReqDto,
   ): Promise<LibraryStatusResDto> {
-    const existing = await this.libraryItemRepository.findOne({
-      where: {
+    const updateResult = await this.libraryItemRepository.update(
+      {
         userId,
         tmdbId: dto.tmdbId,
         mediaType: dto.mediaType,
-        category: dto.category,
+        category: 'saved',
       },
-    });
+      { category: 'seen', rating: dto.rating ?? null },
+    );
 
-    if (existing) {
-      await this.libraryItemRepository.remove(existing);
-      return { [dto.category]: false };
+    // user didn't have this item as saved
+    if (updateResult.affected === 0) {
+      try {
+        const newItem = this.libraryItemRepository.create({
+          userId,
+          tmdbId: dto.tmdbId,
+          mediaType: dto.mediaType,
+          category: 'seen',
+          rating: dto.rating ?? null,
+        });
+        await this.libraryItemRepository.save(newItem);
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          throw new BadRequestException('Item is already marked as seen');
+        }
+        throw error;
+      }
     }
+    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+  }
 
-    const newItem = this.libraryItemRepository.create({
+  async markAsSaved(
+    userId: number,
+    dto: MarkSavedReqDto,
+  ): Promise<LibraryStatusResDto> {
+    const updateResult = await this.libraryItemRepository.update(
+      {
+        userId,
+        tmdbId: dto.tmdbId,
+        mediaType: dto.mediaType,
+        category: 'seen',
+      },
+      { category: 'saved', rating: null },
+    );
+
+    // user didn't have this item as seen
+    if (updateResult.affected === 0) {
+      try {
+        const newItem = this.libraryItemRepository.create({
+          userId,
+          tmdbId: dto.tmdbId,
+          mediaType: dto.mediaType,
+          category: 'saved',
+          rating: null,
+        });
+        await this.libraryItemRepository.save(newItem);
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          throw new BadRequestException('Item is already saved');
+        }
+        throw error;
+      }
+    }
+    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+  }
+
+  async removeItem(
+    userId: number,
+    dto: RemoveItemReqDto,
+  ): Promise<LibraryStatusResDto> {
+    const result = await this.libraryItemRepository.delete({
       userId,
-      ...dto,
+      tmdbId: dto.tmdbId,
+      mediaType: dto.mediaType,
     });
 
-    await this.libraryItemRepository.save(newItem);
-    return { [dto.category]: true };
+    if (result.affected === 0) {
+      throw new BadRequestException('Item does not exist');
+    }
+    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+  }
+
+  async updateRating(
+    userId: number,
+    dto: UpdateRatingReqDto,
+  ): Promise<LibraryStatusResDto> {
+    const result = await this.libraryItemRepository.update(
+      {
+        userId,
+        tmdbId: dto.tmdbId,
+        mediaType: dto.mediaType,
+        category: 'seen',
+      },
+      { rating: dto.rating },
+    );
+
+    if (result.affected === 0) {
+      throw new BadRequestException(
+        'Cannot rate an item that is not marked as seen',
+      );
+    }
+    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
   }
 
   async getLibraryItemsPosters(

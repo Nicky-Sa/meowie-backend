@@ -12,7 +12,7 @@ import { MediaType } from '../../types/media-type';
 import { LibraryCategory } from '../library.constants';
 
 @Entity('library_items')
-@Unique(['userId', 'tmdbId', 'mediaType', 'category'])
+@Unique(['userId', 'tmdbId', 'mediaType'])
 export class LibraryItem {
   @PrimaryGeneratedColumn()
   id: number;
@@ -32,6 +32,9 @@ export class LibraryItem {
   @Index()
   @Column()
   category: LibraryCategory;
+
+  @Column({ type: 'int', nullable: true })
+  rating: number | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
