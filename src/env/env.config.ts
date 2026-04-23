@@ -52,6 +52,7 @@ export const envConfig = z.object({
       "Invalid JWT_REFRESH_EXPIRY format. Use '1h', '2d', '365d', etc.",
     ),
   APP_VERSION: z.string().default('1.0.0'),
+  SENTRY_RELEASE: z.string().default('NO_SENTRY_RELEASE'),
   GEMINI_API_KEY: z.string().min(10, { message: 'GEMINI_API_KEY is required' }),
 });
 
