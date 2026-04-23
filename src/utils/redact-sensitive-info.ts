@@ -2,22 +2,22 @@ import { loadEnv } from '../env/env.config';
 
 export type LoggableObject = Record<string, unknown>;
 const env = loadEnv();
+const isDev = env.BUILD_ENV === 'development';
 
-const SENSITIVE_KEYS: string[] =
-  env.BUILD_ENV !== 'development'
-    ? [
-        'password',
-        'confirmPassword',
-        'creditCard',
-        'ssn',
-        'otp',
-        'hashedPassword',
-        'token',
-        'refreshToken',
-        'accessToken',
-        'userId',
-      ]
-    : [];
+const SENSITIVE_KEYS: string[] = !isDev
+  ? [
+      'password',
+      'confirmPassword',
+      'creditCard',
+      'ssn',
+      'otp',
+      'hashedPassword',
+      'token',
+      'refreshToken',
+      'accessToken',
+      'userId',
+    ]
+  : []; // no redaction in dev
 const REDACTION_PLACEHOLDER = '[REDACTED]';
 
 /**

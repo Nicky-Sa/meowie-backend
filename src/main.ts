@@ -14,12 +14,12 @@ import pkg from '../package.json';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Main');
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  const env = app.get(EnvService);
+  app.useGlobalInterceptors(new LoggingInterceptor(env));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new SentryGlobalFilter());
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
-  const env = app.get(EnvService);
   // Setup Swagger
   if (env.get('BUILD_ENV') !== 'production') {
     const config = new DocumentBuilder()
