@@ -158,7 +158,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key: ${{ secrets.VPS_PRIVATE_SSH_KEY }}
           source: ".env.local"
           target: "/home/${{ secrets.VPS_USERNAME }}/meowie-${{ env.BUILD_ENV }}"
 
@@ -173,7 +173,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key: ${{ secrets.VPS_PRIVATE_SSH_KEY }}
           envs: IMAGE_URI,CONTAINER_NAME,PORT,WORKDIR
           script: |
             # Pull the new image (assumes VPS AWS CLI is authenticated)
