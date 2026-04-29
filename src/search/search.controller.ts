@@ -5,6 +5,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SearchService } from './search.service';
 import { SearchReqQueryDto, MultiSearchResDto } from './dto/search.dto';
 
@@ -17,6 +18,7 @@ export class SearchController {
 
   @Get('/multi')
   @Header('Cache-Control', 'public, max-age=3600')
+  @Throttle({ short: { limit: 10, ttl: 60000 } })
   async multiSearch(
     @Query() { query }: SearchReqQueryDto,
   ): Promise<MultiSearchResDto> {

@@ -2,9 +2,14 @@ import { Module } from '@nestjs/common';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import Redis from 'ioredis';
 import { AppService } from './app.service';
 import { MovieModule } from './movie/movie.module';
 import { EnvModule } from './env/env.module';
+import { EnvService } from './env/env.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -26,6 +31,32 @@ import { AiModule } from './ai/ai.module';
   imports: [
     SentryModule.forRoot(),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRootAsync({
+      imports: [EnvModule],
+      inject: [EnvService],
+      useFactory: (env: EnvService) => ({
+        throttlers: [
+          {
+            name: 'short',
+            ttl: 1000,
+            limit: 30,
+          },
+          {
+            name: 'medium',
+            ttl: 10000,
+            limit: 20,
+          },
+          {
+            name: 'long',
+            ttl: 60000,
+            limit: 100,
+          },
+        ],
+        storage: new ThrottlerStorageRedisService(
+          new Redis(env.get('REDIS_ENDPOINT')),
+        ),
+      }),
+    }),
     MovieModule,
     EnvModule,
     AuthModule,
@@ -51,6 +82,12 @@ import { AiModule } from './ai/ai.module';
     AiModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

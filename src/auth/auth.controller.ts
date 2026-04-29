@@ -8,6 +8,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RequestOtpReqDto } from './dto/request-otp.dto';
 import { VerifyOtpReqDto, VerifyOtpResDto } from './dto/verify-otp.dto';
@@ -36,11 +37,13 @@ export class AuthController {
 
   @Post('request-otp')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ short: { limit: 3, ttl: 60000 } })
   async requestOtp(@Body() dto: RequestOtpReqDto): Promise<void> {
     return await this.authService.requestOtp(dto);
   }
 
   @Post('verify-otp')
+  @Throttle({ short: { limit: 5, ttl: 60000 } })
   async verifyOtp(
     @Body() dto: VerifyOtpReqDto,
     @Res({ passthrough: true }) res: Response,
