@@ -11,7 +11,7 @@ import { CollectionResDto } from './dto/collection.dto';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { getImage } from '../images/images.utils';
-import { DEFAULT_BLURHASH, Duration, LIMIT } from '../common/app.constants';
+import { Duration, LIMIT } from '../common/app.constants';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
 import { MediaType } from '../types/media-type';
@@ -25,6 +25,7 @@ import {
 } from '../tmdb/tmdb.type';
 import { MovieService } from '../movie/movie.service';
 import { SeriesService } from '../series/series.service';
+import { ImagesService } from '../images/images.service';
 
 @Injectable()
 export class CollectionsService {
@@ -37,6 +38,7 @@ export class CollectionsService {
     private readonly cacheService: CacheService,
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
+    private readonly imagesService: ImagesService,
   ) {}
 
   @Cacheable({
@@ -99,24 +101,31 @@ export class CollectionsService {
     const posterType =
       mediaType === 'series' ? 'series_poster' : 'movie_poster';
 
-    const results: PosterInfo[] = response.results
-      .filter((item) => item.poster_path && ('title' in item || 'name' in item))
-      .map((item) => {
-        const title = 'title' in item ? item.title : item.name;
-        const genreIds = item.genre_ids || [];
+    const results: PosterInfo[] = await Promise.all(
+      response.results
+        .filter(
+          (item) => item.poster_path && ('title' in item || 'name' in item),
+        )
+        .map(async (item) => {
+          const title = 'title' in item ? item.title : item.name;
+          const genreIds = item.genre_ids || [];
+          const posterPath = getImage(item.poster_path, posterType);
+          const blurhash =
+            await this.imagesService.generateBlurhash(posterPath);
 
-        return {
-          id: item.id,
-          posterPath: getImage(item.poster_path, posterType),
-          blurhash: DEFAULT_BLURHASH,
-          mediaType,
-          preview: {
-            title,
-            genres: GENRES.filter((g) => genreIds.includes(g.id)),
-            overview: item.overview || '',
-          },
-        };
-      });
+          return {
+            id: item.id,
+            posterPath,
+            blurhash,
+            mediaType,
+            preview: {
+              title,
+              genres: GENRES.filter((g) => genreIds.includes(g.id)),
+              overview: item.overview || '',
+            },
+          };
+        }),
+    );
 
     return {
       page: response.page,
@@ -155,10 +164,13 @@ export class CollectionsService {
 
         const title = 'title' in details ? details.title : details.name;
 
+        const posterPath = getImage(details.poster_path, posterType);
+        const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
         return {
           id: item.tmdbId,
-          posterPath: getImage(details.poster_path, posterType),
-          blurhash: DEFAULT_BLURHASH,
+          posterPath,
+          blurhash,
           mediaType,
           preview: {
             title,

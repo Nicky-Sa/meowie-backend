@@ -9,6 +9,7 @@ export const PERSON_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/person-fallback.png';
 export const LIMIT = 20;
 export const DEFAULT_BLURHASH = 'L18z.G~qRkxakWofofkCD%RjNGj[';
+export const DEFAULT_PRIMARY_COLOR_HEX = '#1F3854';
 
 // durations in seconds
 export enum Duration {

@@ -26,7 +26,7 @@ import {
   emptyCast,
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
-import { DEFAULT_BLURHASH, Duration } from '../common/app.constants';
+import { Duration } from '../common/app.constants';
 import { extractYearFromDate } from '../utils/dates';
 
 import { GENRES } from '../constants/items/genres.constant';
@@ -124,8 +124,11 @@ export class SeriesService {
       'videos,content_ratings,credits',
     );
     const posterPath = getImage(item.poster_path, 'series_poster');
-    const posterProps =
-      await this.imagesService.generatePosterProps(posterPath);
+    const [blurhash, primaryColorHex] = await Promise.all([
+      this.imagesService.generateBlurhash(posterPath),
+      this.imagesService.generatePrimaryColorHex(posterPath),
+    ]);
+    const posterProps = { blurhash, primaryColorHex };
     const ratings = await this.ratingsService.getRatings(
       'tvshow',
       id,
@@ -155,17 +158,26 @@ export class SeriesService {
   async getSeriesPosters(query: QueryParamsDto): Promise<PosterResDto> {
     const discoveredSeriesList = await this.getDiscoveredSeries(query);
     const { results: series, ...rest } = discoveredSeriesList;
-    const results = series.map((tvShow) => ({
-      id: tvShow.id,
-      posterPath: getImage(tvShow.poster_path, 'series_poster'),
-      blurhash: DEFAULT_BLURHASH,
-      mediaType: 'series' as const,
-      preview: {
-        title: tvShow.name,
-        overview: tvShow.overview,
-        genres: GENRES.filter((genre) => tvShow.genre_ids.includes(genre.id)),
-      },
-    }));
+    const results = await Promise.all(
+      series.map(async (tvShow) => {
+        const posterPath = getImage(tvShow.poster_path, 'series_poster');
+        const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
+        return {
+          id: tvShow.id,
+          posterPath,
+          blurhash,
+          mediaType: 'series' as const,
+          preview: {
+            title: tvShow.name,
+            overview: tvShow.overview,
+            genres: GENRES.filter((genre) =>
+              tvShow.genre_ids.includes(genre.id),
+            ),
+          },
+        };
+      }),
+    );
     return { results, ...rest };
   }
 

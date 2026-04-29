@@ -11,7 +11,10 @@ type ServiceWithCache = {
   cacheService: CacheService;
 };
 
-export const Cacheable = (options: CacheableOptions) => {
+export const Cacheable = ({
+  key,
+  ttl = Duration.ONE_DAY,
+}: CacheableOptions) => {
   return function (
     _target: unknown,
     _propertyKey: string,
@@ -29,7 +32,7 @@ export const Cacheable = (options: CacheableOptions) => {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const cacheKey = options.key(...args);
+      const cacheKey = key(...args);
 
       // Get from cache
       const cachedValue = await cacheService.get(cacheKey);
@@ -43,7 +46,6 @@ export const Cacheable = (options: CacheableOptions) => {
 
       // Set cache
       if (result) {
-        const ttl = options.ttl || Duration.ONE_DAY;
         await cacheService.set(cacheKey, result, ttl);
       }
 

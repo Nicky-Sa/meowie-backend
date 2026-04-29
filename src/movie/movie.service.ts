@@ -29,7 +29,7 @@ import {
   emptyCast,
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
-import { DEFAULT_BLURHASH, Duration } from '../common/app.constants';
+import { Duration } from '../common/app.constants';
 
 import { GENRES } from '../constants/items/genres.constant';
 
@@ -122,8 +122,11 @@ export class MovieService {
     );
 
     const posterPath = getImage(item.poster_path, 'movie_poster');
-    const posterProps =
-      await this.imagesService.generatePosterProps(posterPath);
+    const [blurhash, primaryColorHex] = await Promise.all([
+      this.imagesService.generateBlurhash(posterPath),
+      this.imagesService.generatePrimaryColorHex(posterPath),
+    ]);
+    const posterProps = { blurhash, primaryColorHex };
     const ratings = await this.ratingsService.getRatings(
       'movie',
       id,
@@ -177,17 +180,26 @@ export class MovieService {
   async getMoviesPosters(query: QueryParamsDto): Promise<PosterResDto> {
     const discoveredMoviesList = await this.getDiscoveredMovies(query);
     const { results: movies, ...rest } = discoveredMoviesList;
-    const results = movies.map((movie) => ({
-      id: movie.id,
-      posterPath: getImage(movie.poster_path, 'movie_poster'),
-      blurhash: DEFAULT_BLURHASH,
-      mediaType: 'movie' as const,
-      preview: {
-        title: movie.title,
-        overview: movie.overview,
-        genres: GENRES.filter((genre) => movie.genre_ids.includes(genre.id)),
-      },
-    }));
+    const results = await Promise.all(
+      movies.map(async (movie) => {
+        const posterPath = getImage(movie.poster_path, 'movie_poster');
+        const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
+        return {
+          id: movie.id,
+          posterPath,
+          blurhash,
+          mediaType: 'movie' as const,
+          preview: {
+            title: movie.title,
+            overview: movie.overview,
+            genres: GENRES.filter((genre) =>
+              movie.genre_ids.includes(genre.id),
+            ),
+          },
+        };
+      }),
+    );
     return { results, ...rest };
   }
 

@@ -7,6 +7,7 @@ import { EnvModule } from '../env/env.module';
 import { CacheModule } from '../cache/cache.module';
 import { MovieModule } from '../movie/movie.module';
 import { SeriesModule } from '../series/series.module';
+import { ImagesModule } from '../images/images.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SeriesModule } from '../series/series.module';
     CacheModule,
     MovieModule,
     SeriesModule,
+    ImagesModule,
   ],
   controllers: [LibraryController],
   providers: [LibraryService],

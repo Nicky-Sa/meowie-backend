@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LibraryItem } from './entities/library-item.entity';
 import { Repository } from 'typeorm';
-import { DEFAULT_BLURHASH, LIMIT } from '../common/app.constants';
+import { LIMIT } from '../common/app.constants';
 import {
   LibraryItemQueryDto,
   LibraryStatusResDto,
@@ -13,6 +13,7 @@ import {
 } from './dto/library.dto';
 import { MovieService } from '../movie/movie.service';
 import { SeriesService } from '../series/series.service';
+import { ImagesService } from '../images/images.service';
 import { TMDB_MovieInfo, TMDB_SeriesInfo } from '../tmdb/tmdb.type';
 import { GENRES } from '../constants/items/genres.constant';
 import { getImage } from '../images/images.utils';
@@ -28,6 +29,7 @@ export class LibraryService {
     private libraryItemRepository: Repository<LibraryItem>,
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
+    private readonly imagesService: ImagesService,
   ) {}
 
   async getStatus(
@@ -195,10 +197,12 @@ export class LibraryService {
             ? (details as TMDB_MovieInfo).title
             : (details as TMDB_SeriesInfo).name;
 
+        const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
         return {
           id: details.id,
           posterPath,
-          blurhash: DEFAULT_BLURHASH,
+          blurhash,
           mediaType: item.mediaType,
           preview: {
             title,

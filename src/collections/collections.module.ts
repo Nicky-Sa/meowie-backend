@@ -9,6 +9,7 @@ import { TmdbModule } from '../tmdb/tmdb.module';
 import { CacheModule } from '../cache/cache.module';
 import { MovieModule } from '../movie/movie.module';
 import { SeriesModule } from '../series/series.module';
+import { ImagesModule } from '../images/images.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SeriesModule } from '../series/series.module';
     CacheModule,
     MovieModule,
     SeriesModule,
+    ImagesModule,
   ],
   controllers: [CollectionsController],
   providers: [CollectionsService, CollectionsSyncService],

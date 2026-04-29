@@ -3,58 +3,91 @@ import axios from 'axios';
 import { Vibrant } from 'node-vibrant/node';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
-import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
-import { PosterProps } from './poster';
-import { DEFAULT_BLURHASH, Duration } from '../common/app.constants';
+import { Cacheable } from '../cache/cacheable.decorator';
+import {
+  DEFAULT_BLURHASH,
+  DEFAULT_PRIMARY_COLOR_HEX,
+  Duration,
+} from '../common/app.constants';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ImagesService {
   private readonly logger = new Logger(ImagesService.name);
 
-  constructor(private readonly cacheService: CacheService) {}
+  constructor(
+    private readonly cacheService: CacheService,
+    @InjectQueue('image') private readonly imageQueue: Queue,
+  ) {}
+
+  async generateBlurhash(url: string): Promise<string> {
+    const cached = await this.cacheService.get<string>(
+      this.getBlurhashCacheKey(url),
+    );
+
+    if (cached) {
+      return cached;
+    }
+
+    await this.imageQueue.add(
+      'extract-blurhash',
+      { url },
+      {
+        jobId: `blurhash-${this.sanitizeUrlForJobId(url)}`,
+        removeOnComplete: true,
+        removeOnFail: true,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 1000 },
+      },
+    );
+
+    return DEFAULT_BLURHASH;
+  }
 
   @Cacheable({
-    key: (url: string) => `poster-props-${url}`,
-    ttl: Duration.ONE_MONTH,
+    key: (url: string) => `primary-color-${url}`,
+    ttl: Duration.ONE_YEAR,
   })
-  async generatePosterProps(url: string): Promise<PosterProps> {
-    let primaryColorHex = '#1F3854';
-    let blurhash = DEFAULT_BLURHASH;
-
+  async generatePrimaryColorHex(url: string): Promise<string> {
     try {
-      const response = await axios.get<ArrayBuffer>(url, {
-        responseType: 'arraybuffer',
-      });
-      const buffer = Buffer.from(response.data);
+      const buffer = await this.getImageBufferUrl(url);
+      const result = await this.getPrimaryColorHex(buffer);
 
-      const [hexResult, blurhashResult] = await Promise.allSettled([
-        this.getPrimaryColorHex(buffer),
-        this.getBlurhash(buffer),
-      ]);
-
-      if (hexResult.status === 'fulfilled' && hexResult.value) {
-        primaryColorHex = hexResult.value;
-      }
-
-      if (blurhashResult.status === 'fulfilled' && blurhashResult.value) {
-        blurhash = blurhashResult.value;
-      }
-
-      return { primaryColorHex, blurhash };
-    } catch (error) {
-      if (error instanceof AggregateError) {
-        this.logger.error(
-          `AggregateError generating poster props: ${error.message}\n`,
-          `Errors: ${error.errors.join('\n ')}`,
+      if (!result) {
+        this.logger.warn(
+          `Primary color extraction returned no result for ${url}`,
         );
+        return DEFAULT_PRIMARY_COLOR_HEX;
       }
-      this.logger.error(`Error generating poster props`, error);
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Error generating primary color for ${url}`, error);
+      return DEFAULT_PRIMARY_COLOR_HEX;
     }
-    return {
-      primaryColorHex,
-      blurhash,
-    };
+  }
+
+  async processAndCacheBlurhash(url: string): Promise<void> {
+    try {
+      const buffer = await this.getImageBufferUrl(url);
+      const result = await this.getBlurhash(buffer);
+
+      if (!result) {
+        this.logger.warn(`Blurhash extraction returned no result for ${url}`);
+        return; // Don't cache the default — let the next request retry
+      }
+
+      await this.cacheService.set(
+        this.getBlurhashCacheKey(url),
+        result,
+        Duration.ONE_YEAR,
+      );
+    } catch (error) {
+      this.logger.error(`Error generating blurhash for ${url}`, error);
+      return; // Do not cache on failure
+    }
   }
 
   private async getPrimaryColorHex(
@@ -72,5 +105,23 @@ export class ImagesService {
       .toBuffer({ resolveWithObject: true });
 
     return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 4);
+  }
+
+  private getBlurhashCacheKey(url: string): string {
+    return `blurhash-${url}`;
+  }
+
+  private async getImageBufferUrl(url: string): Promise<Buffer<ArrayBuffer>> {
+    // Use a smaller version of the image to save bandwidth/CPU
+    const processingUrl = url.replace('/original/', '/w500/');
+    const response = await axios.get<ArrayBuffer>(processingUrl, {
+      responseType: 'arraybuffer',
+    });
+
+    return Buffer.from(response.data);
+  }
+
+  private sanitizeUrlForJobId(url: string): string {
+    return url.replace(/:/g, '_');
   }
 }
