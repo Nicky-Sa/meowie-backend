@@ -1,0 +1,1 @@
+export const EMAIL_SENDER = 'SES_EMAIL_SENDER';

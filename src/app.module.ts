@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { BullModule } from '@nestjs/bullmq';
 import Redis from 'ioredis';
 import { AppService } from './app.service';
 import { MovieModule } from './movie/movie.module';
@@ -32,6 +33,15 @@ import { AiModule } from './ai/ai.module';
   imports: [
     SentryModule.forRoot(),
     ScheduleModule.forRoot(),
+    BullModule.forRootAsync({
+      imports: [EnvModule],
+      inject: [EnvService],
+      useFactory: (env: EnvService) => ({
+        connection: {
+          url: env.get('REDIS_ENDPOINT'),
+        },
+      }),
+    }),
     ThrottlerModule.forRootAsync({
       imports: [EnvModule],
       inject: [EnvService],
