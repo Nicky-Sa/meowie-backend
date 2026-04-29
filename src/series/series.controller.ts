@@ -14,6 +14,7 @@ import {
   SeriesInfoResDto,
 } from './dto/series.dto';
 import { PosterResDto } from '../common/dto/poster.dto';
+import { Duration } from '../common/app.constants';
 
 @Controller('series')
 @UseInterceptors(TMDBErrorInterceptor)
@@ -28,13 +29,13 @@ export class SeriesController {
   }
 
   @Get('/info/:id')
-  @Header('Cache-Control', 'public, max-age=3600')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesInfo(@Param('id') id: number): Promise<SeriesInfoResDto> {
     return this.seriesService.getSeriesInfo(id);
   }
 
   @Get('/posters')
-  @Header('Cache-Control', 'public, max-age=3600')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesPostersInBulk(
     @Query() query: QueryParamsDto,
   ): Promise<PosterResDto> {

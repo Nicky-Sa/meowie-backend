@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from './cache/cache.module';
+import { Duration } from './common/app.constants';
 import { OtpModule } from './otp/otp.module';
 import { EmailModule } from './email/email.module';
 import { getDataSourceOptions } from './database/database.config';
@@ -38,17 +39,17 @@ import { AiModule } from './ai/ai.module';
         throttlers: [
           {
             name: 'short',
-            ttl: 1000,
+            ttl: Duration.ONE_SECOND * 1000,
             limit: 30,
           },
           {
             name: 'medium',
-            ttl: 10000,
+            ttl: Duration.TEN_SECONDS * 1000,
             limit: 20,
           },
           {
             name: 'long',
-            ttl: 60000,
+            ttl: Duration.ONE_MINUTE * 1000,
             limit: 100,
           },
         ],

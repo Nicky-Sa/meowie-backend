@@ -1,4 +1,3 @@
-// src/collections/collections.service.ts
 import {
   BadRequestException,
   Injectable,
@@ -12,10 +11,9 @@ import { CollectionResDto } from './dto/collection.dto';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { getImage } from '../images/images.utils';
-import { DEFAULT_BLURHASH, LIMIT } from '../common/app.constants';
+import { DEFAULT_BLURHASH, Duration, LIMIT } from '../common/app.constants';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { CacheService } from '../cache/cache.service';
-import { CacheDuration } from '../cache/cache.constants';
 import { MediaType } from '../types/media-type';
 import { PosterInfo } from '../images/poster';
 import { GENRES } from '../constants/items/genres.constant';
@@ -43,7 +41,7 @@ export class CollectionsService {
 
   @Cacheable({
     key: (parentId: number | null) => `collections-${parentId ?? 'root'}`,
-    ttl: CacheDuration.ONE_HOUR,
+    ttl: Duration.ONE_HOUR,
   })
   async getCollections(parentId: number | null): Promise<CollectionResDto[]> {
     const where =

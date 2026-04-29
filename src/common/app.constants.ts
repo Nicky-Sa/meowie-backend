@@ -9,3 +9,15 @@ export const PERSON_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/person-fallback.png';
 export const LIMIT = 20;
 export const DEFAULT_BLURHASH = 'L18z.G~qRkxakWofofkCD%RjNGj[';
+
+// durations in seconds
+export enum Duration {
+  ONE_SECOND = 1,
+  TEN_SECONDS = 10,
+  ONE_MINUTE = 60,
+  ONE_HOUR = 3600,
+  ONE_DAY = 3600 * 24,
+  ONE_WEEK = 3600 * 24 * 7,
+  ONE_MONTH = 3600 * 24 * 30,
+  ONE_YEAR = 3600 * 24 * 365,
+}

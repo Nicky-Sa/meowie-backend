@@ -30,6 +30,7 @@ import {
 } from './dto/delete-account.dto';
 import { RefreshGuard } from './guards/refresh.guard';
 import { AccessGuard } from './guards/access.guard';
+import { Duration } from '../common/app.constants';
 
 @Controller('auth')
 export class AuthController {
@@ -37,13 +38,13 @@ export class AuthController {
 
   @Post('request-otp')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ short: { limit: 3, ttl: 60000 } })
+  @Throttle({ short: { limit: 3, ttl: Duration.ONE_MINUTE * 1000 } })
   async requestOtp(@Body() dto: RequestOtpReqDto): Promise<void> {
     return await this.authService.requestOtp(dto);
   }
 
   @Post('verify-otp')
-  @Throttle({ short: { limit: 5, ttl: 60000 } })
+  @Throttle({ short: { limit: 5, ttl: Duration.ONE_MINUTE * 1000 } })
   async verifyOtp(
     @Body() dto: VerifyOtpReqDto,
     @Res({ passthrough: true }) res: Response,

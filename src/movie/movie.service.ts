@@ -29,8 +29,7 @@ import {
   emptyCast,
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
-import { CacheDuration } from '../cache/cache.constants';
-import { DEFAULT_BLURHASH } from '../common/app.constants';
+import { DEFAULT_BLURHASH, Duration } from '../common/app.constants';
 
 import { GENRES } from '../constants/items/genres.constant';
 
@@ -103,7 +102,7 @@ export class MovieService {
   @Cacheable({
     key: (id: number, append_to_response = '') =>
       `movie-basic-info-${id}-{${append_to_response}}`,
-    ttl: CacheDuration.ONE_DAY,
+    ttl: Duration.ONE_DAY,
   })
   async getBasicMovieInfo<T>(
     id: number,
@@ -114,7 +113,7 @@ export class MovieService {
 
   @Cacheable({
     key: (id: number) => `movie-info-${id}`,
-    ttl: CacheDuration.ONE_DAY,
+    ttl: Duration.ONE_DAY,
   })
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
     const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
@@ -260,7 +259,7 @@ export class MovieService {
     if (theatricalRelease) {
       const theatricalDate = new Date(theatricalRelease.release_date);
       const diffTime = today.getTime() - theatricalDate.getTime();
-      const daysSinceRelease = diffTime / (1000 * 60 * 60 * 24);
+      const daysSinceRelease = diffTime / (1000 * Duration.ONE_DAY);
 
       if (daysSinceRelease >= 0 && daysSinceRelease <= 60) {
         return 'In cinemas';

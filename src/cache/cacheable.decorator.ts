@@ -1,14 +1,15 @@
 import { CacheService } from './cache.service';
+import { Duration } from '../common/app.constants';
 
-interface CacheableOptions {
+type CacheableOptions = {
   key: (...args: any[]) => string;
   ttl?: number;
-}
+};
 
 // Define the shape of the class instance (it MUST have cacheService)
-interface ServiceWithCache {
+type ServiceWithCache = {
   cacheService: CacheService;
-}
+};
 
 export const Cacheable = (options: CacheableOptions) => {
   return function (
@@ -42,7 +43,7 @@ export const Cacheable = (options: CacheableOptions) => {
 
       // Set cache
       if (result) {
-        const ttl = options.ttl || 86400;
+        const ttl = options.ttl || Duration.ONE_DAY;
         await cacheService.set(cacheKey, result, ttl);
       }
 

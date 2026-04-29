@@ -25,9 +25,8 @@ import {
   formatGenres,
   emptyCast,
 } from '../utils/media';
-import { CacheDuration } from '../cache/cache.constants';
 import { PosterResDto } from '../common/dto/poster.dto';
-import { DEFAULT_BLURHASH } from '../common/app.constants';
+import { DEFAULT_BLURHASH, Duration } from '../common/app.constants';
 import { extractYearFromDate } from '../utils/dates';
 
 import { GENRES } from '../constants/items/genres.constant';
@@ -106,7 +105,7 @@ export class SeriesService {
   @Cacheable({
     key: (id: number, append_to_response = '') =>
       `series-basic-info-${id}-{${append_to_response}}`,
-    ttl: CacheDuration.ONE_DAY,
+    ttl: Duration.ONE_DAY,
   })
   async getBasicSeriesInfo<T>(
     id: number,
@@ -117,7 +116,7 @@ export class SeriesService {
 
   @Cacheable({
     key: (id: number) => `series-info-${id}`,
-    ttl: CacheDuration.ONE_DAY,
+    ttl: Duration.ONE_DAY,
   })
   async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
     const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(

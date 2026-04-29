@@ -5,11 +5,10 @@ import { CacheService } from 'src/cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { PosterResDto } from '../common/dto/poster.dto';
-import { DEFAULT_BLURHASH } from '../common/app.constants';
+import { DEFAULT_BLURHASH, Duration } from '../common/app.constants';
 import { PosterInfo } from '../images/poster';
 import { formatGenres, TmdbMediaTypeToAppMediaType } from '../utils/media';
 import { GENRES } from '../constants/items/genres.constant';
-import { CacheDuration } from '../cache/cache.constants';
 
 @Injectable()
 export class PersonService {
@@ -35,7 +34,7 @@ export class PersonService {
 
   @Cacheable({
     key: (personId: number) => `person-combined-posters-${personId}`,
-    ttl: CacheDuration.ONE_DAY,
+    ttl: Duration.ONE_DAY,
   })
   async getCombinedPosters(personId: number): Promise<PosterResDto> {
     const combinedCredits = await this.tmdbService.getCombinedCredits(personId);

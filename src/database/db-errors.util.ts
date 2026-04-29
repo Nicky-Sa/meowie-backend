@@ -1,8 +1,8 @@
 import { QueryFailedError } from 'typeorm';
 
-export interface PostgresQueryFailedError extends QueryFailedError {
+export type PostgresQueryFailedError = QueryFailedError & {
   code: string;
-}
+};
 
 export function isQueryFailedError(
   error: unknown,

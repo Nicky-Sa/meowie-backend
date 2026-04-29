@@ -1,4 +1,3 @@
-// src/collections/collections.controller.ts
 import {
   Controller,
   Get,
@@ -15,6 +14,7 @@ import {
 } from './dto/collection.dto';
 import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
 import { PosterResDto } from '../common/dto/poster.dto';
+import { Duration } from '../common/app.constants';
 
 @Controller('collections')
 @UseInterceptors(TMDBErrorInterceptor)
@@ -22,7 +22,7 @@ export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
   @Get()
-  @Header('Cache-Control', 'public, max-age=3600')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getCollections(
     @Query() query: CollectionQueryDto,
   ): Promise<CollectionResDto[]> {
@@ -31,7 +31,7 @@ export class CollectionsController {
   }
 
   @Get(':slug/items')
-  @Header('Cache-Control', 'public, max-age=3600')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getCollectionItems(
     @Param('slug') slug: string,
     @Query() query: CollectionItemQueryDto,

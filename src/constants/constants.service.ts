@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { Cacheable } from '../cache/cacheable.decorator';
-import { CacheDuration } from '../cache/cache.constants';
 import { TMDB_GenresList } from '../tmdb/tmdb.type';
 import { Genre, GenresResDto } from './constants.dto';
 import { getGenreEmoji } from '../utils/media';
 import { CacheService } from '../cache/cache.service';
+import { Duration } from '../common/app.constants';
 
 @Injectable()
 export class ConstantsService {
@@ -16,7 +16,7 @@ export class ConstantsService {
 
   @Cacheable({
     key: () => 'movie-genres',
-    ttl: CacheDuration.ONE_MONTH,
+    ttl: Duration.ONE_MONTH,
   })
   async getMovieGenres(): Promise<Genre[]> {
     const list: TMDB_GenresList = await this.tmdbService.getMovieGenres();
@@ -28,7 +28,7 @@ export class ConstantsService {
 
   @Cacheable({
     key: () => 'tv-genres',
-    ttl: CacheDuration.ONE_MONTH,
+    ttl: Duration.ONE_MONTH,
   })
   async getSeriesGenres(): Promise<Genre[]> {
     const list: TMDB_GenresList = await this.tmdbService.getSeriesGenres();

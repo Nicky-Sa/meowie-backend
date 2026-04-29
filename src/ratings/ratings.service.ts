@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { RatingEntry } from './types/rating.type';
-import { WHATSON_BASE_URL } from '../common/app.constants';
+import { Duration, WHATSON_BASE_URL } from '../common/app.constants';
 import { Whatson_MediaItem } from './types/whatson.type';
 import { Cacheable } from '../cache/cacheable.decorator';
-import { CacheDuration } from '../cache/cache.constants';
 import { CacheService } from '../cache/cache.service';
 
 @Injectable()
@@ -16,7 +15,7 @@ export class RatingsService {
   @Cacheable({
     key: (mediaType: 'movie' | 'tvshow', id: number) =>
       `ratings-${mediaType}-${id}`,
-    ttl: CacheDuration.ONE_DAY,
+    ttl: Duration.ONE_DAY,
   })
   async getRatings(
     mediaType: 'movie' | 'tvshow',

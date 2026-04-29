@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export abstract class CacheService {
   protected constructor() {}
 
-  abstract set(key: string, value: unknown, ttl?: number): Promise<void>;
+  abstract set(key: string, value: unknown, ttl: number): Promise<void>;
 
   abstract get<T>(key: string): Promise<T | null>;
 

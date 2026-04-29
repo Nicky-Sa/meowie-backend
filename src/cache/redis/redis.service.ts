@@ -27,7 +27,7 @@ export class RedisService
     this.client.on('error', (err) => this.logger.error('❌ Redis Error:', err));
   }
 
-  async set(key: string, value: unknown, ttlSeconds = 3600) {
+  async set(key: string, value: unknown, ttlSeconds: number) {
     const stringValue = JSON.stringify(value); // Serialize
     await this.client.set(key, stringValue, 'EX', ttlSeconds);
   }
