@@ -11,7 +11,8 @@ import {
   RemoveItemReqDto,
   UpdateRatingReqDto,
 } from './dto/library.dto';
-import { TmdbService } from '../tmdb/tmdb.service';
+import { MovieService } from '../movie/movie.service';
+import { SeriesService } from '../series/series.service';
 import { TMDB_MovieInfo, TMDB_SeriesInfo } from '../tmdb/tmdb.type';
 import { GENRES } from '../constants/items/genres.constant';
 import { getImage } from '../images/images.utils';
@@ -25,7 +26,8 @@ export class LibraryService {
   constructor(
     @InjectRepository(LibraryItem)
     private libraryItemRepository: Repository<LibraryItem>,
-    private readonly tmdbService: TmdbService,
+    private readonly movieService: MovieService,
+    private readonly seriesService: SeriesService,
   ) {}
 
   async getStatus(
@@ -178,9 +180,11 @@ export class LibraryService {
 
     const results = await Promise.all(
       items.map(async (item) => {
-        const details = await this.tmdbService.getDetails<
-          TMDB_MovieInfo | TMDB_SeriesInfo
-        >(item.mediaType, item.tmdbId);
+        const details = await (item.mediaType === 'movie'
+          ? this.movieService.getBasicMovieInfo<TMDB_MovieInfo>(item.tmdbId)
+          : this.seriesService.getBasicSeriesInfo<TMDB_SeriesInfo>(
+              item.tmdbId,
+            ));
         const posterPath = getImage(
           details.poster_path,
           `${item.mediaType}_poster`,

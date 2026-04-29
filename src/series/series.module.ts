@@ -11,5 +11,6 @@ import { ImagesModule } from '../images/images.module';
   controllers: [SeriesController],
   providers: [SeriesService],
   imports: [TmdbModule, EnvModule, CacheModule, RatingsModule, ImagesModule],
+  exports: [SeriesService],
 })
 export class SeriesModule {}

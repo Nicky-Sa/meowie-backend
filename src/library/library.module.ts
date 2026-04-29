@@ -3,16 +3,18 @@ import { LibraryService } from './library.service';
 import { LibraryController } from './library.controller';
 import { LibraryItem } from './entities/library-item.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TmdbModule } from '../tmdb/tmdb.module';
 import { EnvModule } from '../env/env.module';
 import { CacheModule } from '../cache/cache.module';
+import { MovieModule } from '../movie/movie.module';
+import { SeriesModule } from '../series/series.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([LibraryItem]),
-    TmdbModule,
     EnvModule,
     CacheModule,
+    MovieModule,
+    SeriesModule,
   ],
   controllers: [LibraryController],
   providers: [LibraryService],

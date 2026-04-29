@@ -25,6 +25,8 @@ import {
   TMDB_MovieInfo,
   TMDB_SeriesInfo,
 } from '../tmdb/tmdb.type';
+import { MovieService } from '../movie/movie.service';
+import { SeriesService } from '../series/series.service';
 
 @Injectable()
 export class CollectionsService {
@@ -35,6 +37,8 @@ export class CollectionsService {
     private readonly collectionItemRepository: Repository<CollectionItem>,
     private readonly tmdbService: TmdbService,
     private readonly cacheService: CacheService,
+    private readonly movieService: MovieService,
+    private readonly seriesService: SeriesService,
   ) {}
 
   @Cacheable({
@@ -145,9 +149,11 @@ export class CollectionsService {
 
     const results = await Promise.all(
       items.map(async (item) => {
-        const details = await this.tmdbService.getDetails<
-          TMDB_MovieInfo | TMDB_SeriesInfo
-        >(mediaType, item.tmdbId);
+        const details = await (mediaType === 'movie'
+          ? this.movieService.getBasicMovieInfo<TMDB_MovieInfo>(item.tmdbId)
+          : this.seriesService.getBasicSeriesInfo<TMDB_SeriesInfo>(
+              item.tmdbId,
+            ));
 
         const title = 'title' in details ? details.title : details.name;
 
