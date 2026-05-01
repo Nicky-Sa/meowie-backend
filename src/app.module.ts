@@ -82,8 +82,6 @@ import { AiModule } from './ai/ai.module';
     EmailModule,
     ConstantsModule,
     PersonModule,
-    ConstantsModule,
-    PersonModule,
     SearchModule,
     LibraryModule,
     SeriesModule,

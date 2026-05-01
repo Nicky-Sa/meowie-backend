@@ -22,6 +22,7 @@ export class SeriesController {
   constructor(private readonly seriesService: SeriesService) {}
 
   @Get('interesting-ids')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getInterestingSeriesIds(
     @Query() query: QueryParamsDto,
   ): Promise<InterestingSeriesIdsResDto> {

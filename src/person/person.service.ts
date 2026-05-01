@@ -8,8 +8,12 @@ import { ImagesService } from '../images/images.service';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
 import { PosterInfo } from '../images/poster';
-import { formatGenres, TmdbMediaTypeToAppMediaType } from '../utils/media';
+import { formatGenres, tmdbMediaTypeToAppMediaType } from '../utils/media';
 import { GENRES } from '../constants/items/genres.constant';
+import {
+  TMDB_CombinedCreditsCast,
+  TMDB_CombinedCreditsCrew,
+} from '../tmdb/tmdb.type';
 
 @Injectable()
 export class PersonService {
@@ -19,6 +23,10 @@ export class PersonService {
     private readonly imagesService: ImagesService,
   ) {}
 
+  @Cacheable({
+    key: (personId: number) => `person-info-${personId}`,
+    ttl: Duration.ONE_WEEK,
+  })
   async getPersonInfo(id: number) {
     try {
       const response = await this.tmdbService.getPerson(id);
@@ -41,59 +49,18 @@ export class PersonService {
   async getCombinedPosters(personId: number): Promise<PosterResDto> {
     const combinedCredits = await this.tmdbService.getCombinedCredits(personId);
     const { cast, crew } = combinedCredits;
+
     const castResults: PosterInfo[] = await Promise.all(
-      cast.map(async (item) => {
-        const mediaType = TmdbMediaTypeToAppMediaType(item.media_type);
-        const posterType =
-          mediaType === 'series' ? 'series_poster' : 'movie_poster';
-
-        const genreIds = item.genre_ids || [];
-        const tmdbGenres = GENRES.filter((g) => genreIds.includes(g.id)).map(
-          (g) => ({ id: g.id, name: g.name }),
-        );
-        const posterPath = getImage(item.poster_path as string, posterType);
-        const blurhash = await this.imagesService.generateBlurhash(posterPath);
-
-        return {
-          id: item.id,
-          posterPath,
-          blurhash,
-          mediaType,
-          role: item.character ? `Performing as ${item.character}` : 'N/A',
-          preview: {
-            title: item.title || item.name || '',
-            genres: formatGenres(tmdbGenres),
-            overview: item.overview || '',
-          },
-        };
-      }),
+      cast.map((item) =>
+        this.mapToPosterInfo(
+          item,
+          item.character ? `Performing as ${item.character}` : 'N/A',
+        ),
+      ),
     );
+
     const crewResults: PosterInfo[] = await Promise.all(
-      crew.map(async (item) => {
-        const mediaType = TmdbMediaTypeToAppMediaType(item.media_type);
-        const posterType =
-          mediaType === 'series' ? 'series_poster' : 'movie_poster';
-
-        const genreIds = item.genre_ids || [];
-        const tmdbGenres = GENRES.filter((g) => genreIds.includes(g.id)).map(
-          (g) => ({ id: g.id, name: g.name }),
-        );
-        const posterPath = getImage(item.poster_path as string, posterType);
-        const blurhash = await this.imagesService.generateBlurhash(posterPath);
-
-        return {
-          id: item.id,
-          posterPath,
-          blurhash,
-          mediaType: mediaType,
-          role: item.job,
-          preview: {
-            title: item.title || item.name || '',
-            genres: formatGenres(tmdbGenres),
-            overview: item.overview || '',
-          },
-        };
-      }),
+      crew.map((item) => this.mapToPosterInfo(item, item.job)),
     );
 
     // aggregated based on id which is media's id
@@ -112,5 +79,34 @@ export class PersonService {
     }, [] as PosterInfo[]);
 
     return { results, page: 1, total_pages: 1, total_results: results.length };
+  }
+
+  private async mapToPosterInfo(
+    item: TMDB_CombinedCreditsCast | TMDB_CombinedCreditsCrew,
+    role: string,
+  ): Promise<PosterInfo> {
+    const mediaType = tmdbMediaTypeToAppMediaType(item.media_type);
+    const posterType =
+      mediaType === 'series' ? 'series_poster' : 'movie_poster';
+
+    const genreIds = item.genre_ids || [];
+    const tmdbGenres = GENRES.filter((g) => genreIds.includes(g.id)).map(
+      (g) => ({ id: g.id, name: g.name }),
+    );
+    const posterPath = getImage(item.poster_path, posterType);
+    const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
+    return {
+      id: item.id,
+      posterPath,
+      blurhash,
+      mediaType,
+      role,
+      preview: {
+        title: item.title || item.name || '',
+        genres: formatGenres(tmdbGenres),
+        overview: item.overview || '',
+      },
+    };
   }
 }

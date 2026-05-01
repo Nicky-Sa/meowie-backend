@@ -82,7 +82,7 @@ export const formatCasts = (
     }));
 };
 
-export const TmdbMediaTypeToAppMediaType = (
+export const tmdbMediaTypeToAppMediaType = (
   tmdbMediaType: TMDB_MediaType,
 ): MediaType => {
   switch (tmdbMediaType) {
