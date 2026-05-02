@@ -9,6 +9,7 @@ import { AppService } from '../app.service';
 import { EmailModule } from '../email/email.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { RatingsModule } from '../ratings/ratings.module';
+import { DatabaseHealthIndicator } from './indicators/database.health-indicator';
 
 @Module({
   imports: [TerminusModule, EmailModule, TmdbModule, RatingsModule],
@@ -18,6 +19,7 @@ import { RatingsModule } from '../ratings/ratings.module';
     EmailHealthIndicator,
     TmdbHealthIndicator,
     WhatsonHealthIndicator,
+    DatabaseHealthIndicator,
     AppService,
   ],
 })
