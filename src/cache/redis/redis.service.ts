@@ -52,7 +52,10 @@ export class RedisService
     return this.client.ping();
   }
 
-  onModuleDestroy() {
-    return this.client.quit();
+  async onModuleDestroy() {
+    this.logger.log('Gracefully closing Redis connection...');
+    if (this.client && this.client.status !== 'end') {
+      await this.client.quit();
+    }
   }
 }

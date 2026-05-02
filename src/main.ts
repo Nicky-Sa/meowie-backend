@@ -69,6 +69,8 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
+  app.enableShutdownHooks();
+
   await app.listen(env.get('PORT'));
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }

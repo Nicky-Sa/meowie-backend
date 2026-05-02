@@ -1,14 +1,14 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { ImagesService } from './images.service';
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 
 type ExtractPropsJobData = {
   url: string;
 };
 
 @Processor('image')
-export class ImagesProcessor extends WorkerHost {
+export class ImagesProcessor extends WorkerHost implements OnModuleDestroy {
   private readonly logger = new Logger(ImagesProcessor.name);
 
   constructor(private readonly imagesService: ImagesService) {
@@ -32,5 +32,11 @@ export class ImagesProcessor extends WorkerHost {
       );
       throw error; // Throwing will trigger BullMQ's retry mechanism
     }
+  }
+
+  async onModuleDestroy() {
+    this.logger.log('Pausing and shutting down image worker...');
+    await this.worker.pause();
+    await this.worker.close();
   }
 }

@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { EmailService } from './email.service';
-import { Logger, Inject } from '@nestjs/common';
+import { Logger, Inject, OnModuleDestroy } from '@nestjs/common';
 import { EMAIL_SENDER } from './email.constants';
 
 type SendEmailJobData = {
@@ -10,7 +10,7 @@ type SendEmailJobData = {
 };
 
 @Processor('email')
-export class EmailProcessor extends WorkerHost {
+export class EmailProcessor extends WorkerHost implements OnModuleDestroy {
   private readonly logger = new Logger(EmailProcessor.name);
 
   constructor(
@@ -26,5 +26,11 @@ export class EmailProcessor extends WorkerHost {
       this.logger.error(`Failed to send email to ${job.data.to}:`, error);
       throw error; // Throwing will trigger BullMQ's retry mechanism
     }
+  }
+
+  async onModuleDestroy() {
+    this.logger.log('Pausing and shutting down email worker...');
+    await this.worker.pause();
+    await this.worker.close();
   }
 }

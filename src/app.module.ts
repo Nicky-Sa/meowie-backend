@@ -28,6 +28,7 @@ import { ImagesModule } from './images/images.module';
 import { CollectionsModule } from './collections/collections.module';
 import { AiModule } from './ai/ai.module';
 import { HealthModule } from './health/health.module';
+import { LifecycleService } from './common/lifecycle.service';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { HealthModule } from './health/health.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    LifecycleService,
   ],
 })
 export class AppModule {}
