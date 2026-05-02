@@ -104,6 +104,10 @@ export class TmdbService {
     });
   }
 
+  async ping(): Promise<void> {
+    await this.get('configuration');
+  }
+
   private async get<
     T,
     P extends Record<string, any> = Record<string, string | number | boolean>,

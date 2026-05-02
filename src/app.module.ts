@@ -7,7 +7,6 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { BullModule } from '@nestjs/bullmq';
 import Redis from 'ioredis';
-import { AppService } from './app.service';
 import { MovieModule } from './movie/movie.module';
 import { EnvModule } from './env/env.module';
 import { EnvService } from './env/env.service';
@@ -28,6 +27,7 @@ import { RatingsModule } from './ratings/ratings.module';
 import { ImagesModule } from './images/images.module';
 import { CollectionsModule } from './collections/collections.module';
 import { AiModule } from './ai/ai.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -89,10 +89,10 @@ import { AiModule } from './ai/ai.module';
     ImagesModule,
     CollectionsModule,
     AiModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

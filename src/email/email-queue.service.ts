@@ -37,4 +37,8 @@ export class EmailQueueService extends EmailService {
   async syncTemplates(config: EmailTemplateConfig): Promise<void> {
     return this.emailService.syncTemplates(config);
   }
+
+  async ping(): Promise<void> {
+    return this.emailService.ping();
+  }
 }

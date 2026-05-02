@@ -99,4 +99,8 @@ export class RatingsService {
       value: `${value}`,
     };
   }
+
+  async ping(): Promise<void> {
+    await axios.get(`${WHATSON_BASE_URL}/movie/550`); // Fight Club as a stable check
+  }
 }

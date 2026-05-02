@@ -9,4 +9,6 @@ export abstract class CacheService {
   abstract get<T>(key: string): Promise<T | null>;
 
   abstract del(key: string): Promise<void>;
+
+  abstract ping(): Promise<string>;
 }

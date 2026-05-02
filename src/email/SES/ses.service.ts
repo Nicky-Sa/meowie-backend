@@ -4,6 +4,7 @@ import {
   SESClient,
   UpdateTemplateCommand,
   CreateTemplateCommand,
+  GetSendQuotaCommand,
 } from '@aws-sdk/client-ses';
 import { EnvService } from '../../env/env.service';
 import { Injectable, Logger } from '@nestjs/common';
@@ -79,5 +80,9 @@ export class SesService extends EmailService {
         this.logger.error('❌ Error syncing template to SES:', error);
       }
     }
+  }
+
+  async ping(): Promise<void> {
+    await this.sesClient.send(new GetSendQuotaCommand({}));
   }
 }

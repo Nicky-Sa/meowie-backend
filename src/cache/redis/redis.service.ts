@@ -48,6 +48,10 @@ export class RedisService
     await this.client.del(key);
   }
 
+  async ping(): Promise<string> {
+    return this.client.ping();
+  }
+
   onModuleDestroy() {
     return this.client.quit();
   }

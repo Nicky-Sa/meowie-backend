@@ -14,4 +14,6 @@ export abstract class EmailService {
   ): Promise<void>;
 
   abstract syncTemplates(config: EmailTemplateConfig): Promise<void>;
+
+  abstract ping(): Promise<void>;
 }
