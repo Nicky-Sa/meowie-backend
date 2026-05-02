@@ -13,7 +13,7 @@ export class RedisService
   extends CacheService
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger();
+  private readonly logger = new Logger(RedisService.name);
 
   constructor(private readonly env: EnvService) {
     super();

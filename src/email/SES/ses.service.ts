@@ -12,7 +12,7 @@ import { EmailTemplateConfig } from '../email.types';
 @Injectable()
 export class SesService extends EmailService {
   private readonly sesClient: SESClient;
-  private readonly logger = new Logger();
+  private readonly logger = new Logger(SesService.name);
 
   constructor(private readonly env: EnvService) {
     super();

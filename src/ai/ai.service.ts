@@ -9,7 +9,7 @@ import { EnvService } from '../env/env.service';
 @Injectable()
 export class AiService {
   GOOGLE: GoogleGenerativeAIProvider;
-  private readonly logger = new Logger('AI Service');
+  private readonly logger = new Logger(AiService.name);
 
   constructor(private env: EnvService) {
     this.GOOGLE = createGoogleGenerativeAI({
