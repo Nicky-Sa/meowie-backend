@@ -12,12 +12,16 @@ import {
   redactSensitiveInfo,
 } from '../../utils/redact-sensitive-info';
 import { EnvService } from 'src/env/env.service';
+import { ClsService } from '../cls/cls.service';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
 
-  constructor(private readonly env: EnvService) {}
+  constructor(
+    private readonly env: EnvService,
+    private readonly clsService: ClsService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const now = Date.now();
@@ -29,9 +33,12 @@ export class LoggingInterceptor implements NestInterceptor {
       ? redactSensitiveInfo(body as unknown as LoggableObject)
       : null;
 
+    const correlationId = this.clsService.correlationId;
+
     // Log incoming request
     this.logger.log({
       message: `Incoming Request`,
+      correlationId,
       method,
       url,
       ...(redactedBody && { body: redactedBody }),
@@ -45,6 +52,7 @@ export class LoggingInterceptor implements NestInterceptor {
           : null;
         this.logger.log({
           message: `Outgoing Response`,
+          correlationId,
           method,
           url,
           duration: Date.now() - now,

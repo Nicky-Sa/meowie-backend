@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { BullModule } from '@nestjs/bullmq';
@@ -29,6 +30,12 @@ import { CollectionsModule } from './collections/collections.module';
 import { AiModule } from './ai/ai.module';
 import { HealthModule } from './health/health.module';
 import { LifecycleService } from './common/lifecycle.service';
+import { ClsService } from './common/cls/cls.service';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { CorrelationIdMiddleware } from './common/cls/correlation-id.middleware';
+import { ClsLogger } from './common/cls/cls-logger.service';
 
 @Module({
   imports: [
@@ -99,6 +106,28 @@ import { LifecycleService } from './common/lifecycle.service';
       useClass: ThrottlerGuard,
     },
     LifecycleService,
+    ClsService,
+    ClsLogger,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

@@ -4,26 +4,22 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { EnvService } from 'src/env/env.service';
 import { Logger, VersioningType } from '@nestjs/common';
+import { ClsLogger } from './common/cls/cls-logger.service';
 import { ValidationPipe } from '@nestjs/common';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import pkg from '../package.json';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const clsLogger = app.get(ClsLogger);
+  app.useLogger(clsLogger);
+
   const logger = new Logger('Main');
 
   // Gzip/deflate compression — skip responses under 1KB where overhead isn't worth it
   app.use(compression({ threshold: 1024 }));
   const env = app.get(EnvService);
-  app.useGlobalInterceptors(new LoggingInterceptor(env));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useGlobalFilters(new SentryGlobalFilter());
-  app.useGlobalFilters(new GlobalExceptionFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
