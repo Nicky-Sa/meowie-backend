@@ -1,4 +1,5 @@
 import './instrument';
+import compression from 'compression';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { EnvService } from 'src/env/env.service';
@@ -14,6 +15,9 @@ import pkg from '../package.json';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Main');
+
+  // Gzip/deflate compression — skip responses under 1KB where overhead isn't worth it
+  app.use(compression({ threshold: 1024 }));
   const env = app.get(EnvService);
   app.useGlobalInterceptors(new LoggingInterceptor(env));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
