@@ -8,7 +8,7 @@ import {
 } from '../../common/types/media-query';
 import { Genre } from '../../constants/items/genres.constant';
 import { PosterProps } from '../../images/poster';
-import { CastInfo } from '../../types/cast';
+import { CreditInfo } from '../../types/credit';
 import { RatingEntry } from '../../ratings/types/rating.type';
 
 export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
@@ -22,8 +22,9 @@ export class QueryParamsDto extends IntersectionType(
 ) {}
 
 export class SeriesCredits {
-  casts: CastInfo[];
-  creator: CastInfo;
+  casts: CreditInfo[];
+  crew: CreditInfo[];
+  creator: CreditInfo;
 }
 
 export class SeriesInfoResDto {

@@ -1,7 +1,7 @@
-export class CastInfo {
+export class CreditInfo {
   id: number;
   name: string;
-  character: string;
+  role: string;
   creditId: string;
   profilePath: string;
 }

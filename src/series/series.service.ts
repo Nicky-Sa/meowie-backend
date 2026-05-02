@@ -15,15 +15,16 @@ import {
 import { Cacheable } from '../cache/cacheable.decorator';
 import { SortOption } from '../common/types/media-query';
 import { getImage } from '../images/images.utils';
-import { CastInfo } from '../types/cast';
+import { CreditInfo } from '../types/credit';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { ImagesService } from '../images/images.service';
 import { RatingsService } from '../ratings/ratings.service';
 import {
   findTrailerKey,
   formatCasts,
+  formatCrew,
   formatGenres,
-  emptyCast,
+  emptyCredit,
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
@@ -191,19 +192,20 @@ export class SeriesService {
   ): SeriesCredits {
     return {
       casts: formatCasts(credits.cast),
+      crew: formatCrew(credits.crew),
       creator: this.formatCreator(createdBy),
     };
   }
 
-  private formatCreator(createdBy: TMDB_SeriesInfo['created_by']): CastInfo {
+  private formatCreator(createdBy: TMDB_SeriesInfo['created_by']): CreditInfo {
     const creator = createdBy[0];
     if (!creator) {
-      return emptyCast;
+      return emptyCredit;
     }
     return {
       id: creator.id,
       name: creator.name,
-      character: 'Creator',
+      role: 'Creator',
       creditId: creator.credit_id,
       profilePath: getImage(creator.profile_path, 'person'),
     };

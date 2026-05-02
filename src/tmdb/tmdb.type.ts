@@ -67,6 +67,31 @@ export type TMDB_Videos = {
   }[];
 };
 
+export type TMDB_WatchProvider = {
+  logo_path: string;
+  provider_id: number;
+  provider_name: string;
+  display_priority: number;
+};
+
+export type TMDB_WatchProviders = {
+  results: {
+    [countryCode: string]: {
+      link: string;
+      flatrate?: TMDB_WatchProvider[];
+      rent?: TMDB_WatchProvider[];
+      buy?: TMDB_WatchProvider[];
+    };
+  };
+};
+
+export type TMDB_Recommendations = {
+  page: number;
+  results: TMDB_DiscoveredMovieDetail[];
+  total_pages: number;
+  total_results: number;
+};
+
 export type TMDB_MovieInfo = {
   id: number;
   adult: boolean;
@@ -97,6 +122,8 @@ export type TMDB_MovieInfo = {
   release_dates: TMDB_ReleaseDates;
   videos: TMDB_Videos;
   credits: Omit<TMDB_MediaCredits, 'id'>;
+  'watch/providers': TMDB_WatchProviders;
+  recommendations: TMDB_Recommendations;
 };
 
 type TMDB_MediaCredits = {

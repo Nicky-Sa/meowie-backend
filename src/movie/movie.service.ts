@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CastInfo } from 'src/types/cast';
+import { CreditInfo } from 'src/types/credit';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoveredMovieDetail,
   TMDB_MovieInfo,
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
+  TMDB_WatchProviders,
+  TMDB_WatchProvider,
+  TMDB_Recommendations,
 } from 'src/tmdb/tmdb.type';
 import { getImage } from '../images/images.utils';
 import {
@@ -13,6 +16,7 @@ import {
   InterestingMovieIdsResDto,
   QueryParamsDto,
   MovieCredits,
+  WatchProviders,
 } from './dto/movie.dto';
 import { CacheService } from '../cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
@@ -24,9 +28,10 @@ import { ImagesService } from '../images/images.service';
 import {
   findTrailerKey,
   formatCasts,
+  formatCrew,
   formatDuration,
   formatGenres,
-  emptyCast,
+  emptyCredit,
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
@@ -118,7 +123,7 @@ export class MovieService {
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
     const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
       id,
-      'videos,release_dates,credits',
+      'videos,release_dates,credits,watch/providers,recommendations',
     );
 
     const posterPath = getImage(item.poster_path, 'movie_poster');
@@ -148,6 +153,10 @@ export class MovieService {
       ratings,
       posterProps,
       credits: this.constructMovieCredits(item.credits),
+      watchProviders: this.constructWatchProviders(item['watch/providers']),
+      recommendations: await this.constructRecommendations(
+        item.recommendations,
+      ),
     };
 
     return data;
@@ -155,11 +164,46 @@ export class MovieService {
 
   constructMovieCredits(credits: TMDB_MovieInfo['credits']): MovieCredits {
     const casts = formatCasts(credits.cast);
+    const crew = formatCrew(credits.crew);
     const director = this.findDirector(credits);
-    return { casts, director };
+    return { casts, crew, director };
   }
 
-  private findDirector(credits: TMDB_MovieInfo['credits']): CastInfo {
+  private constructWatchProviders(
+    watchProviders: TMDB_WatchProviders,
+    country: string = 'US',
+  ): WatchProviders {
+    const data = watchProviders.results[country];
+    if (!data) return { flatrate: [], rent: [], buy: [] };
+
+    const mapProvider = (p: TMDB_WatchProvider) => ({
+      logoPath: getImage(p.logo_path, 'movie_poster'),
+      providerId: p.provider_id,
+      providerName: p.provider_name,
+    });
+
+    return {
+      flatrate: (data.flatrate || []).map(mapProvider),
+      rent: (data.rent || []).map(mapProvider),
+      buy: (data.buy || []).map(mapProvider),
+    };
+  }
+
+  private async constructRecommendations(
+    recommendations: TMDB_Recommendations,
+  ): Promise<PosterResDto> {
+    const results = await Promise.all(
+      recommendations.results.map((movie) => this.mapToMoviePoster(movie)),
+    );
+    return {
+      results,
+      page: recommendations.page,
+      total_pages: recommendations.total_pages,
+      total_results: recommendations.total_results,
+    };
+  }
+
+  private findDirector(credits: TMDB_MovieInfo['credits']): CreditInfo {
     const director = credits.crew
       .filter((crew) => crew.job === 'Director')
       .sort((a, b) => a.popularity - b.popularity)
@@ -167,12 +211,12 @@ export class MovieService {
       .map((crew) => ({
         id: crew.id,
         name: crew.name,
-        character: crew.job,
+        role: crew.job,
         creditId: crew.credit_id,
         profilePath: getImage(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
-      return emptyCast;
+      return emptyCredit;
     }
     return director;
   }
@@ -181,26 +225,26 @@ export class MovieService {
     const discoveredMoviesList = await this.getDiscoveredMovies(query);
     const { results: movies, ...rest } = discoveredMoviesList;
     const results = await Promise.all(
-      movies.map(async (movie) => {
-        const posterPath = getImage(movie.poster_path, 'movie_poster');
-        const blurhash = await this.imagesService.generateBlurhash(posterPath);
-
-        return {
-          id: movie.id,
-          posterPath,
-          blurhash,
-          mediaType: 'movie' as const,
-          preview: {
-            title: movie.title,
-            overview: movie.overview,
-            genres: GENRES.filter((genre) =>
-              movie.genre_ids.includes(genre.id),
-            ),
-          },
-        };
-      }),
+      movies.map((movie) => this.mapToMoviePoster(movie)),
     );
     return { results, ...rest };
+  }
+
+  private async mapToMoviePoster(movie: TMDB_DiscoveredMovieDetail) {
+    const posterPath = getImage(movie.poster_path, 'movie_poster');
+    const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
+    return {
+      id: movie.id,
+      posterPath,
+      blurhash,
+      mediaType: 'movie' as const,
+      preview: {
+        title: movie.title,
+        overview: movie.overview,
+        genres: GENRES.filter((genre) => movie.genre_ids.includes(genre.id)),
+      },
+    };
   }
 
   private isMovieValid(movie: TMDB_DiscoveredMovieDetail): boolean {

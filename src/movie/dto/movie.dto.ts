@@ -1,9 +1,10 @@
 import { PosterProps } from '../../images/poster';
-import { CastInfo } from '../../types/cast';
+import { CreditInfo } from '../../types/credit';
 import { Genre } from '../../constants/items/genres.constant';
 import { RatingEntry } from '../../ratings/types/rating.type';
 import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
+import { PosterResDto } from '../../common/dto/poster.dto';
 import {
   Browse,
   MovieFilters,
@@ -22,8 +23,21 @@ export class QueryParamsDto extends IntersectionType(
 ) {}
 
 export class MovieCredits {
-  casts: CastInfo[];
-  director: CastInfo;
+  casts: CreditInfo[];
+  crew: CreditInfo[];
+  director: CreditInfo;
+}
+
+export class WatchProvider {
+  logoPath: string;
+  providerId: number;
+  providerName: string;
+}
+
+export class WatchProviders {
+  flatrate: WatchProvider[];
+  rent: WatchProvider[];
+  buy: WatchProvider[];
 }
 
 // Combines MovieDetails and Ratings into one parent class
@@ -39,4 +53,6 @@ export class MovieInfoResDto {
   posterProps: PosterProps;
   credits: MovieCredits;
   ratings: RatingEntry[];
+  watchProviders: WatchProviders;
+  recommendations: PosterResDto;
 }
