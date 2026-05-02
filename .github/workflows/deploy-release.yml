@@ -151,6 +151,7 @@ jobs:
           JWT_REFRESH_EXPIRY=${{ vars.JWT_REFRESH_EXPIRY }}
           APP_VERSION=${{ env.APP_VERSION }}
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          ALLOWED_DOMAIN=${{ vars.ALLOWED_DOMAIN }}
           EOF
 
       - name: Copy .env.local to VPS

@@ -53,11 +53,18 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, document);
   }
 
+  // --- CORS Configuration ---
+  const buildEnv = env.get('BUILD_ENV');
+  const allowedDomain = env.get('ALLOWED_DOMAIN');
+  const escapedDomain = allowedDomain.replace(/\./g, '\\.');
+  const domainRegex = new RegExp(`^https?://(([^/]+\\.)?${escapedDomain})$`);
+
   app.enableCors({
-    origin: '*',
+    origin: buildEnv === 'development' ? '*' : domainRegex,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
   await app.listen(env.get('PORT'));
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }
