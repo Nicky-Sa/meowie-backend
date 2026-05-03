@@ -40,7 +40,7 @@ export class WatchProviders {
   buy: WatchProvider[];
 }
 
-// Combines MovieDetails and Ratings into one parent class
+// Combines MovieInfo and Ratings into one parent class
 export class MovieInfoResDto {
   title: string;
   screeningStatus: string | null;
