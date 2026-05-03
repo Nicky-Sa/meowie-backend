@@ -35,6 +35,15 @@ export class MovieController {
     return this.movieService.getMovieInfo(id);
   }
 
+  @Get('/details/:id/recommendations/posters')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
+  async getMovieRecommendations(
+    @Param('id') id: number,
+    @Query('page') page: number,
+  ): Promise<PosterResDto> {
+    return this.movieService.getMovieRecommendations(id, page);
+  }
+
   @Get('/posters')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getMoviePostersInBulk(

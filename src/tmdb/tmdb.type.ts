@@ -85,9 +85,9 @@ export type TMDB_WatchProviders = {
   };
 };
 
-export type TMDB_Recommendations = {
+export type TMDB_Recommendations<T> = {
   page: number;
-  results: TMDB_DiscoveredMovieDetail[];
+  results: T[];
   total_pages: number;
   total_results: number;
 };
@@ -123,7 +123,7 @@ export type TMDB_MovieInfo = {
   videos: TMDB_Videos;
   credits: Omit<TMDB_MediaCredits, 'id'>;
   'watch/providers': TMDB_WatchProviders;
-  recommendations: TMDB_Recommendations;
+  recommendations?: TMDB_Recommendations<TMDB_DiscoveredMovieDetail>;
 };
 
 type TMDB_MediaCredits = {
@@ -877,6 +877,8 @@ export type TMDB_SeriesInfo = {
   videos: TMDB_Videos;
   credits: Omit<TMDB_MediaCredits, 'id'>;
   content_ratings: TMDB_ContentRatings;
+  'watch/providers': TMDB_WatchProviders;
+  recommendations?: TMDB_Recommendations<TMDB_DiscoveredSeriesDetail>;
 };
 
 type TMDB_ContentRatings = {

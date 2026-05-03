@@ -7,7 +7,7 @@ import {
 
 export const getImage = (
   path: string | null | undefined,
-  type: 'movie_poster' | 'series_poster' | 'person',
+  type: 'movie_poster' | 'series_poster' | 'person' | 'watch_provider',
 ) => {
   if (!path) {
     switch (type) {
@@ -17,6 +17,8 @@ export const getImage = (
         return TV_POSTER_FALLBACK_URL;
       case 'person':
         return PERSON_FALLBACK_URL;
+      case 'watch_provider': // to be determined
+        return TV_POSTER_FALLBACK_URL;
     }
   }
   return `${TMDB_IMAGE_BASE_URL}${path}`;

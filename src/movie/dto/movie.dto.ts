@@ -11,6 +11,7 @@ import {
   Page,
   Sort,
 } from '../../common/types/media-query';
+import { WatchProviders } from '../../types/watch-provider';
 
 export class InterestingMovieIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
@@ -28,22 +29,9 @@ export class MovieCredits {
   director: CreditInfo;
 }
 
-export class WatchProvider {
-  logoPath: string;
-  providerId: number;
-  providerName: string;
-}
-
-export class WatchProviders {
-  flatrate: WatchProvider[];
-  rent: WatchProvider[];
-  buy: WatchProvider[];
-}
-
-// Combines MovieInfo and Ratings into one parent class
 export class MovieInfoResDto {
   title: string;
-  screeningStatus: string | null;
+  screeningStatus: string;
   duration: string;
   certification: string;
   trailerKey: string;

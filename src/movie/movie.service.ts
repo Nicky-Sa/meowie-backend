@@ -16,7 +16,6 @@ import {
   InterestingMovieIdsResDto,
   QueryParamsDto,
   MovieCredits,
-  WatchProviders,
 } from './dto/movie.dto';
 import { CacheService } from '../cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
@@ -37,6 +36,7 @@ import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
 
 import { GENRES } from '../constants/items/genres.constant';
+import { WatchProviders } from '../types/watch-provider';
 
 @Injectable()
 export class MovieService {
@@ -121,10 +121,13 @@ export class MovieService {
     ttl: Duration.ONE_DAY,
   })
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
-    const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
-      id,
-      'videos,release_dates,credits,watch/providers,recommendations',
-    );
+    const [item, recommendations] = await Promise.all([
+      this.getBasicMovieInfo<TMDB_MovieInfo>(
+        id,
+        'videos,release_dates,credits,watch/providers',
+      ),
+      this.getMovieRecommendations(id),
+    ]);
 
     const posterPath = getImage(item.poster_path, 'movie_poster');
     const [blurhash, primaryColorHex] = await Promise.all([
@@ -154,9 +157,7 @@ export class MovieService {
       posterProps,
       credits: this.constructMovieCredits(item.credits),
       watchProviders: this.constructWatchProviders(item['watch/providers']),
-      recommendations: await this.constructRecommendations(
-        item.recommendations,
-      ),
+      recommendations,
     };
 
     return data;
@@ -174,10 +175,10 @@ export class MovieService {
     country: string = 'US',
   ): WatchProviders {
     const data = watchProviders.results[country];
-    if (!data) return { flatrate: [], rent: [], buy: [] };
+    if (!data) return { flatrate: [], rent: [], buy: [], tmdbLink: '' };
 
     const mapProvider = (p: TMDB_WatchProvider) => ({
-      logoPath: getImage(p.logo_path, 'movie_poster'),
+      logoPath: getImage(p.logo_path, 'watch_provider'),
       providerId: p.provider_id,
       providerName: p.provider_name,
     });
@@ -186,11 +187,27 @@ export class MovieService {
       flatrate: (data.flatrate || []).map(mapProvider),
       rent: (data.rent || []).map(mapProvider),
       buy: (data.buy || []).map(mapProvider),
+      tmdbLink: data.link || '',
     };
   }
 
+  @Cacheable({
+    key: (id: number, page: number = 1) =>
+      `movie-recommendations-${id}-p${page}`,
+    ttl: Duration.ONE_DAY,
+  })
+  async getMovieRecommendations(
+    id: number,
+    page: number = 1,
+  ): Promise<PosterResDto> {
+    const response = await this.tmdbService.getRecommendations<
+      TMDB_Recommendations<TMDB_DiscoveredMovieDetail>
+    >('movie', id, page);
+    return this.constructRecommendations(response);
+  }
+
   private async constructRecommendations(
-    recommendations: TMDB_Recommendations,
+    recommendations: TMDB_Recommendations<TMDB_DiscoveredMovieDetail>,
   ): Promise<PosterResDto> {
     const results = await Promise.all(
       recommendations.results.map((movie) => this.mapToMoviePoster(movie)),

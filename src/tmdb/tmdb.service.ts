@@ -46,6 +46,15 @@ export class TmdbService {
     );
   }
 
+  async getRecommendations<T>(
+    mediaType: MediaType,
+    id: number,
+    page: number = 1,
+  ): Promise<T> {
+    const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
+    return this.get<T>(`${tmdbMediaType}/${id}/recommendations`, { page });
+  }
+
   async getDetails<T>(
     mediaType: MediaType,
     id: number,

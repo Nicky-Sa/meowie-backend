@@ -35,6 +35,15 @@ export class SeriesController {
     return this.seriesService.getSeriesInfo(id);
   }
 
+  @Get('/details/:id/recommendations/posters')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
+  async getSeriesRecommendations(
+    @Param('id') id: number,
+    @Query('page') page: number,
+  ): Promise<PosterResDto> {
+    return this.seriesService.getSeriesRecommendations(id, page);
+  }
+
   @Get('/posters')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesPostersInBulk(

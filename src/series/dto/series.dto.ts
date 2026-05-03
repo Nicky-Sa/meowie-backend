@@ -10,6 +10,8 @@ import { Genre } from '../../constants/items/genres.constant';
 import { PosterProps } from '../../images/poster';
 import { CreditInfo } from '../../types/credit';
 import { RatingEntry } from '../../ratings/types/rating.type';
+import { PosterResDto } from '../../common/dto/poster.dto';
+import { WatchProviders } from '../../types/watch-provider';
 
 export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })
@@ -30,7 +32,7 @@ export class SeriesCredits {
 export class SeriesInfoResDto {
   title: string;
   airingYears: string;
-  numberOfSeasons: number;
+  seasonsText: string;
   contentRating: string;
   trailerKey: string;
   posterPath: string;
@@ -39,4 +41,6 @@ export class SeriesInfoResDto {
   posterProps: PosterProps;
   credits: SeriesCredits;
   ratings: RatingEntry[];
+  watchProviders: WatchProviders;
+  recommendations: PosterResDto;
 }

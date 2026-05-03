@@ -5,6 +5,9 @@ import {
   TMDB_DiscoveredSeriesDetail,
   TMDB_SeriesInfo,
   TMDB_DiscoveredSeriesList,
+  TMDB_WatchProviders,
+  TMDB_WatchProvider,
+  TMDB_Recommendations,
 } from '../tmdb/tmdb.type';
 import {
   InterestingSeriesIdsResDto,
@@ -31,6 +34,7 @@ import { Duration } from '../common/app.constants';
 import { extractYearFromDate } from '../utils/dates';
 
 import { GENRES } from '../constants/items/genres.constant';
+import { WatchProviders } from '../types/watch-provider';
 
 @Injectable()
 export class SeriesService {
@@ -120,10 +124,13 @@ export class SeriesService {
     ttl: Duration.ONE_DAY,
   })
   async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
-    const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(
-      id,
-      'videos,content_ratings,credits',
-    );
+    const [item, recommendations] = await Promise.all([
+      this.getBasicSeriesInfo<TMDB_SeriesInfo>(
+        id,
+        'videos,content_ratings,credits,watch/providers',
+      ),
+      this.getSeriesRecommendations(id),
+    ]);
     const posterPath = getImage(item.poster_path, 'series_poster');
     const [blurhash, primaryColorHex] = await Promise.all([
       this.imagesService.generateBlurhash(posterPath),
@@ -143,7 +150,7 @@ export class SeriesService {
         item.last_air_date,
         item.status,
       ),
-      numberOfSeasons: item.number_of_seasons,
+      seasonsText: this.constructSeasons(item.number_of_seasons),
       contentRating: this.findContentRating(item.content_ratings),
       trailerKey: findTrailerKey(item.videos),
       posterPath,
@@ -152,6 +159,8 @@ export class SeriesService {
       posterProps,
       credits: this.constructSeriesCredits(item.credits, item.created_by),
       ratings,
+      watchProviders: this.constructWatchProviders(item['watch/providers']),
+      recommendations,
     };
     return data;
   }
@@ -160,26 +169,80 @@ export class SeriesService {
     const discoveredSeriesList = await this.getDiscoveredSeries(query);
     const { results: series, ...rest } = discoveredSeriesList;
     const results = await Promise.all(
-      series.map(async (tvShow) => {
-        const posterPath = getImage(tvShow.poster_path, 'series_poster');
-        const blurhash = await this.imagesService.generateBlurhash(posterPath);
-
-        return {
-          id: tvShow.id,
-          posterPath,
-          blurhash,
-          mediaType: 'series' as const,
-          preview: {
-            title: tvShow.name,
-            overview: tvShow.overview,
-            genres: GENRES.filter((genre) =>
-              tvShow.genre_ids.includes(genre.id),
-            ),
-          },
-        };
-      }),
+      series.map(async (tvShow) => this.mapToSeriesPoster(tvShow)),
     );
     return { results, ...rest };
+  }
+
+  private constructSeasons(numberOfSeasons: number): string {
+    return `${numberOfSeasons} Season${numberOfSeasons === 1 ? '' : 's'}`;
+  }
+
+  private constructWatchProviders(
+    watchProviders: TMDB_WatchProviders,
+    country: string = 'US',
+  ): WatchProviders {
+    const data = watchProviders.results[country];
+    if (!data) return { flatrate: [], rent: [], buy: [], tmdbLink: '' };
+
+    const mapProvider = (p: TMDB_WatchProvider) => ({
+      logoPath: getImage(p.logo_path, 'watch_provider'),
+      providerId: p.provider_id,
+      providerName: p.provider_name,
+    });
+
+    return {
+      flatrate: (data.flatrate || []).map(mapProvider),
+      rent: (data.rent || []).map(mapProvider),
+      buy: (data.buy || []).map(mapProvider),
+      tmdbLink: data.link || '',
+    };
+  }
+
+  @Cacheable({
+    key: (id: number, page: number = 1) =>
+      `series-recommendations-${id}-p${page}`,
+    ttl: Duration.ONE_DAY,
+  })
+  async getSeriesRecommendations(
+    id: number,
+    page: number = 1,
+  ): Promise<PosterResDto> {
+    const response = await this.tmdbService.getRecommendations<
+      TMDB_Recommendations<TMDB_DiscoveredSeriesDetail>
+    >('series', id, page);
+    return this.constructRecommendations(response);
+  }
+
+  private async constructRecommendations(
+    recommendations: TMDB_Recommendations<TMDB_DiscoveredSeriesDetail>,
+  ): Promise<PosterResDto> {
+    const results = await Promise.all(
+      recommendations.results.map((series) => this.mapToSeriesPoster(series)),
+    );
+    return {
+      results,
+      page: recommendations.page,
+      total_pages: recommendations.total_pages,
+      total_results: recommendations.total_results,
+    };
+  }
+
+  private async mapToSeriesPoster(tvShow: TMDB_DiscoveredSeriesDetail) {
+    const posterPath = getImage(tvShow.poster_path, 'series_poster');
+    const blurhash = await this.imagesService.generateBlurhash(posterPath);
+
+    return {
+      id: tvShow.id,
+      posterPath,
+      blurhash,
+      mediaType: 'series' as const,
+      preview: {
+        title: tvShow.name,
+        overview: tvShow.overview,
+        genres: GENRES.filter((genre) => tvShow.genre_ids.includes(genre.id)),
+      },
+    };
   }
 
   private isSeriesValid(tvShow: TMDB_DiscoveredSeriesDetail): boolean {
