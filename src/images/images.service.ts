@@ -12,6 +12,7 @@ import {
 } from '../common/app.constants';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { IMAGE_QUEUE } from '../common/queue.constants';
 
 @Injectable()
 export class ImagesService {
@@ -19,7 +20,7 @@ export class ImagesService {
 
   constructor(
     private readonly cacheService: CacheService,
-    @InjectQueue('image') private readonly imageQueue: Queue,
+    @InjectQueue(IMAGE_QUEUE.name) private readonly imageQueue: Queue,
   ) {}
 
   async generateBlurhash(url: string): Promise<string> {
@@ -32,14 +33,10 @@ export class ImagesService {
     }
 
     await this.imageQueue.add(
-      'extract-blurhash',
+      IMAGE_QUEUE.jobs.extractBlurhash,
       { url },
       {
         jobId: `blurhash-${this.sanitizeUrlForJobId(url)}`,
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
       },
     );
 

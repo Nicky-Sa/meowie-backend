@@ -3,12 +3,13 @@ import { BullModule } from '@nestjs/bullmq';
 import { ImagesService } from './images.service';
 import { CacheModule } from '../cache/cache.module';
 import { ImagesProcessor } from './images.processor';
+import { IMAGE_QUEUE } from '../common/queue.constants';
 
 @Module({
   imports: [
     CacheModule,
     BullModule.registerQueue({
-      name: 'image',
+      name: IMAGE_QUEUE.name,
     }),
   ],
   providers: [ImagesService, ImagesProcessor],

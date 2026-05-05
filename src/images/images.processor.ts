@@ -2,12 +2,15 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { ImagesService } from './images.service';
 import { Logger, OnModuleDestroy } from '@nestjs/common';
+import { IMAGE_QUEUE } from '../common/queue.constants';
 
 type ExtractPropsJobData = {
   url: string;
 };
 
-@Processor('image')
+@Processor(IMAGE_QUEUE.name, {
+  concurrency: 8,
+})
 export class ImagesProcessor extends WorkerHost implements OnModuleDestroy {
   private readonly logger = new Logger(ImagesProcessor.name);
 
@@ -18,7 +21,7 @@ export class ImagesProcessor extends WorkerHost implements OnModuleDestroy {
   async process(job: Job<ExtractPropsJobData>): Promise<void> {
     try {
       switch (job.name) {
-        case 'extract-blurhash':
+        case IMAGE_QUEUE.jobs.extractBlurhash:
           await this.imagesService.processAndCacheBlurhash(job.data.url);
           break;
         default:

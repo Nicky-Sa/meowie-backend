@@ -5,11 +5,12 @@ import { SesService } from './SES/ses.service';
 import { EmailQueueService } from './email-queue.service';
 import { EmailProcessor } from './email.processor';
 import { EMAIL_SENDER } from './email.constants';
+import { EMAIL_QUEUE } from '../common/queue.constants';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'email',
+      name: EMAIL_QUEUE.name,
     }),
   ],
   providers: [

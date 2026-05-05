@@ -4,11 +4,12 @@ import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { EmailTemplateConfig } from './email.types';
 import { EMAIL_SENDER } from './email.constants';
+import { EMAIL_QUEUE } from '../common/queue.constants';
 
 @Injectable()
 export class EmailQueueService extends EmailService {
   constructor(
-    @InjectQueue('email') private readonly emailQueue: Queue,
+    @InjectQueue(EMAIL_QUEUE.name) private readonly emailQueue: Queue,
     @Inject(EMAIL_SENDER) private readonly emailService: EmailService,
   ) {
     super();
@@ -19,19 +20,7 @@ export class EmailQueueService extends EmailService {
     template: { name: string; data: Record<string, string> },
   ): Promise<void> {
     // Push the email job to the Redis queue instead of waiting for the email provider
-    await this.emailQueue.add(
-      'send-email',
-      { to, template },
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-      },
-    );
+    await this.emailQueue.add(EMAIL_QUEUE.jobs.sendEmail, { to, template });
   }
 
   async syncTemplates(config: EmailTemplateConfig): Promise<void> {

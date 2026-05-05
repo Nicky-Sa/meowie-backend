@@ -1,15 +1,16 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { EmailService } from './email.service';
 import { Logger, Inject, OnModuleDestroy } from '@nestjs/common';
 import { EMAIL_SENDER } from './email.constants';
+import { EMAIL_QUEUE } from '../common/queue.constants';
 
 type SendEmailJobData = {
   to: string;
   template: { name: string; data: Record<string, string> };
 };
 
-@Processor('email')
+@Processor(EMAIL_QUEUE.name)
 export class EmailProcessor extends WorkerHost implements OnModuleDestroy {
   private readonly logger = new Logger(EmailProcessor.name);
 
@@ -20,14 +21,18 @@ export class EmailProcessor extends WorkerHost implements OnModuleDestroy {
   }
 
   async process(job: Job<SendEmailJobData>): Promise<void> {
-    try {
-      await this.realEmailService.sendEmail(job.data.to, job.data.template);
-    } catch (error) {
-      this.logger.error(`Failed to send email to ${job.data.to}:`, error);
-      throw error; // Throwing will trigger BullMQ's retry mechanism
+    switch (job.name) {
+      case EMAIL_QUEUE.jobs.sendEmail:
+        await this.realEmailService.sendEmail(job.data.to, job.data.template);
+        break;
+      default:
+        this.logger.warn(`Unknown job name: ${job.name}`);
     }
   }
-
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<SendEmailJobData>) {
+    this.logger.error(`Failed to send email to ${job.data.to}`);
+  }
   async onModuleDestroy() {
     this.logger.log('Pausing and shutting down email worker...');
     await this.worker.pause();

@@ -48,6 +48,12 @@ import { ClsLogger } from './common/cls/cls-logger.service';
         connection: {
           url: env.get('REDIS_ENDPOINT'),
         },
+        defaultJobOptions: {
+          removeOnComplete: 100,
+          removeOnFail: 300,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+        },
       }),
     }),
     ThrottlerModule.forRootAsync({
