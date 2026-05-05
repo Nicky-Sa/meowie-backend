@@ -6,13 +6,24 @@ import { randomUUID } from 'crypto';
 export class ClsService {
   private readonly storage = new AsyncLocalStorage<Map<string, string>>();
 
-  run(correlationId: string | undefined, callback: () => void) {
+  run(
+    correlationId: string | undefined,
+    countryCode: string | undefined,
+    callback: () => void,
+  ) {
     const id = correlationId ?? randomUUID();
-    const store = new Map([['correlationId', id]]); // new map per request, in case more props are needed to be stored in the future
+    const store = new Map([
+      ['correlationId', id],
+      ['countryCode', countryCode ?? 'US'],
+    ]);
     return this.storage.run(store, callback);
   }
 
   get correlationId(): string {
-    return this.storage.getStore()?.get('correlationId') as string; // we know it always has the value
+    return this.storage.getStore()?.get('correlationId') as string;
+  }
+
+  get countryCode(): string {
+    return this.storage.getStore()?.get('countryCode') || 'US';
   }
 }

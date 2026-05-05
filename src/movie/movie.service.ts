@@ -34,6 +34,7 @@ import {
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
+import { ClsService } from '../common/cls/cls.service';
 
 import { GENRES } from '../constants/items/genres.constant';
 import { WatchProviders } from '../types/watch-provider';
@@ -45,6 +46,7 @@ export class MovieService {
     private readonly cacheService: CacheService,
     private readonly ratingsService: RatingsService,
     private readonly imagesService: ImagesService,
+    private readonly cls: ClsService,
   ) {}
 
   async getDiscoveredMovies(
@@ -111,10 +113,10 @@ export class MovieService {
   }
 
   @Cacheable({
-    key: (id: number) => `movie-info-${id}`,
+    key: (id: number, country: string) => `movie-info-${id}-${country}`,
     ttl: Duration.ONE_DAY,
   })
-  async getMovieInfo(id: number): Promise<MovieInfoResDto> {
+  async getMovieInfo(id: number, country: string): Promise<MovieInfoResDto> {
     const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
       id,
       'videos,release_dates,credits,watch/providers',
@@ -137,17 +139,22 @@ export class MovieService {
       screeningStatus: this.screeningStatus(
         item.release_date,
         item.release_dates,
+        country,
       ),
       overview: item.overview || 'N/A',
       posterPath,
       duration: formatDuration(item.runtime),
-      certification: this.findCertification(item.release_dates),
+      certification: this.findCertification(item.release_dates, country),
       trailerKey: findTrailerKey(item.videos),
       genres: formatGenres(item.genres),
       ratings,
       posterProps,
       credits: this.constructMovieCredits(item.credits),
-      watchProviders: this.constructWatchProviders(item['watch/providers']),
+      watchProviders: this.constructWatchProviders(
+        id,
+        item['watch/providers'],
+        country,
+      ),
     };
 
     return data;
@@ -161,11 +168,20 @@ export class MovieService {
   }
 
   private constructWatchProviders(
+    id: number,
     watchProviders: TMDB_WatchProviders,
-    country: string = 'US',
+    country: string,
   ): WatchProviders {
     const data = watchProviders.results[country];
-    if (!data) return { flatrate: [], rent: [], buy: [], tmdbLink: '' };
+    const fallbackTmdbLink = `https://www.themoviedb.org/movie/${id}/watch`;
+
+    if (!data)
+      return {
+        flatrate: [],
+        rent: [],
+        buy: [],
+        tmdbLink: fallbackTmdbLink,
+      };
 
     const mapProvider = (p: TMDB_WatchProvider) => ({
       logoPath: getImage(p.logo_path, 'watch_provider'),
@@ -177,7 +193,7 @@ export class MovieService {
       flatrate: (data.flatrate || []).map(mapProvider),
       rent: (data.rent || []).map(mapProvider),
       buy: (data.buy || []).map(mapProvider),
-      tmdbLink: data.link || '',
+      tmdbLink: data.link || fallbackTmdbLink,
     };
   }
 
@@ -258,10 +274,7 @@ export class MovieService {
     return Boolean(movie.title && movie.overview);
   }
 
-  private findCertification(
-    releaseDates: TMDB_ReleaseDates,
-    country: string = 'US',
-  ) {
+  private findCertification(releaseDates: TMDB_ReleaseDates, country: string) {
     const certification =
       releaseDates.results.find((result) => result.iso_3166_1 === country)
         ?.release_dates[0].certification || 'N/A';

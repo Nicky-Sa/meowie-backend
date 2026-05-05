@@ -2,7 +2,7 @@ import { CacheService } from './cache.service';
 import { Duration } from '../common/app.constants';
 
 type CacheableOptions = {
-  key: (...args: any[]) => string;
+  key: (...args: unknown[]) => string;
   ttl?: number;
 };
 
@@ -20,9 +20,14 @@ export const Cacheable = ({
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    const originalMethod = descriptor.value as (...args: any[]) => Promise<any>;
+    const originalMethod = descriptor.value as (
+      ...args: unknown[]
+    ) => Promise<unknown>;
 
-    descriptor.value = async function (this: ServiceWithCache, ...args: any[]) {
+    descriptor.value = async function (
+      this: ServiceWithCache,
+      ...args: unknown[]
+    ) {
       const cacheService = this.cacheService;
 
       if (!cacheService) {
@@ -31,7 +36,6 @@ export const Cacheable = ({
         );
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const cacheKey = key(...args);
 
       // Get from cache
@@ -41,7 +45,7 @@ export const Cacheable = ({
       }
 
       // Call original method (using .call to preserve strict typing)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-argument
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = await originalMethod.call(this, ...args);
 
       // Set cache

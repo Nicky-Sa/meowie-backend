@@ -119,7 +119,10 @@ export class TmdbService {
 
   private async get<
     T,
-    P extends Record<string, any> = Record<string, string | number | boolean>,
+    P extends Record<string, unknown> = Record<
+      string,
+      string | number | boolean
+    >,
   >(endpoint: string, params: P = {} as P): Promise<T> {
     const response = await axios.get<T>(`${TMDB_BASE_URL}/3/${endpoint}`, {
       params: {

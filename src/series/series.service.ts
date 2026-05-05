@@ -35,6 +35,7 @@ import { extractYearFromDate } from '../utils/dates';
 
 import { GENRES } from '../constants/items/genres.constant';
 import { WatchProviders } from '../types/watch-provider';
+import { ClsService } from '../common/cls/cls.service';
 
 @Injectable()
 export class SeriesService {
@@ -43,6 +44,7 @@ export class SeriesService {
     private readonly cacheService: CacheService,
     private readonly ratingsService: RatingsService,
     private readonly imagesService: ImagesService,
+    private readonly cls: ClsService,
   ) {}
 
   async getDiscoveredSeries(
@@ -107,11 +109,6 @@ export class SeriesService {
     return data;
   }
 
-  @Cacheable({
-    key: (id: number, append_to_response = '') =>
-      `series-basic-info-${id}-{${append_to_response}}`,
-    ttl: Duration.ONE_DAY,
-  })
   async getBasicSeriesInfo<T>(
     id: number,
     append_to_response: string = '',
@@ -120,10 +117,10 @@ export class SeriesService {
   }
 
   @Cacheable({
-    key: (id: number) => `series-info-${id}`,
+    key: (id: number, country: string) => `series-info-${id}-${country}`,
     ttl: Duration.ONE_DAY,
   })
-  async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
+  async getSeriesInfo(id: number, country: string): Promise<SeriesInfoResDto> {
     const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(
       id,
       'videos,content_ratings,credits,watch/providers',
@@ -148,7 +145,7 @@ export class SeriesService {
         item.status,
       ),
       seasonsText: this.constructSeasons(item.number_of_seasons),
-      contentRating: this.findContentRating(item.content_ratings),
+      contentRating: this.findContentRating(item.content_ratings, country),
       trailerKey: findTrailerKey(item.videos),
       posterPath,
       overview: item.overview,
@@ -156,7 +153,11 @@ export class SeriesService {
       posterProps,
       credits: this.constructSeriesCredits(item.credits, item.created_by),
       ratings,
-      watchProviders: this.constructWatchProviders(item['watch/providers']),
+      watchProviders: this.constructWatchProviders(
+        id,
+        item['watch/providers'],
+        country,
+      ),
     };
     return data;
   }
@@ -173,11 +174,20 @@ export class SeriesService {
   }
 
   private constructWatchProviders(
+    id: number,
     watchProviders: TMDB_WatchProviders,
-    country: string = 'US',
+    country: string,
   ): WatchProviders {
     const data = watchProviders.results[country];
-    if (!data) return { flatrate: [], rent: [], buy: [], tmdbLink: '' };
+    const fallbackTmdbLink = `https://www.themoviedb.org/tv/${id}/watch`;
+
+    if (!data)
+      return {
+        flatrate: [],
+        rent: [],
+        buy: [],
+        tmdbLink: fallbackTmdbLink,
+      };
 
     const mapProvider = (p: TMDB_WatchProvider) => ({
       logoPath: getImage(p.logo_path, 'watch_provider'),
@@ -189,7 +199,7 @@ export class SeriesService {
       flatrate: (data.flatrate || []).map(mapProvider),
       rent: (data.rent || []).map(mapProvider),
       buy: (data.buy || []).map(mapProvider),
-      tmdbLink: data.link || '',
+      tmdbLink: data.link || fallbackTmdbLink,
     };
   }
 
@@ -272,7 +282,7 @@ export class SeriesService {
 
   private findContentRating(
     contentRatings: TMDB_SeriesInfo['content_ratings'],
-    country: string = 'US',
+    country: string,
   ) {
     return (
       contentRatings.results.find((result) => result.iso_3166_1 === country)

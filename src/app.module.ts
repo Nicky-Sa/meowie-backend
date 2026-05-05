@@ -30,12 +30,11 @@ import { CollectionsModule } from './collections/collections.module';
 import { AiModule } from './ai/ai.module';
 import { HealthModule } from './health/health.module';
 import { LifecycleService } from './common/lifecycle.service';
-import { ClsService } from './common/cls/cls.service';
+import { ClsModule } from './common/cls/cls.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { CorrelationIdMiddleware } from './common/cls/correlation-id.middleware';
-import { ClsLogger } from './common/cls/cls-logger.service';
+import { ClsMiddleware } from './common/cls/cls.middleware';
 
 @Module({
   imports: [
@@ -104,6 +103,7 @@ import { ClsLogger } from './common/cls/cls-logger.service';
     CollectionsModule,
     AiModule,
     HealthModule,
+    ClsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -112,8 +112,6 @@ import { ClsLogger } from './common/cls/cls-logger.service';
       useClass: ThrottlerGuard,
     },
     LifecycleService,
-    ClsService,
-    ClsLogger,
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
@@ -134,6 +132,6 @@ import { ClsLogger } from './common/cls/cls-logger.service';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    consumer.apply(ClsMiddleware).forRoutes('*');
   }
 }

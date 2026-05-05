@@ -15,11 +15,15 @@ import {
 } from './dto/series.dto';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
+import { ClsService } from '../common/cls/cls.service';
 
 @Controller('series')
 @UseInterceptors(TMDBErrorInterceptor)
 export class SeriesController {
-  constructor(private readonly seriesService: SeriesService) {}
+  constructor(
+    private readonly seriesService: SeriesService,
+    private readonly cls: ClsService,
+  ) {}
 
   @Get('interesting-ids')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
@@ -32,7 +36,7 @@ export class SeriesController {
   @Get('/info/:id')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesInfo(@Param('id') id: number): Promise<SeriesInfoResDto> {
-    return this.seriesService.getSeriesInfo(id);
+    return this.seriesService.getSeriesInfo(id, this.cls.countryCode);
   }
 
   @Get('/details/:id/recommendations/posters')
