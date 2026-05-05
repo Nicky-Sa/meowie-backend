@@ -101,31 +101,28 @@ export class CollectionsService {
     const posterType =
       mediaType === 'series' ? 'series_poster' : 'movie_poster';
 
-    const results: PosterInfo[] = await Promise.all(
-      response.results
-        .filter(
-          (item) => item.poster_path && ('title' in item || 'name' in item),
-        )
-        .map(async (item) => {
-          const title = 'title' in item ? item.title : item.name;
-          const genreIds = item.genre_ids || [];
-          const posterPath = getImage(item.poster_path, posterType);
-          const blurhash =
-            await this.imagesService.generateBlurhash(posterPath);
+    const results: PosterInfo[] = response.results
+      .filter((item) => item.poster_path && ('title' in item || 'name' in item))
+      .map((item) => {
+        const title = 'title' in item ? item.title : item.name;
+        const genreIds = item.genre_ids || [];
+        const posterPath = getImage(item.poster_path, posterType);
+        const blurhash = this.imagesService.generatePlaceholderBlurhash({
+          id: item.id,
+        });
 
-          return {
-            id: item.id,
-            posterPath,
-            blurhash,
-            mediaType,
-            preview: {
-              title,
-              genres: GENRES.filter((g) => genreIds.includes(g.id)),
-              overview: item.overview || '',
-            },
-          };
-        }),
-    );
+        return {
+          id: item.id,
+          posterPath,
+          blurhash,
+          mediaType,
+          preview: {
+            title,
+            genres: GENRES.filter((g) => genreIds.includes(g.id)),
+            overview: item.overview || '',
+          },
+        };
+      });
 
     return {
       page: response.page,
@@ -165,7 +162,9 @@ export class CollectionsService {
         const title = 'title' in details ? details.title : details.name;
 
         const posterPath = getImage(details.poster_path, posterType);
-        const blurhash = await this.imagesService.generateBlurhash(posterPath);
+        const blurhash = this.imagesService.generatePlaceholderBlurhash({
+          id: item.tmdbId,
+        });
 
         return {
           id: item.tmdbId,

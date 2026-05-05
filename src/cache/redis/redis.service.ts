@@ -48,6 +48,14 @@ export class RedisService
     await this.client.del(key);
   }
 
+  async sadd(key: string, value: string) {
+    await this.client.sadd(key, value);
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    return this.client.smembers(key);
+  }
+
   async ping(): Promise<string> {
     return this.client.ping();
   }

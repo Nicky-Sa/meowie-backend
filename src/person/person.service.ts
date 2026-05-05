@@ -50,17 +50,15 @@ export class PersonService {
     const combinedCredits = await this.tmdbService.getCombinedCredits(personId);
     const { cast, crew } = combinedCredits;
 
-    const castResults: PosterInfo[] = await Promise.all(
-      cast.map((item) =>
-        this.mapToPosterInfo(
-          item,
-          item.character ? `Performing as ${item.character}` : 'N/A',
-        ),
+    const castResults: PosterInfo[] = cast.map((item) =>
+      this.mapToPosterInfo(
+        item,
+        item.character ? `Performing as ${item.character}` : 'N/A',
       ),
     );
 
-    const crewResults: PosterInfo[] = await Promise.all(
-      crew.map((item) => this.mapToPosterInfo(item, item.job)),
+    const crewResults: PosterInfo[] = crew.map((item) =>
+      this.mapToPosterInfo(item, item.job),
     );
 
     // aggregated based on id which is media's id
@@ -81,10 +79,10 @@ export class PersonService {
     return { results, page: 1, total_pages: 1, total_results: results.length };
   }
 
-  private async mapToPosterInfo(
+  private mapToPosterInfo(
     item: TMDB_CombinedCreditsCast | TMDB_CombinedCreditsCrew,
     role: string,
-  ): Promise<PosterInfo> {
+  ): PosterInfo {
     const mediaType = tmdbMediaTypeToAppMediaType(item.media_type);
     const posterType =
       mediaType === 'series' ? 'series_poster' : 'movie_poster';
@@ -94,7 +92,9 @@ export class PersonService {
       (g) => ({ id: g.id, name: g.name }),
     );
     const posterPath = getImage(item.poster_path, posterType);
-    const blurhash = await this.imagesService.generateBlurhash(posterPath);
+    const blurhash = this.imagesService.generatePlaceholderBlurhash({
+      id: item.id,
+    });
 
     return {
       id: item.id,

@@ -4,10 +4,3 @@ export const EMAIL_QUEUE = {
     sendEmail: 'send-email',
   },
 } as const;
-
-export const IMAGE_QUEUE = {
-  name: 'image',
-  jobs: {
-    extractBlurhash: 'extract-blurhash',
-  },
-} as const;

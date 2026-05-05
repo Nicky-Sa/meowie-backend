@@ -103,12 +103,6 @@ export class MovieService {
     return data;
   }
 
-  // based on append_to_response, the return type can differ
-  @Cacheable({
-    key: (id: number, append_to_response = '') =>
-      `movie-basic-info-${id}-{${append_to_response}}`,
-    ttl: Duration.ONE_DAY,
-  })
   async getBasicMovieInfo<T>(
     id: number,
     append_to_response: string = '',
@@ -121,17 +115,14 @@ export class MovieService {
     ttl: Duration.ONE_DAY,
   })
   async getMovieInfo(id: number): Promise<MovieInfoResDto> {
-    const [item, recommendations] = await Promise.all([
-      this.getBasicMovieInfo<TMDB_MovieInfo>(
-        id,
-        'videos,release_dates,credits,watch/providers',
-      ),
-      this.getMovieRecommendations(id),
-    ]);
+    const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
+      id,
+      'videos,release_dates,credits,watch/providers',
+    );
 
     const posterPath = getImage(item.poster_path, 'movie_poster');
     const [blurhash, primaryColorHex] = await Promise.all([
-      this.imagesService.generateBlurhash(posterPath),
+      this.imagesService.generateRealBlurhash({ imageUrl: posterPath }),
       this.imagesService.generatePrimaryColorHex(posterPath),
     ]);
     const posterProps = { blurhash, primaryColorHex };
@@ -157,7 +148,6 @@ export class MovieService {
       posterProps,
       credits: this.constructMovieCredits(item.credits),
       watchProviders: this.constructWatchProviders(item['watch/providers']),
-      recommendations,
     };
 
     return data;
@@ -206,11 +196,11 @@ export class MovieService {
     return this.constructRecommendations(response);
   }
 
-  private async constructRecommendations(
+  private constructRecommendations(
     recommendations: TMDB_Recommendations<TMDB_DiscoveredMovieDetail>,
-  ): Promise<PosterResDto> {
-    const results = await Promise.all(
-      recommendations.results.map((movie) => this.mapToMoviePoster(movie)),
+  ): PosterResDto {
+    const results = recommendations.results.map((movie) =>
+      this.mapToMoviePoster(movie),
     );
     return {
       results,
@@ -241,15 +231,15 @@ export class MovieService {
   async getMoviesPosters(query: QueryParamsDto): Promise<PosterResDto> {
     const discoveredMoviesList = await this.getDiscoveredMovies(query);
     const { results: movies, ...rest } = discoveredMoviesList;
-    const results = await Promise.all(
-      movies.map((movie) => this.mapToMoviePoster(movie)),
-    );
+    const results = movies.map((movie) => this.mapToMoviePoster(movie));
     return { results, ...rest };
   }
 
-  private async mapToMoviePoster(movie: TMDB_DiscoveredMovieDetail) {
+  private mapToMoviePoster(movie: TMDB_DiscoveredMovieDetail) {
     const posterPath = getImage(movie.poster_path, 'movie_poster');
-    const blurhash = await this.imagesService.generateBlurhash(posterPath);
+    const blurhash = this.imagesService.generatePlaceholderBlurhash({
+      id: movie.id,
+    });
 
     return {
       id: movie.id,

@@ -197,7 +197,9 @@ export class LibraryService {
             ? (details as TMDB_MovieInfo).title
             : (details as TMDB_SeriesInfo).name;
 
-        const blurhash = await this.imagesService.generateBlurhash(posterPath);
+        const blurhash = this.imagesService.generatePlaceholderBlurhash({
+          id: details.id,
+        });
 
         return {
           id: details.id,

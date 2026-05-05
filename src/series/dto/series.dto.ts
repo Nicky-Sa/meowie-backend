@@ -10,7 +10,6 @@ import { Genre } from '../../constants/items/genres.constant';
 import { PosterProps } from '../../images/poster';
 import { CreditInfo } from '../../types/credit';
 import { RatingEntry } from '../../ratings/types/rating.type';
-import { PosterResDto } from '../../common/dto/poster.dto';
 import { WatchProviders } from '../../types/watch-provider';
 
 export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
@@ -42,5 +41,4 @@ export class SeriesInfoResDto {
   credits: SeriesCredits;
   ratings: RatingEntry[];
   watchProviders: WatchProviders;
-  recommendations: PosterResDto;
 }

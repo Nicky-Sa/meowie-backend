@@ -124,16 +124,13 @@ export class SeriesService {
     ttl: Duration.ONE_DAY,
   })
   async getSeriesInfo(id: number): Promise<SeriesInfoResDto> {
-    const [item, recommendations] = await Promise.all([
-      this.getBasicSeriesInfo<TMDB_SeriesInfo>(
-        id,
-        'videos,content_ratings,credits,watch/providers',
-      ),
-      this.getSeriesRecommendations(id),
-    ]);
+    const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(
+      id,
+      'videos,content_ratings,credits,watch/providers',
+    );
     const posterPath = getImage(item.poster_path, 'series_poster');
     const [blurhash, primaryColorHex] = await Promise.all([
-      this.imagesService.generateBlurhash(posterPath),
+      this.imagesService.generateRealBlurhash({ imageUrl: posterPath }),
       this.imagesService.generatePrimaryColorHex(posterPath),
     ]);
     const posterProps = { blurhash, primaryColorHex };
@@ -160,7 +157,6 @@ export class SeriesService {
       credits: this.constructSeriesCredits(item.credits, item.created_by),
       ratings,
       watchProviders: this.constructWatchProviders(item['watch/providers']),
-      recommendations,
     };
     return data;
   }
@@ -168,9 +164,7 @@ export class SeriesService {
   async getSeriesPosters(query: QueryParamsDto): Promise<PosterResDto> {
     const discoveredSeriesList = await this.getDiscoveredSeries(query);
     const { results: series, ...rest } = discoveredSeriesList;
-    const results = await Promise.all(
-      series.map(async (tvShow) => this.mapToSeriesPoster(tvShow)),
-    );
+    const results = series.map((tvShow) => this.mapToSeriesPoster(tvShow));
     return { results, ...rest };
   }
 
@@ -214,11 +208,11 @@ export class SeriesService {
     return this.constructRecommendations(response);
   }
 
-  private async constructRecommendations(
+  private constructRecommendations(
     recommendations: TMDB_Recommendations<TMDB_DiscoveredSeriesDetail>,
-  ): Promise<PosterResDto> {
-    const results = await Promise.all(
-      recommendations.results.map((series) => this.mapToSeriesPoster(series)),
+  ): PosterResDto {
+    const results = recommendations.results.map((series) =>
+      this.mapToSeriesPoster(series),
     );
     return {
       results,
@@ -228,19 +222,21 @@ export class SeriesService {
     };
   }
 
-  private async mapToSeriesPoster(tvShow: TMDB_DiscoveredSeriesDetail) {
-    const posterPath = getImage(tvShow.poster_path, 'series_poster');
-    const blurhash = await this.imagesService.generateBlurhash(posterPath);
+  private mapToSeriesPoster(series: TMDB_DiscoveredSeriesDetail) {
+    const posterPath = getImage(series.poster_path, 'series_poster');
+    const blurhash = this.imagesService.generatePlaceholderBlurhash({
+      id: series.id,
+    });
 
     return {
-      id: tvShow.id,
+      id: series.id,
       posterPath,
       blurhash,
       mediaType: 'series' as const,
       preview: {
-        title: tvShow.name,
-        overview: tvShow.overview,
-        genres: GENRES.filter((genre) => tvShow.genre_ids.includes(genre.id)),
+        title: series.name,
+        overview: series.overview,
+        genres: GENRES.filter((genre) => series.genre_ids.includes(genre.id)),
       },
     };
   }

@@ -4,7 +4,6 @@ import { Genre } from '../../constants/items/genres.constant';
 import { RatingEntry } from '../../ratings/types/rating.type';
 import { PaginatedResponse } from '../../common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { PosterResDto } from '../../common/dto/poster.dto';
 import {
   Browse,
   MovieFilters,
@@ -42,5 +41,4 @@ export class MovieInfoResDto {
   credits: MovieCredits;
   ratings: RatingEntry[];
   watchProviders: WatchProviders;
-  recommendations: PosterResDto;
 }
