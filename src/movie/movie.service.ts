@@ -6,9 +6,6 @@ import {
   TMDB_MovieInfo,
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
-  TMDB_WatchProviders,
-  TMDB_WatchProvider,
-  TMDB_Recommendations,
 } from 'src/tmdb/tmdb.type';
 import { getImage } from '../images/images.utils';
 import {
@@ -19,7 +16,6 @@ import {
 } from './dto/movie.dto';
 import { CacheService } from '../cache/cache.service';
 import { Cacheable } from '../cache/cacheable.decorator';
-import { SortOption } from '../common/types/media-query';
 import { extractYearFromDate } from '../utils/dates';
 import { TmdbService } from '../tmdb/tmdb.service';
 import { RatingsService } from '../ratings/ratings.service';
@@ -34,20 +30,22 @@ import {
 } from '../utils/media';
 import { PosterResDto } from '../common/dto/poster.dto';
 import { Duration } from '../common/app.constants';
-import { ClsService } from '../common/cls/cls.service';
-
 import { GENRES } from '../constants/items/genres.constant';
-import { WatchProviders } from '../types/watch-provider';
+import { BaseMediaService } from '../common/base-media.service';
 
 @Injectable()
-export class MovieService {
+export class MovieService extends BaseMediaService {
+  protected readonly mediaType = 'movie' as const;
+  protected readonly tmdbMediaType = 'movie' as const;
+
   constructor(
-    private readonly tmdbService: TmdbService,
+    tmdbService: TmdbService,
     private readonly cacheService: CacheService,
     private readonly ratingsService: RatingsService,
     private readonly imagesService: ImagesService,
-    private readonly cls: ClsService,
-  ) {}
+  ) {
+    super(tmdbService);
+  }
 
   async getDiscoveredMovies(
     query: QueryParamsDto,
@@ -56,30 +54,10 @@ export class MovieService {
     const response = await this.tmdbService.getDiscover<
       TMDB_DiscoveredMoviesList,
       TMDB_DiscoverMovieQuery
-    >('movie', {
-      ...tmdbQuery,
-      ...(this.constructSortRelatedParams(
-        query.sort,
-      ) as Partial<TMDB_DiscoverMovieQuery>),
-      ...(query.genres && {
-        with_genres: query.genres.replaceAll(',', '|'),
-      }),
-      ...(query.personId && {
-        with_people: query.personId,
-      }),
-      ...(query.languages && {
-        with_original_language: query.languages.replaceAll(',', '|'),
-      }),
-      ...(query.decade && {
-        'primary_release_date.gte': `${query.decade}-01-01`,
-        'primary_release_date.lte': `${Number(query.decade) + 9}-12-31`,
-      }),
-      ...(query.tmdbRatings && {
-        'vote_average.gte': Number(query.tmdbRatings.split(',')[0]),
-        'vote_average.lte': Number(query.tmdbRatings.split(',')[1]),
-      }),
-      page: query.page ?? 1,
-    });
+    >(
+      'movie',
+      this.constructDiscoveryParams(query, 'primary_release_date', tmdbQuery),
+    );
     const validMovies = response.results.filter((movie) =>
       this.isMovieValid(movie),
     );
@@ -92,17 +70,12 @@ export class MovieService {
   async getInterestingMovieIds(
     query: Pick<QueryParamsDto, 'page' | 'sort'>,
   ): Promise<InterestingMovieIdsResDto> {
-    const discoveredMovies = await this.getDiscoveredMovies(query, {
-      'vote_count.gte': 50,
-      'with_runtime.gte': 30,
-    });
-
-    const data = {
-      ...discoveredMovies,
-      results: discoveredMovies.results.map((movie) => movie.id),
-    };
-
-    return data;
+    return await this.getInterestingIdsBase(() =>
+      this.getDiscoveredMovies(query, {
+        'vote_count.gte': 50,
+        'with_runtime.gte': 30,
+      }),
+    );
   }
 
   async getBasicMovieInfo<T>(
@@ -167,36 +140,6 @@ export class MovieService {
     return { casts, crew, director };
   }
 
-  private constructWatchProviders(
-    id: number,
-    watchProviders: TMDB_WatchProviders,
-    country: string,
-  ): WatchProviders {
-    const data = watchProviders.results[country];
-    const fallbackTmdbLink = `https://www.themoviedb.org/movie/${id}/watch`;
-
-    if (!data)
-      return {
-        flatrate: [],
-        rent: [],
-        buy: [],
-        tmdbLink: fallbackTmdbLink,
-      };
-
-    const mapProvider = (p: TMDB_WatchProvider) => ({
-      logoPath: getImage(p.logo_path, 'watch_provider'),
-      providerId: p.provider_id,
-      providerName: p.provider_name,
-    });
-
-    return {
-      flatrate: (data.flatrate || []).map(mapProvider),
-      rent: (data.rent || []).map(mapProvider),
-      buy: (data.buy || []).map(mapProvider),
-      tmdbLink: data.link || fallbackTmdbLink,
-    };
-  }
-
   @Cacheable({
     key: (id: number, page: number = 1) =>
       `movie-recommendations-${id}-p${page}`,
@@ -206,24 +149,11 @@ export class MovieService {
     id: number,
     page: number = 1,
   ): Promise<PosterResDto> {
-    const response = await this.tmdbService.getRecommendations<
-      TMDB_Recommendations<TMDB_DiscoveredMovieDetail>
-    >('movie', id, page);
-    return this.constructRecommendations(response);
-  }
-
-  private constructRecommendations(
-    recommendations: TMDB_Recommendations<TMDB_DiscoveredMovieDetail>,
-  ): PosterResDto {
-    const results = recommendations.results.map((movie) =>
-      this.mapToMoviePoster(movie),
+    return await this.getRecommendationsBase<TMDB_DiscoveredMovieDetail>(
+      id,
+      page,
+      (movie) => this.mapToMoviePoster(movie),
     );
-    return {
-      results,
-      page: recommendations.page,
-      total_pages: recommendations.total_pages,
-      total_results: recommendations.total_results,
-    };
   }
 
   private findDirector(credits: TMDB_MovieInfo['credits']): CreditInfo {
@@ -343,28 +273,5 @@ export class MovieService {
     }
 
     return extractYearFromDate(firstRelease.release_date);
-  }
-
-  private constructSortRelatedParams(sort: SortOption) {
-    switch (sort) {
-      case SortOption.RANDOM:
-        return {
-          sort_by: 'vote_count.desc',
-        };
-      case SortOption.NEWEST:
-        return {
-          sort_by: 'primary_release_date.desc',
-        };
-      case SortOption.POPULARITY:
-        return {
-          sort_by: 'popularity.desc',
-          'vote_average.gte': 7,
-          'vote_count.gte': 300,
-        };
-      default:
-        return {
-          sort_by: sort,
-        };
-    }
   }
 }
