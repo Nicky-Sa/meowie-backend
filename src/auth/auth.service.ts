@@ -15,6 +15,9 @@ import { DeleteAccountReqDto } from './dto/delete-account.dto';
 import { User } from '../users/entities/users.entity';
 import { ChurnLog } from '../users/entities/churn-log.entity';
 import type { StringValue } from 'ms';
+import { CacheService } from '../cache/cache.service';
+import * as crypto from 'crypto';
+import { Duration } from '../common/app.constants';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
     private env: EnvService,
     private readonly dataSource: DataSource,
+    private cacheService: CacheService,
   ) {}
 
   async requestOtp(dto: RequestOtpReqDto) {
@@ -55,6 +59,24 @@ export class AuthService {
    * Implements the rotating token.
    */
   async refreshToken(userId: number, refreshToken: string) {
+    // 1. Handle network flakiness with a Grace Period (Idempotency)
+    // If the app sent a refresh request but didn't receive the response due to network drop,
+    // it will retry with the SAME token. We check if we already rotated this token recently.
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+    const graceKey = `auth:grace:${userId}:${tokenHash}`;
+
+    const cachedTokens = await this.cacheService.get<{
+      accessToken: string;
+      refreshToken: string;
+    }>(graceKey);
+
+    if (cachedTokens) {
+      return cachedTokens;
+    }
+
     const user = await this.usersService.findOneBy(
       {
         key: 'id',
@@ -85,9 +107,15 @@ export class AuthService {
       await this.generateTokens(user.id);
 
     // Rotating Refresh Tokens: Store the hash of the *new* refresh token with the new expiry.
-    // As long as the user opens the app (triggers a refresh) at least once every JWT_REFRESH_EXPIRY,
-    // they will stay logged in forever!
     await this.updateRefreshTokenInDB(user.id, newRefreshToken);
+
+    // Store the old token's rotation result in cache for 60 seconds.
+    // If the app retries with the same "old" token within a minute, it gets the same result.
+    await this.cacheService.set(
+      graceKey,
+      { accessToken, refreshToken: newRefreshToken },
+      Duration.ONE_MINUTE,
+    );
 
     return { accessToken, refreshToken: newRefreshToken };
   }
