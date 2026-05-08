@@ -16,6 +16,7 @@ export enum Duration {
   ONE_SECOND = 1,
   TEN_SECONDS = 10,
   ONE_MINUTE = 60,
+  FIVE_MINUTES = 300,
   ONE_HOUR = 3600,
   ONE_DAY = 3600 * 24,
   ONE_WEEK = 3600 * 24 * 7,
