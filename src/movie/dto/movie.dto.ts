@@ -41,4 +41,5 @@ export class MovieInfoResDto {
   credits: MovieCredits;
   ratings: RatingEntry[];
   watchProviders: WatchProviders;
+  ticketLink?: string;
 }

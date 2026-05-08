@@ -107,13 +107,15 @@ export class MovieService extends BaseMediaService {
       item.vote_average,
     );
 
+    const screeningStatus = this.screeningStatus(
+      item.release_date,
+      item.release_dates,
+      country,
+    );
+
     const data: MovieInfoResDto = {
       title: item.title,
-      screeningStatus: this.screeningStatus(
-        item.release_date,
-        item.release_dates,
-        country,
-      ),
+      screeningStatus,
       overview: item.overview || 'N/A',
       posterPath,
       duration: formatDuration(item.runtime),
@@ -128,6 +130,10 @@ export class MovieService extends BaseMediaService {
         item['watch/providers'],
         country,
       ),
+      ticketLink:
+        screeningStatus === 'In cinemas' || screeningStatus === 'Upcoming'
+          ? `https://www.google.com/search?q=${encodeURIComponent(item.title)}+showtimes`
+          : undefined,
     };
 
     return data;
