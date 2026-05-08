@@ -3,14 +3,14 @@ import { Job } from 'bullmq';
 import { EmailService } from './email.service';
 import { Logger, Inject, OnModuleDestroy } from '@nestjs/common';
 import { EMAIL_SENDER } from './email.constants';
-import { EMAIL_QUEUE } from '../common/queue.constants';
+import { EMAIL_QUEUE, DEFAULT_WORKER_OPTIONS } from '../common/queue.constants';
 
 type SendEmailJobData = {
   to: string;
   template: { name: string; data: Record<string, string> };
 };
 
-@Processor(EMAIL_QUEUE.name)
+@Processor(EMAIL_QUEUE.name, DEFAULT_WORKER_OPTIONS)
 export class EmailProcessor extends WorkerHost implements OnModuleDestroy {
   private readonly logger = new Logger(EmailProcessor.name);
 
