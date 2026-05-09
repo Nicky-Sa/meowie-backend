@@ -6,7 +6,6 @@ import { CollectionsSyncService } from './collections-sync.service';
 import { Collection } from './entities/collection.entity';
 import { CollectionItem } from './entities/collection-item.entity';
 import { TmdbModule } from '../tmdb/tmdb.module';
-import { CacheModule } from '../cache/cache.module';
 import { MovieModule } from '../movie/movie.module';
 import { SeriesModule } from '../series/series.module';
 import { ImagesModule } from '../images/images.module';
@@ -15,7 +14,6 @@ import { ImagesModule } from '../images/images.module';
   imports: [
     TypeOrmModule.forFeature([Collection, CollectionItem]),
     TmdbModule,
-    CacheModule,
     MovieModule,
     SeriesModule,
     ImagesModule,
