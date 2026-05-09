@@ -36,7 +36,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const correlationId = this.clsService.correlationId;
 
     // Log incoming request
-    this.logger.log({
+    this.logger.debug({
       message: `Incoming Request`,
       correlationId,
       method,
@@ -50,7 +50,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const redactedResponse = isDev
           ? redactSensitiveInfo(responseData as unknown as LoggableObject)
           : null;
-        this.logger.log({
+        this.logger.debug({
           message: `Outgoing Response`,
           correlationId,
           method,

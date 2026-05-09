@@ -185,11 +185,15 @@ jobs:
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
             
-            # Run new container
+            # Ensure logs directory exists on host
+            mkdir -p $WORKDIR/logs
+
+            # Run new container with logs volume mount
             docker run -d \
               --name $CONTAINER_NAME \
               --restart unless-stopped \
               -p $PORT:$PORT \
+              -v $WORKDIR/logs:/app/logs \
               --env-file $WORKDIR/.env.local \
               $IMAGE_URI
             
