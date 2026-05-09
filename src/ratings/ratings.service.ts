@@ -3,12 +3,13 @@ import axios from 'axios';
 import { RatingEntry } from './types/rating.type';
 import { WHATSON_BASE_URL } from '../common/app.constants';
 import { Whatson_MediaItem } from './types/whatson.type';
+import { EnvService } from 'src/env/env.service';
 
 @Injectable()
 export class RatingsService {
   private readonly logger = new Logger(RatingsService.name);
 
-  constructor() {}
+  constructor(private readonly env: EnvService) {}
 
   async getRatings(
     mediaType: 'movie' | 'tvshow',
@@ -16,8 +17,14 @@ export class RatingsService {
     tmdbVoteAverage: number,
   ): Promise<RatingEntry[]> {
     try {
+      const apiKey = this.env.get('WHATSON_API_KEY');
       const response = await axios.get<Whatson_MediaItem>(
         `${WHATSON_BASE_URL}/${mediaType}/${id}`,
+        {
+          params: {
+            ...(apiKey && { api_key: apiKey }),
+          },
+        },
       );
       const item = response.data;
 
@@ -94,6 +101,11 @@ export class RatingsService {
   }
 
   async ping(): Promise<void> {
-    await axios.get(`${WHATSON_BASE_URL}/movie/550`); // Fight Club as a stable check
+    const apiKey = this.env.get('WHATSON_API_KEY');
+    await axios.get(`${WHATSON_BASE_URL}/movie/550`, {
+      params: {
+        ...(apiKey && { api_key: apiKey }),
+      },
+    }); // Fight Club as a stable check
   }
 }

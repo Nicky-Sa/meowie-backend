@@ -152,6 +152,7 @@ jobs:
           APP_VERSION=${{ env.APP_VERSION }}
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           ALLOWED_DOMAIN=${{ vars.ALLOWED_DOMAIN }}
+          WHATSON_API_KEY=${{ secrets.WHATSON_API_KEY }}
           EOF
 
       - name: Copy .env.local to VPS
