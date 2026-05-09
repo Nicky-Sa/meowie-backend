@@ -122,11 +122,11 @@ import { ClsMiddleware } from './common/cls/cls.middleware';
     },
     {
       provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
+      useClass: SentryGlobalFilter,
     },
     {
       provide: APP_FILTER,
-      useClass: SentryGlobalFilter,
+      useClass: GlobalExceptionFilter,
     },
   ],
 })

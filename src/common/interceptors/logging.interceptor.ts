@@ -45,10 +45,10 @@ export class LoggingInterceptor implements NestInterceptor {
     });
 
     return next.handle().pipe(
-      map((responseData: Response) => {
+      map((responseData: unknown) => {
         // Log outgoing response after processing
         const redactedResponse = isDev
-          ? redactSensitiveInfo(responseData as unknown as LoggableObject)
+          ? redactSensitiveInfo(responseData as LoggableObject)
           : null;
         this.logger.debug({
           message: `Outgoing Response`,

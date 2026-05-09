@@ -7,7 +7,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { isArray } from 'lodash';
 import * as Sentry from '@sentry/nestjs';
 
 type ErrorResponse = {
@@ -24,6 +23,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+
+    // If it's not an HTTP context, we can't do much with the response
+    if (!response || typeof response.status !== 'function') {
+      return;
+    }
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let errorMessage: string | string[] = 'Internal server error';
@@ -42,18 +46,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     // Conditionally capture only 5xx errors
-    if (status.valueOf() >= 500) {
+    if ((status as number) >= 500) {
       Sentry.captureException(exception);
     }
 
     const errorResponse: ErrorResponse = {
       success: false,
-      errors: isArray(errorMessage) ? errorMessage.join(', ') : errorMessage,
+      errors: Array.isArray(errorMessage)
+        ? errorMessage.join(', ')
+        : errorMessage,
       statusCode: status,
       timestamp: new Date().toISOString(),
     };
 
-    this.logger.error(errorResponse);
+    try {
+      this.logger.error(errorResponse);
+    } catch (e) {
+      console.error('Logger failed in GlobalExceptionFilter:', e);
+    }
 
     response.status(status).json(errorResponse);
   }

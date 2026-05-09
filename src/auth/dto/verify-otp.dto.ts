@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { User } from '@sentry/nestjs';
+import { User } from '../../users/entities/users.entity';
 
 export class VerifyOtpReqDto {
   @IsEmail()
