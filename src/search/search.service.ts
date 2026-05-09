@@ -114,6 +114,5 @@ export class SearchService {
           result.name && result.genre_ids.length > 0 && result.first_air_date,
         );
     }
-    return false;
   }
 }

@@ -213,7 +213,7 @@ export class MovieService extends BaseMediaService {
   private findCertification(releaseDates: TMDB_ReleaseDates, country: string) {
     const certification =
       releaseDates.results.find((result) => result.iso_3166_1 === country)
-        ?.release_dates[0].certification || 'N/A';
+        ?.release_dates[0]?.certification || 'N/A';
 
     return certification;
   }

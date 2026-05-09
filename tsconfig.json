@@ -17,7 +17,9 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    //"noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "inlineSources": true,
     // Set `sourceRoot` to "/" to strip the build path prefix
