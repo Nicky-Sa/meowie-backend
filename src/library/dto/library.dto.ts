@@ -1,7 +1,7 @@
 import { IsEnum, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
-import { MediaType, MEDIA_TYPE_VALUES } from '../../types/media-type';
-import { LibraryCategory } from '../library.constants';
-import { Page } from '../../common/types/media-query';
+import { MediaType, MEDIA_TYPE_VALUES } from '@/types/media-type';
+import { LibraryCategory } from '@/library/library.constants';
+import { Page } from '@/common/types/media-query';
 
 class LibraryItemIdentifier {
   @IsInt()

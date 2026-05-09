@@ -2,14 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Collection } from './entities/collection.entity';
-import { CollectionItem } from './entities/collection-item.entity';
-import { TmdbService } from '../tmdb/tmdb.service';
+import { Collection } from '@/collections/entities/collection.entity';
+import { CollectionItem } from '@/collections/entities/collection-item.entity';
+import { TmdbService } from '@/tmdb/tmdb.service';
 import {
   scrapeImdbTop250,
   scrapeImdbTop250Series,
   scrapeLetterboxdList,
-} from './utils/scrapers';
+} from '@/collections/utils/scrapers';
 
 @Injectable()
 export class CollectionsSyncService {

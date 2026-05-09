@@ -1,16 +1,16 @@
-import { TmdbService } from '../tmdb/tmdb.service';
+import { TmdbService } from '@/tmdb/tmdb.service';
 import {
   TMDB_WatchProviders,
   TMDB_WatchProvider,
   TMDB_Recommendations,
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoverSeriesQuery,
-} from '../tmdb/tmdb.type';
-import { WatchProviders } from '../types/watch-provider';
-import { getImage } from '../images/images.utils';
-import { PosterResDto } from './dto/poster.dto';
-import { SortOption } from './types/media-query';
-import { PosterInfo } from '../images/poster';
+} from '@/tmdb/tmdb.type';
+import { WatchProviders } from '@/types/watch-provider';
+import { getImage } from '@/images/images.utils';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { SortOption } from '@/common/types/media-query';
+import { PosterInfo } from '@/images/poster';
 
 export abstract class BaseMediaService {
   protected abstract readonly mediaType: 'movie' | 'series';

@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
-import { ClsService } from './cls.service';
-import { ClsLogger } from './cls-logger.service';
+import { ClsService } from '@/common/cls/cls.service';
+import { ClsLogger } from '@/common/cls/cls-logger.service';
 
 @Global()
 @Module({

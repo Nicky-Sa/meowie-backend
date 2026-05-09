@@ -1,9 +1,9 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { EmailService } from './email.service';
+import { EmailService } from '@/email/email.service';
 import { Logger, Inject, OnModuleDestroy } from '@nestjs/common';
-import { EMAIL_SENDER } from './email.constants';
-import { EMAIL_QUEUE, DEFAULT_WORKER_OPTIONS } from '../common/queue.constants';
+import { EMAIL_SENDER } from '@/email/email.constants';
+import { EMAIL_QUEUE, DEFAULT_WORKER_OPTIONS } from '@/common/queue.constants';
 
 type SendEmailJobData = {
   to: string;

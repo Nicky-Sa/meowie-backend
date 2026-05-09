@@ -1,35 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '@/cache/cache.service';
 import {
   TMDB_DiscoverSeriesQuery,
   TMDB_DiscoveredSeriesDetail,
   TMDB_SeriesInfo,
   TMDB_DiscoveredSeriesList,
-} from '../tmdb/tmdb.type';
+} from '@/tmdb/tmdb.type';
 import {
   InterestingSeriesIdsResDto,
   QueryParamsDto,
   SeriesCredits,
   SeriesInfoResDto,
-} from './dto/series.dto';
-import { Cacheable } from '../cache/cacheable.decorator';
-import { getImage } from '../images/images.utils';
-import { CreditInfo } from '../types/credit';
-import { TmdbService } from '../tmdb/tmdb.service';
-import { ImagesService } from '../images/images.service';
-import { RatingsService } from '../ratings/ratings.service';
+} from '@/series/dto/series.dto';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { getImage } from '@/images/images.utils';
+import { CreditInfo } from '@/types/credit';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { ImagesService } from '@/images/images.service';
+import { RatingsService } from '@/ratings/ratings.service';
 import {
   findTrailerKey,
   formatCasts,
   formatCrew,
   formatGenres,
   emptyCredit,
-} from '../utils/media';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { Duration } from '../common/app.constants';
-import { extractYearFromDate } from '../utils/dates';
-import { GENRES } from '../constants/items/genres.constant';
-import { BaseMediaService } from '../common/base-media.service';
+} from '@/utils/media';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { Duration } from '@/common/app.constants';
+import { extractYearFromDate } from '@/utils/dates';
+import { GENRES } from '@/constants/items/genres.constant';
+import { BaseMediaService } from '@/common/base-media.service';
 
 @Injectable()
 export class SeriesService extends BaseMediaService {

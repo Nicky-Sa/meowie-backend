@@ -6,16 +6,16 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { MovieService } from './movie.service';
+import { MovieService } from '@/movie/movie.service';
 import {
   InterestingMovieIdsResDto,
   MovieInfoResDto,
   QueryParamsDto,
-} from './dto/movie.dto';
-import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { ClsService } from '../common/cls/cls.service';
-import { Duration } from '../common/app.constants';
+} from '@/movie/dto/movie.dto';
+import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { ClsService } from '@/common/cls/cls.service';
+import { Duration } from '@/common/app.constants';
 
 @Controller('movie')
 @UseInterceptors(TMDBErrorInterceptor)

@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   CollectionMediaType,
   CollectionSourceType,
-} from '../collections.constants';
-import { Page } from '../../common/types/media-query';
+} from '@/collections/collections.constants';
+import { Page } from '@/common/types/media-query';
 import { IsOptional } from 'class-validator';
 
 export class CollectionResDto {

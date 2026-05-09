@@ -6,16 +6,16 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { SeriesService } from './series.service';
-import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
+import { SeriesService } from '@/series/series.service';
+import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
 import {
   InterestingSeriesIdsResDto,
   QueryParamsDto,
   SeriesInfoResDto,
-} from './dto/series.dto';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { Duration } from '../common/app.constants';
-import { ClsService } from '../common/cls/cls.service';
+} from '@/series/dto/series.dto';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { Duration } from '@/common/app.constants';
+import { ClsService } from '@/common/cls/cls.service';
 
 @Controller('series')
 @UseInterceptors(TMDBErrorInterceptor)

@@ -7,9 +7,9 @@ import {
   Index,
   Unique,
 } from 'typeorm';
-import { User } from '../../users/entities/users.entity';
-import { MediaType } from '../../types/media-type';
-import { LibraryCategory } from '../library.constants';
+import { User } from '@/users/entities/users.entity';
+import { MediaType } from '@/types/media-type';
+import { LibraryCategory } from '@/library/library.constants';
 
 @Entity('library_items')
 @Unique(['userId', 'tmdbId', 'mediaType'])

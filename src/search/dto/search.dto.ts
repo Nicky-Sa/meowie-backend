@@ -1,4 +1,4 @@
-import { MultiSearchResults } from '../models/search-results.model';
+import { MultiSearchResults } from '@/search/models/search-results.model';
 import { IsString } from 'class-validator';
 
 export class SearchReqQueryDto {

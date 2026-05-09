@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EmailTemplateConfig } from './email.types';
+import { EmailTemplateConfig } from '@/email/email.types';
 
 @Injectable()
 export abstract class EmailService {

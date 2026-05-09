@@ -1,10 +1,10 @@
 import { Controller, Get, Version, VERSION_NEUTRAL } from '@nestjs/common';
 import { HealthCheckService, HealthCheck } from '@nestjs/terminus';
-import { DatabaseHealthIndicator } from './indicators/database.health-indicator';
-import { RedisHealthIndicator } from './indicators/redis.health-indicator';
-import { EmailHealthIndicator } from './indicators/email.health-indicator';
-import { TmdbHealthIndicator } from './indicators/tmdb.health-indicator';
-import { AppService } from '../app.service';
+import { DatabaseHealthIndicator } from '@/health/indicators/database.health-indicator';
+import { RedisHealthIndicator } from '@/health/indicators/redis.health-indicator';
+import { EmailHealthIndicator } from '@/health/indicators/email.health-indicator';
+import { TmdbHealthIndicator } from '@/health/indicators/tmdb.health-indicator';
+import { AppService } from '@/app.service';
 
 @Controller()
 export class HealthController {

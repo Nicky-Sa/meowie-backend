@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { PersonResDto } from './dto/person.dto';
-import { getImage } from '../images/images.utils';
-import { CacheService } from 'src/cache/cache.service';
-import { Cacheable } from '../cache/cacheable.decorator';
-import { TmdbService } from '../tmdb/tmdb.service';
-import { ImagesService } from '../images/images.service';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { Duration } from '../common/app.constants';
-import { PosterInfo } from '../images/poster';
-import { formatGenres, tmdbMediaTypeToAppMediaType } from '../utils/media';
-import { GENRES } from '../constants/items/genres.constant';
+import { PersonResDto } from '@/person/dto/person.dto';
+import { getImage } from '@/images/images.utils';
+import { CacheService } from '@/cache/cache.service';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { ImagesService } from '@/images/images.service';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { Duration } from '@/common/app.constants';
+import { PosterInfo } from '@/images/poster';
+import { formatGenres, tmdbMediaTypeToAppMediaType } from '@/utils/media';
+import { GENRES } from '@/constants/items/genres.constant';
 import {
   TMDB_CombinedCreditsCast,
   TMDB_CombinedCreditsCrew,
-} from '../tmdb/tmdb.type';
+} from '@/tmdb/tmdb.type';
 
 @Injectable()
 export class PersonService {

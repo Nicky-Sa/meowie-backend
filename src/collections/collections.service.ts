@@ -5,27 +5,27 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import { Collection } from './entities/collection.entity';
-import { CollectionItem } from './entities/collection-item.entity';
-import { CollectionResDto } from './dto/collection.dto';
-import { TmdbService } from '../tmdb/tmdb.service';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { getImage } from '../images/images.utils';
-import { Duration, LIMIT } from '../common/app.constants';
-import { Cacheable } from '../cache/cacheable.decorator';
-import { CacheService } from '../cache/cache.service';
-import { MediaType } from '../types/media-type';
-import { PosterInfo } from '../images/poster';
-import { GENRES } from '../constants/items/genres.constant';
+import { Collection } from '@/collections/entities/collection.entity';
+import { CollectionItem } from '@/collections/entities/collection-item.entity';
+import { CollectionResDto } from '@/collections/dto/collection.dto';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { getImage } from '@/images/images.utils';
+import { Duration, LIMIT } from '@/common/app.constants';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { CacheService } from '@/cache/cache.service';
+import { MediaType } from '@/types/media-type';
+import { PosterInfo } from '@/images/poster';
+import { GENRES } from '@/constants/items/genres.constant';
 import {
   TMDB_DiscoveredMovieDetail,
   TMDB_DiscoveredSeriesDetail,
   TMDB_MovieInfo,
   TMDB_SeriesInfo,
-} from '../tmdb/tmdb.type';
-import { MovieService } from '../movie/movie.service';
-import { SeriesService } from '../series/series.service';
-import { ImagesService } from '../images/images.service';
+} from '@/tmdb/tmdb.type';
+import { MovieService } from '@/movie/movie.service';
+import { SeriesService } from '@/series/series.service';
+import { ImagesService } from '@/images/images.service';
 
 @Injectable()
 export class CollectionsService {

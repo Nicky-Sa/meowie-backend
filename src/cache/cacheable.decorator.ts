@@ -1,8 +1,8 @@
-import { CacheService } from './cache.service';
-import { Duration } from '../common/app.constants';
+import { CacheService } from '@/cache/cache.service';
+import { Duration } from '@/common/app.constants';
 
-type CacheableOptions = {
-  key: (...args: unknown[]) => string;
+type CacheableOptions<T extends unknown[]> = {
+  key: (...args: T) => string;
   ttl?: number;
 };
 
@@ -11,23 +11,22 @@ type ServiceWithCache = {
   cacheService: CacheService;
 };
 
-export const Cacheable = ({
+export const Cacheable = <T extends unknown[], R>({
   key,
   ttl = Duration.ONE_DAY,
-}: CacheableOptions) => {
+}: CacheableOptions<T>) => {
   return function (
     _target: unknown,
     _propertyKey: string,
-    descriptor: PropertyDescriptor,
+    descriptor: TypedPropertyDescriptor<(...args: T) => Promise<R>>,
   ) {
-    const originalMethod = descriptor.value as (
-      ...args: unknown[]
-    ) => Promise<unknown>;
+    const originalMethod = descriptor.value;
+    if (!originalMethod) return;
 
     descriptor.value = async function (
       this: ServiceWithCache,
-      ...args: unknown[]
-    ) {
+      ...args: T
+    ): Promise<R> {
       const cacheService = this.cacheService;
 
       if (!cacheService) {
@@ -39,21 +38,19 @@ export const Cacheable = ({
       const cacheKey = key(...args);
 
       // Get from cache
-      const cachedValue = await cacheService.get(cacheKey);
+      const cachedValue = (await cacheService.get(cacheKey)) as R;
       if (cachedValue) {
         return cachedValue;
       }
 
-      // Call original method (using .call to preserve strict typing)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await originalMethod.call(this, ...args);
+      // Call original method
+      const result = (await originalMethod.call(this, ...args)) as R;
 
       // Set cache
       if (result) {
         await cacheService.set(cacheKey, result, ttl);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return result;
     };
 

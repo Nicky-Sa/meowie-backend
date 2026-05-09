@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
-import { CHURN_REASONS } from './items/churn-reasons.constant';
-import { ChurnReasonsResDto, GenresResDto } from './constants.dto';
-import { ConstantsService } from './constants.service';
+import { CHURN_REASONS } from '@/constants/items/churn-reasons.constant';
+import { ChurnReasonsResDto, GenresResDto } from '@/constants/constants.dto';
+import { ConstantsService } from '@/constants/constants.service';
 
 @Controller('constants')
 export class ConstantsController {

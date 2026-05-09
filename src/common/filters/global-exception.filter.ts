@@ -29,7 +29,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
     let errorMessage: string | string[] = 'Internal server error';
 
     if (exception instanceof HttpException) {
@@ -46,7 +46,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     // Conditionally capture only 5xx errors
-    if ((status as number) >= 500) {
+    if (status >= 500) {
       Sentry.captureException(exception);
     }
 

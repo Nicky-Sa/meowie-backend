@@ -2,7 +2,7 @@ import { IsEmail, IsIn } from 'class-validator';
 import {
   CHURN_REASONS_IDS,
   ChurnReasonId,
-} from '../../constants/items/churn-reasons.constant';
+} from '@/constants/items/churn-reasons.constant';
 
 export class DeleteAccountReqDto {
   @IsEmail()

@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { EmailService } from './email.service';
+import { EmailService } from '@/email/email.service';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
-import { EmailTemplateConfig } from './email.types';
-import { EMAIL_SENDER } from './email.constants';
-import { EMAIL_QUEUE } from '../common/queue.constants';
+import { EmailTemplateConfig } from '@/email/email.types';
+import { EMAIL_SENDER } from '@/email/email.constants';
+import { EMAIL_QUEUE } from '@/common/queue.constants';
 
 @Injectable()
 export class EmailQueueService extends EmailService {

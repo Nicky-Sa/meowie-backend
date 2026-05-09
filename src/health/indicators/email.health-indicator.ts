@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
-import { EmailService } from '../../email/email.service';
+import { EmailService } from '@/email/email.service';
 
 @Injectable()
 export class EmailHealthIndicator {

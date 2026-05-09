@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MovieService } from './movie.service';
-import { MovieController } from './movie.controller';
-import { TmdbModule } from '../tmdb/tmdb.module';
-import { RatingsModule } from '../ratings/ratings.module';
-import { ImagesModule } from '../images/images.module';
+import { MovieService } from '@/movie/movie.service';
+import { MovieController } from '@/movie/movie.controller';
+import { TmdbModule } from '@/tmdb/tmdb.module';
+import { RatingsModule } from '@/ratings/ratings.module';
+import { ImagesModule } from '@/images/images.module';
 
 @Module({
   controllers: [MovieController],

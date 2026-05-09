@@ -10,13 +10,13 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { CollectionItem } from './collection-item.entity';
+import { CollectionItem } from '@/collections/entities/collection-item.entity';
 import {
   CATEGORY_MEDIA_TYPE_VALUES,
   CATEGORY_SOURCE_TYPE_VALUES,
   CollectionMediaType,
   CollectionSourceType,
-} from '../collections.constants';
+} from '@/collections/collections.constants';
 
 @Entity('collections')
 export class Collection {

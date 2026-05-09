@@ -1,8 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { User } from './entities/users.entity';
-import { RequestOtpReqDto } from '../auth/dto/request-otp.dto';
+import { User } from '@/users/entities/users.entity';
+import { RequestOtpReqDto } from '@/auth/dto/request-otp.dto';
 
 type FindOneBy =
   | { key: 'email'; value: string | null }

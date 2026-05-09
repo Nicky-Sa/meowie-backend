@@ -1,5 +1,5 @@
 import { DataSourceOptions } from 'typeorm';
-import { loadEnv, loadDbMigratorEnv } from '../env/env.config';
+import { loadEnv, loadDbMigratorEnv } from '@/env/env.config';
 
 export type DbConnectionRole = 'app' | 'migrator';
 

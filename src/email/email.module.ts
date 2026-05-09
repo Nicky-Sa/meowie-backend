@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { EmailService } from './email.service';
-import { SesService } from './SES/ses.service';
-import { EmailQueueService } from './email-queue.service';
-import { EmailProcessor } from './email.processor';
-import { EMAIL_SENDER } from './email.constants';
-import { EMAIL_QUEUE } from '../common/queue.constants';
+import { EmailService } from '@/email/email.service';
+import { SesService } from '@/email/SES/ses.service';
+import { EmailQueueService } from '@/email/email-queue.service';
+import { EmailProcessor } from '@/email/email.processor';
+import { EMAIL_SENDER } from '@/email/email.constants';
+import { EMAIL_QUEUE } from '@/common/queue.constants';
 
 @Module({
   imports: [

@@ -9,28 +9,28 @@ import {
   Res,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { AuthService } from './auth.service';
-import { RequestOtpReqDto } from './dto/request-otp.dto';
-import { VerifyOtpReqDto, VerifyOtpResDto } from './dto/verify-otp.dto';
+import { AuthService } from '@/auth/auth.service';
+import { RequestOtpReqDto } from '@/auth/dto/request-otp.dto';
+import { VerifyOtpReqDto, VerifyOtpResDto } from '@/auth/dto/verify-otp.dto';
 import { Response } from 'express';
 import {
   AuthenticatedRequest,
   OptionallyAuthenticatedRequest,
-} from './types/authenticated-request.type';
+} from '@/auth/types/authenticated-request.type';
 import {
   RefreshTokenReqDto,
   RefreshTokenResDto,
-} from './dto/refresh-token.dto';
-import { OptionalAccessGuard } from './guards/optional-access.guard';
-import { CurrentUserResDto } from './dto/current-user.dto';
-import { LogoutResDto } from './dto/logout.dto';
+} from '@/auth/dto/refresh-token.dto';
+import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
+import { CurrentUserResDto } from '@/auth/dto/current-user.dto';
+import { LogoutResDto } from '@/auth/dto/logout.dto';
 import {
   DeleteAccountReqDto,
   DeleteAccountResDto,
-} from './dto/delete-account.dto';
-import { RefreshGuard } from './guards/refresh.guard';
-import { AccessGuard } from './guards/access.guard';
-import { Duration } from '../common/app.constants';
+} from '@/auth/dto/delete-account.dto';
+import { RefreshGuard } from '@/auth/guards/refresh.guard';
+import { AccessGuard } from '@/auth/guards/access.guard';
+import { Duration } from '@/common/app.constants';
 
 @Controller('auth')
 export class AuthController {

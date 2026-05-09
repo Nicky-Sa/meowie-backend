@@ -1,5 +1,5 @@
-import { MediaType } from '../types/media-type';
-import { Genre } from '../constants/items/genres.constant';
+import { MediaType } from '@/types/media-type';
+import { Genre } from '@/constants/items/genres.constant';
 
 export class PosterProps {
   primaryColorHex: string;

@@ -5,11 +5,11 @@ import {
   Param,
   UseInterceptors,
 } from '@nestjs/common';
-import { PersonService } from './person.service';
-import { PersonResDto } from './dto/person.dto';
-import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { Duration } from '../common/app.constants';
+import { PersonService } from '@/person/person.service';
+import { PersonResDto } from '@/person/dto/person.dto';
+import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { Duration } from '@/common/app.constants';
 
 @Controller('person')
 @UseInterceptors(TMDBErrorInterceptor)

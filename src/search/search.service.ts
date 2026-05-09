@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { TMDB_MultiSearchDetail } from '../tmdb/tmdb.type';
-import { MultiSearchResDto } from './dto/search.dto';
-import { getImage } from '../images/images.utils';
-import { extractYearFromDate } from '../utils/dates';
-import { MultiSearchResults } from './models/search-results.model';
-import { TmdbService } from '../tmdb/tmdb.service';
-import { ConstantsService } from '../constants/constants.service';
-import { AiService } from '../ai/ai.service';
+import { TMDB_MultiSearchDetail } from '@/tmdb/tmdb.type';
+import { MultiSearchResDto } from '@/search/dto/search.dto';
+import { getImage } from '@/images/images.utils';
+import { extractYearFromDate } from '@/utils/dates';
+import { MultiSearchResults } from '@/search/models/search-results.model';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { ConstantsService } from '@/constants/constants.service';
+import { AiService } from '@/ai/ai.service';
 
 @Injectable()
 export class SearchService {

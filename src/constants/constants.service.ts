@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { TmdbService } from '../tmdb/tmdb.service';
-import { Cacheable } from '../cache/cacheable.decorator';
-import { TMDB_GenresList } from '../tmdb/tmdb.type';
-import { Genre, GenresResDto } from './constants.dto';
-import { getGenreEmoji } from '../utils/media';
-import { CacheService } from '../cache/cache.service';
-import { Duration } from '../common/app.constants';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { TMDB_GenresList } from '@/tmdb/tmdb.type';
+import { Genre, GenresResDto } from '@/constants/constants.dto';
+import { getGenreEmoji } from '@/utils/media';
+import { CacheService } from '@/cache/cache.service';
+import { Duration } from '@/common/app.constants';
 
 @Injectable()
 export class ConstantsService {

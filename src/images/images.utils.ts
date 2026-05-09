@@ -3,7 +3,7 @@ import {
   MOVIE_POSTER_FALLBACK_URL,
   TV_POSTER_FALLBACK_URL,
   TMDB_IMAGE_BASE_URL,
-} from '../common/app.constants';
+} from '@/common/app.constants';
 
 export const getImage = (
   path: string | null | undefined,

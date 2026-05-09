@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { User } from '../../users/entities/users.entity';
+import { User } from '@/users/entities/users.entity';
 
 export class VerifyOtpReqDto {
   @IsEmail()

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
-import { TmdbService } from '../../tmdb/tmdb.service';
+import { TmdbService } from '@/tmdb/tmdb.service';
 
 @Injectable()
 export class TmdbHealthIndicator {

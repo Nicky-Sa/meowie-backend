@@ -4,12 +4,12 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { EmailService } from '../email/email.service';
+import { EmailService } from '@/email/email.service';
 import { randomInt } from 'crypto';
 import { Repository } from 'typeorm';
-import { Otp } from './entities/otp.entity';
+import { Otp } from '@/otp/entities/otp.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EnvService } from '../env/env.service';
+import { EnvService } from '@/env/env.service';
 import * as fs from 'fs';
 import * as path from 'path';
 

@@ -1,4 +1,4 @@
-import { ChurnReason } from './items/churn-reasons.constant';
+import { ChurnReason } from '@/constants/items/churn-reasons.constant';
 
 export class ChurnReasonsResDto {
   reasons: ChurnReason[];

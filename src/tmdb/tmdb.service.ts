@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { EnvService } from '../env/env.service';
+import { EnvService } from '@/env/env.service';
 import axios from 'axios';
-import { TMDB_BASE_URL } from '../common/app.constants';
-import { MediaType } from '../types/media-type';
+import { TMDB_BASE_URL } from '@/common/app.constants';
+import { MediaType } from '@/types/media-type';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoverSeriesQuery,
@@ -12,7 +12,7 @@ import {
   TMDB_GenresList,
   TMDB_CombinedCredits,
   TMDB_FindByExternalId,
-} from './tmdb.type';
+} from '@/tmdb/tmdb.type';
 
 @Injectable()
 export class TmdbService {

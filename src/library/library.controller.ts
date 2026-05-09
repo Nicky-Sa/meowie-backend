@@ -7,13 +7,13 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { LibraryService } from './library.service';
+import { LibraryService } from '@/library/library.service';
 import {
   AuthenticatedRequest,
   OptionallyAuthenticatedRequest,
-} from '../auth/types/authenticated-request.type';
-import { AccessGuard } from '../auth/guards/access.guard';
-import { OptionalAccessGuard } from '../auth/guards/optional-access.guard';
+} from '@/auth/types/authenticated-request.type';
+import { AccessGuard } from '@/auth/guards/access.guard';
+import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
 import {
   LibraryStatusResDto,
   LibraryItemQueryDto,
@@ -21,12 +21,12 @@ import {
   UpdateRatingReqDto,
   MarkSavedReqDto,
   RemoveItemReqDto,
-} from './dto/library.dto';
+} from '@/library/dto/library.dto';
 import { Body, Delete } from '@nestjs/common';
-import { MediaType } from '../types/media-type';
-import { LibraryCategory } from './library.constants';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { EMPTY_PAGINATED_RESULTS } from '../common/types/paginated-response';
+import { MediaType } from '@/types/media-type';
+import { LibraryCategory } from '@/library/library.constants';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { EMPTY_PAGINATED_RESULTS } from '@/common/types/paginated-response';
 
 @Controller('library')
 export class LibraryController {

@@ -1,25 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { CreditInfo } from 'src/types/credit';
+import { CreditInfo } from '@/types/credit';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoveredMovieDetail,
   TMDB_MovieInfo,
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
-} from 'src/tmdb/tmdb.type';
-import { getImage } from '../images/images.utils';
+} from '@/tmdb/tmdb.type';
+import { getImage } from '@/images/images.utils';
 import {
   MovieInfoResDto,
   InterestingMovieIdsResDto,
   QueryParamsDto,
   MovieCredits,
-} from './dto/movie.dto';
-import { CacheService } from '../cache/cache.service';
-import { Cacheable } from '../cache/cacheable.decorator';
-import { extractYearFromDate } from '../utils/dates';
-import { TmdbService } from '../tmdb/tmdb.service';
-import { RatingsService } from '../ratings/ratings.service';
-import { ImagesService } from '../images/images.service';
+} from '@/movie/dto/movie.dto';
+import { CacheService } from '@/cache/cache.service';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { extractYearFromDate } from '@/utils/dates';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { RatingsService } from '@/ratings/ratings.service';
+import { ImagesService } from '@/images/images.service';
 import {
   findTrailerKey,
   formatCasts,
@@ -27,11 +27,11 @@ import {
   formatDuration,
   formatGenres,
   emptyCredit,
-} from '../utils/media';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { Duration } from '../common/app.constants';
-import { GENRES } from '../constants/items/genres.constant';
-import { BaseMediaService } from '../common/base-media.service';
+} from '@/utils/media';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { Duration } from '@/common/app.constants';
+import { GENRES } from '@/constants/items/genres.constant';
+import { BaseMediaService } from '@/common/base-media.service';
 
 @Injectable()
 export class MovieService extends BaseMediaService {

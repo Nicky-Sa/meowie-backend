@@ -1,6 +1,6 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
-import { ClsService } from './cls.service';
-import { EnvService } from 'src/env/env.service';
+import { ClsService } from '@/common/cls/cls.service';
+import { EnvService } from '@/env/env.service';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 

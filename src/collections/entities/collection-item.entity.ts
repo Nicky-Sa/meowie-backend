@@ -7,7 +7,7 @@ import {
   Unique,
   Index,
 } from 'typeorm';
-import { Collection } from './collection.entity';
+import { Collection } from '@/collections/entities/collection.entity';
 
 @Entity('collection_items')
 @Unique(['collectionId', 'tmdbId', 'position'])

@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { LibraryItem } from '../../library/entities/library-item.entity';
+import { LibraryItem } from '@/library/entities/library-item.entity';
 
 @Entity({
   name: 'users',

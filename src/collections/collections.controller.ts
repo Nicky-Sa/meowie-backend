@@ -6,15 +6,15 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { CollectionsService } from './collections.service';
+import { CollectionsService } from '@/collections/collections.service';
 import {
   CollectionItemQueryDto,
   CollectionQueryDto,
   CollectionResDto,
-} from './dto/collection.dto';
-import { TMDBErrorInterceptor } from '../common/interceptors/tmdb-error.interceptor';
-import { PosterResDto } from '../common/dto/poster.dto';
-import { Duration } from '../common/app.constants';
+} from '@/collections/dto/collection.dto';
+import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
+import { PosterResDto } from '@/common/dto/poster.dto';
+import { Duration } from '@/common/app.constants';
 
 @Controller('collections')
 @UseInterceptors(TMDBErrorInterceptor)

@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nestjs';
-import { loadEnv } from './env/env.config';
+import { loadEnv } from '@/env/env.config';
 
 const env = loadEnv();
 

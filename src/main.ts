@@ -1,10 +1,10 @@
-import './instrument';
+import '@/instrument';
 import compression from 'compression';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { EnvService } from 'src/env/env.service';
+import { AppModule } from '@/app.module';
+import { EnvService } from '@/env/env.service';
 import { Logger, VersioningType } from '@nestjs/common';
-import { ClsLogger } from './common/cls/cls-logger.service';
+import { ClsLogger } from '@/common/cls/cls-logger.service';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import pkg from '../package.json';

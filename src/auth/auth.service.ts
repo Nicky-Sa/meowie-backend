@@ -1,23 +1,23 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { RequestOtpReqDto } from './dto/request-otp.dto';
-import { UsersService } from '../users/users.service';
-import { OtpService } from '../otp/otp.service';
-import { VerifyOtpReqDto } from './dto/verify-otp.dto';
+import { RequestOtpReqDto } from '@/auth/dto/request-otp.dto';
+import { UsersService } from '@/users/users.service';
+import { OtpService } from '@/otp/otp.service';
+import { VerifyOtpReqDto } from '@/auth/dto/verify-otp.dto';
 import { JwtService } from '@nestjs/jwt';
-import { EnvService } from '../env/env.service';
+import { EnvService } from '@/env/env.service';
 import {
   JwtAccessTokenPayload,
   JwtRefreshTokenPayload,
-} from './types/jwt.type';
+} from '@/auth/types/jwt.type';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
-import { DeleteAccountReqDto } from './dto/delete-account.dto';
-import { User } from '../users/entities/users.entity';
-import { ChurnLog } from '../users/entities/churn-log.entity';
+import { DeleteAccountReqDto } from '@/auth/dto/delete-account.dto';
+import { User } from '@/users/entities/users.entity';
+import { ChurnLog } from '@/users/entities/churn-log.entity';
 import type { StringValue } from 'ms';
-import { CacheService } from '../cache/cache.service';
+import { CacheService } from '@/cache/cache.service';
 import * as crypto from 'crypto';
-import { Duration } from '../common/app.constants';
+import { Duration } from '@/common/app.constants';
 
 @Injectable()
 export class AuthService {

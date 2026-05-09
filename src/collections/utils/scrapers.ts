@@ -161,7 +161,8 @@ export async function scrapeLetterboxdList(
 
     return items;
   } catch (error) {
-    console.error(`Scraping Letterboxd failed (${baseUrl}):`, error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Scraping Letterboxd failed (${baseUrl}):`, errorMessage);
     return items;
   }
 }

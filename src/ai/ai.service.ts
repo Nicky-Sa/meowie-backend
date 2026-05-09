@@ -4,7 +4,7 @@ import {
   createGoogleGenerativeAI,
   GoogleGenerativeAIProvider,
 } from '@ai-sdk/google';
-import { EnvService } from '../env/env.service';
+import { EnvService } from '@/env/env.service';
 
 @Injectable()
 export class AiService {

@@ -5,8 +5,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import Redis from 'ioredis';
-import { CacheService } from '../cache.service';
-import { EnvService } from '../../env/env.service';
+import { CacheService } from '@/cache/cache.service';
+import { EnvService } from '@/env/env.service';
 
 @Injectable()
 export class RedisService

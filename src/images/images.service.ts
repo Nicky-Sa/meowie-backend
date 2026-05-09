@@ -6,8 +6,8 @@ import { encode } from 'blurhash';
 import {
   DEFAULT_BLURHASH,
   DEFAULT_PRIMARY_COLOR_HEX,
-} from '../common/app.constants';
-import { getPlaceholderBlurhash } from './blurhash-placeholders';
+} from '@/common/app.constants';
+import { getPlaceholderBlurhash } from '@/images/blurhash-placeholders';
 
 @Injectable()
 export class ImagesService {

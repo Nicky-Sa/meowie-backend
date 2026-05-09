@@ -1,4 +1,4 @@
-import { EmailService } from '../email.service';
+import { EmailService } from '@/email/email.service';
 import {
   SendTemplatedEmailCommand,
   SESClient,
@@ -6,9 +6,9 @@ import {
   CreateTemplateCommand,
   GetSendQuotaCommand,
 } from '@aws-sdk/client-ses';
-import { EnvService } from '../../env/env.service';
+import { EnvService } from '@/env/env.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { EmailTemplateConfig } from '../email.types';
+import { EmailTemplateConfig } from '@/email/email.types';
 
 @Injectable()
 export class SesService extends EmailService {

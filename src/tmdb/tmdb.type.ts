@@ -1,4 +1,4 @@
-import { PaginatedResponse } from '../common/types/paginated-response';
+import { PaginatedResponse } from '@/common/types/paginated-response';
 
 export type TMDB_Genre = {
   id: number;

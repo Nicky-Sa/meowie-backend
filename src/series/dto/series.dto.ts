@@ -1,16 +1,11 @@
-import { PaginatedResponse } from '../../common/types/paginated-response';
+import { PaginatedResponse } from '@/common/types/paginated-response';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import {
-  Browse,
-  SeriesFilters,
-  Page,
-  Sort,
-} from '../../common/types/media-query';
-import { Genre } from '../../constants/items/genres.constant';
-import { PosterProps } from '../../images/poster';
-import { CreditInfo } from '../../types/credit';
-import { RatingEntry } from '../../ratings/types/rating.type';
-import { WatchProviders } from '../../types/watch-provider';
+import { Browse, SeriesFilters, Page, Sort } from '@/common/types/media-query';
+import { Genre } from '@/constants/items/genres.constant';
+import { PosterProps } from '@/images/poster';
+import { CreditInfo } from '@/types/credit';
+import { RatingEntry } from '@/ratings/types/rating.type';
+import { WatchProviders } from '@/types/watch-provider';
 
 export class InterestingSeriesIdsResDto extends PaginatedResponse<number> {
   @ApiProperty({ type: [Number] })

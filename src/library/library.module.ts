@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { LibraryService } from './library.service';
-import { LibraryController } from './library.controller';
-import { LibraryItem } from './entities/library-item.entity';
+import { LibraryService } from '@/library/library.service';
+import { LibraryController } from '@/library/library.controller';
+import { LibraryItem } from '@/library/entities/library-item.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MovieModule } from '../movie/movie.module';
-import { SeriesModule } from '../series/series.module';
-import { ImagesModule } from '../images/images.module';
+import { MovieModule } from '@/movie/movie.module';
+import { SeriesModule } from '@/series/series.module';
+import { ImagesModule } from '@/images/images.module';
 
 @Module({
   imports: [

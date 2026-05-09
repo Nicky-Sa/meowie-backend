@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { RatingEntry } from './types/rating.type';
-import { WHATSON_BASE_URL } from '../common/app.constants';
-import { Whatson_MediaItem } from './types/whatson.type';
-import { EnvService } from 'src/env/env.service';
+import { RatingEntry } from '@/ratings/types/rating.type';
+import { WHATSON_BASE_URL } from '@/common/app.constants';
+import { Whatson_MediaItem } from '@/ratings/types/whatson.type';
+import { EnvService } from '@/env/env.service';
 
 @Injectable()
 export class RatingsService {
