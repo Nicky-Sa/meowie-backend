@@ -4,7 +4,7 @@ WORKDIR /app
 
 # 1. Copy package files and install ONLY production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # 2. Copy the pre-compiled dist folder from the GitHub runner
 COPY dist ./dist
