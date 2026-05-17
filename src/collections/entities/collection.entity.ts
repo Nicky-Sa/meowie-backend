@@ -73,10 +73,10 @@ export class Collection {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
   // -- Relations --

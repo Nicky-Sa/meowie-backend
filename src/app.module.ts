@@ -1,7 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
-import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from '@/app.controller';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -39,7 +38,6 @@ import { ClsMiddleware } from '@/common/cls/cls.middleware';
 @Module({
   imports: [
     SentryModule.forRoot(),
-    ScheduleModule.forRoot(),
     BullModule.forRootAsync({
       imports: [EnvModule],
       inject: [EnvService],

@@ -1,0 +1,42 @@
+name: Weekly Collections Sync
+
+on:
+  schedule:
+    # Every Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to sync'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # If triggered manually, use the selected input. Otherwise (cron), run for both.
+        environment: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.environment)) || fromJSON('["production", "preview"]') }}
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Trigger Sync
+        run: |
+          # Use vars.API_BASE_URL to determine the environment's URL
+          # The secret CRON_SECRET must be set in the GitHub repository secrets
+          BASE_URL="${{ vars.API_BASE_URL }}"
+          if [ -z "$BASE_URL" ]; then
+            echo "Error: API_BASE_URL variable is not set for environment ${{ matrix.environment }}"
+            exit 1
+          fi
+          
+          echo "Syncing collections at $BASE_URL/collections/sync..."
+          
+          curl -X POST "$BASE_URL/collections/sync" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --fail-with-body

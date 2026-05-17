@@ -6,6 +6,8 @@ import {
   JoinColumn,
   Unique,
   Index,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Collection } from '@/collections/entities/collection.entity';
 
@@ -28,4 +30,10 @@ export class CollectionItem {
   @ManyToOne(() => Collection, (cat) => cat.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'collection_id' })
   collection: Collection;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
 }

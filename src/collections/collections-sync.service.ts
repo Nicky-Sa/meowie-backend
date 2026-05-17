@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Collection } from '@/collections/entities/collection.entity';
@@ -24,9 +23,8 @@ export class CollectionsSyncService {
   ) {}
 
   /**
-   * Cron job that runs every week to sync the IMDB Top 250 movies list.
+   * Sync the IMDB Top 250 movies list.
    */
-  @Cron(CronExpression.EVERY_WEEK)
   async syncImdbTop250Movies() {
     await this.syncImdbCollection({
       slug: 'imdb-top-250-movies',
@@ -37,9 +35,8 @@ export class CollectionsSyncService {
   }
 
   /**
-   * Cron job that runs every week to sync the IMDB Top 250 series list.
+   * Sync the IMDB Top 250 series list.
    */
-  @Cron(CronExpression.EVERY_WEEK)
   async syncImdbTop250Series() {
     await this.syncImdbCollection({
       slug: 'imdb-top-250-series',
@@ -49,9 +46,8 @@ export class CollectionsSyncService {
     });
   }
   /**
-   * Cron job that runs every week to sync the Letterboxd Top 250 Narrative list.
+   * Sync the Letterboxd Top 250 Narrative list.
    */
-  @Cron(CronExpression.EVERY_WEEK)
   async syncLetterboxdTop250Narrative() {
     await this.syncLetterboxdCollection({
       slug: 'letterboxd-top-250-narratives',
@@ -61,9 +57,8 @@ export class CollectionsSyncService {
   }
 
   /**
-   * Cron job that runs every week to sync the Letterboxd Top 250 Documentaries list.
+   * Sync the Letterboxd Top 250 Documentaries list.
    */
-  @Cron(CronExpression.EVERY_WEEK)
   async syncLetterboxdTop250Documentaries() {
     await this.syncLetterboxdCollection({
       slug: 'letterboxd-top-250-documentaries',

@@ -153,6 +153,7 @@ jobs:
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           ALLOWED_DOMAIN=${{ vars.ALLOWED_DOMAIN }}
           WHATSON_API_KEY=${{ secrets.WHATSON_API_KEY }}
+          CRON_SECRET=${{ secrets.CRON_SECRET }}
           EOF
 
       - name: Copy .env.local to VPS
