@@ -20,10 +20,10 @@ export class SearchService {
     if (!query) {
       return { results: [] };
     }
-    const correctedQuery = await this.aiService.textAutoCorrect(query);
+    // const correctedQuery = await this.aiService.textAutoCorrect(query);
 
     const [response, genresRes] = await Promise.all([
-      this.tmdbService.multiSearch(correctedQuery),
+      this.tmdbService.multiSearch(query),
       this.constantsService.getGenres(),
     ]);
 
@@ -75,10 +75,10 @@ export class SearchService {
       })
       .filter(Boolean);
     const matchingMovieGenres = movieGenres.filter((genre) =>
-      genre.name.toLowerCase().includes(correctedQuery.toLowerCase()),
+      genre.name.toLowerCase().includes(query.toLowerCase()),
     );
     const matchingSeriesGenres = seriesGenres.filter((genre) =>
-      genre.name.toLowerCase().includes(correctedQuery.toLowerCase()),
+      genre.name.toLowerCase().includes(query.toLowerCase()),
     );
 
     if (matchingMovieGenres.length > 0) {
