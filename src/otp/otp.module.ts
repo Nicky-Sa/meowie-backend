@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { OtpService } from '@/otp/otp.service';
 import { EmailModule } from '@/email/email.module';
-import { Otp } from '@/otp/entities/otp.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { CacheModule } from '@/cache/cache.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Otp]), EmailModule],
+  imports: [CacheModule, EmailModule],
   providers: [OtpService],
   exports: [OtpService],
 })

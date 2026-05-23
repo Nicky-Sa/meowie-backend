@@ -6,9 +6,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { EmailService } from '@/email/email.service';
 import { randomInt } from 'crypto';
-import { Repository } from 'typeorm';
-import { Otp } from '@/otp/entities/otp.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { CacheService } from '@/cache/cache.service';
 import { EnvService } from '@/env/env.service';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -19,8 +17,7 @@ export class OtpService implements OnModuleInit {
   private readonly OTP_EMAIL_TEMPLATE: string;
 
   constructor(
-    @InjectRepository(Otp)
-    private readonly otpRepository: Repository<Otp>,
+    private readonly cacheService: CacheService,
     private readonly emailService: EmailService,
     private readonly env: EnvService,
   ) {
@@ -36,7 +33,9 @@ export class OtpService implements OnModuleInit {
     const hash = await bcrypt.hash(otp, 10);
 
     try {
-      await this.otpRepository.upsert({ email, otp: hash }, ['email']);
+      const ttlSeconds = this.OTP_EXPIRY_MINUTES * 60;
+      await this.cacheService.set(`otp:${email}`, hash, ttlSeconds);
+
       await this.emailService.sendEmail(email, {
         name: this.OTP_EMAIL_TEMPLATE,
         data: {
@@ -54,27 +53,17 @@ export class OtpService implements OnModuleInit {
 
   async verifyOtp(email: string, input: string) {
     try {
-      const storedOtpItem = await this.otpRepository.findOne({
-        where: { email },
-      });
-      if (!storedOtpItem || !storedOtpItem.otp) {
+      const redisKey = `otp:${email}`;
+      const storedOtp = await this.cacheService.get<string>(redisKey);
+
+      if (!storedOtp) {
         return false;
       }
 
-      const isExpired = this.isExpired(
-        storedOtpItem.updatedAt,
-        this.OTP_EXPIRY_MINUTES,
-      );
-      if (isExpired) {
-        await this.otpRepository.delete({ email });
-        return false;
-      }
-
-      const storedOtp = storedOtpItem.otp;
       const isValid = await bcrypt.compare(input, storedOtp);
 
       if (isValid) {
-        await this.otpRepository.delete({ email });
+        await this.cacheService.del(redisKey);
       }
       return isValid;
     } catch (error) {
@@ -84,12 +73,6 @@ export class OtpService implements OnModuleInit {
         { cause: error },
       );
     }
-  }
-
-  private isExpired(createdAt: Date, expiryMinutes: number) {
-    const diff = Date.now() - createdAt.getTime();
-    const minutesPassed = Math.floor(diff / (1000 * 60));
-    return minutesPassed > expiryMinutes;
   }
 
   private async syncOtpTemplate() {
