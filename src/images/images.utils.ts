@@ -24,6 +24,8 @@ export const getImageWithFallback = (
         return PERSON_FALLBACK_URL;
       case 'watch_provider': // to be determined
         return TV_POSTER_FALLBACK_URL;
+      case 'backdrop':
+        return MOVIE_POSTER_FALLBACK_URL; // Using poster fallback as generic backdrop fallback
     }
   }
   return getImageFullUrl(path) as string; // path is already a string if we got this far
