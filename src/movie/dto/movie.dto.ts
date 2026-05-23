@@ -33,6 +33,7 @@ export class MovieInfoResDto {
   overview: string;
   genres: Genre[];
   posterProps: PosterProps;
+  backdropPath?: string;
   credits: MovieCredits;
   ratings: RatingEntry[];
   watchProviders: WatchProviders;

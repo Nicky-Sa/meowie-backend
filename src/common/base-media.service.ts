@@ -7,7 +7,7 @@ import {
   TMDB_DiscoverSeriesQuery,
 } from '@/tmdb/tmdb.type';
 import { WatchProviders } from '@/types/watch-provider';
-import { getImage } from '@/images/images.utils';
+import { getImageWithFallback } from '@/images/images.utils';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { SortOption } from '@/common/types/media-query';
 import { PosterInfo } from '@/images/poster';
@@ -75,7 +75,7 @@ export abstract class BaseMediaService {
       };
 
     const mapProvider = (p: TMDB_WatchProvider) => ({
-      logoPath: getImage(p.logo_path, 'watch_provider'),
+      logoPath: getImageWithFallback(p.logo_path, 'watch_provider'),
       providerId: p.provider_id,
       providerName: p.provider_name,
     });

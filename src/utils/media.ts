@@ -6,7 +6,7 @@ import {
 } from '@/tmdb/tmdb.type';
 import { CreditInfo } from '@/types/credit';
 import { PERSON_FALLBACK_URL } from '@/common/app.constants';
-import { getImage } from '@/images/images.utils';
+import { getImageWithFallback } from '@/images/images.utils';
 import { GENRES } from '@/constants/items/genres.constant';
 import { MediaType } from '@/types/media-type';
 
@@ -77,7 +77,7 @@ export const formatCasts = (
       name: cast.name,
       role: cast.character,
       creditId: cast.credit_id,
-      profilePath: getImage(cast.profile_path, 'person'),
+      profilePath: getImageWithFallback(cast.profile_path, 'person'),
     }));
 };
 
@@ -92,7 +92,7 @@ export const formatCrew = (
       name: crew.name,
       role: crew.job,
       creditId: crew.credit_id,
-      profilePath: getImage(crew.profile_path, 'person'),
+      profilePath: getImageWithFallback(crew.profile_path, 'person'),
     }));
 };
 

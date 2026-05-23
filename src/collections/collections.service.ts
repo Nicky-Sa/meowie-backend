@@ -10,7 +10,7 @@ import { CollectionItem } from '@/collections/entities/collection-item.entity';
 import { CollectionResDto } from '@/collections/dto/collection.dto';
 import { TmdbService } from '@/tmdb/tmdb.service';
 import { PosterResDto } from '@/common/dto/poster.dto';
-import { getImage } from '@/images/images.utils';
+import { getImageWithFallback } from '@/images/images.utils';
 import { Duration, LIMIT } from '@/common/app.constants';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { CacheService } from '@/cache/cache.service';
@@ -106,7 +106,7 @@ export class CollectionsService {
       .map((item) => {
         const title = 'title' in item ? item.title : item.name;
         const genreIds = item.genre_ids || [];
-        const posterPath = getImage(item.poster_path, posterType);
+        const posterPath = getImageWithFallback(item.poster_path, posterType);
         const blurhash = this.imagesService.generatePlaceholderBlurhash({
           id: item.id,
         });
@@ -161,7 +161,10 @@ export class CollectionsService {
 
         const title = 'title' in details ? details.title : details.name;
 
-        const posterPath = getImage(details.poster_path, posterType);
+        const posterPath = getImageWithFallback(
+          details.poster_path,
+          posterType,
+        );
         const blurhash = this.imagesService.generatePlaceholderBlurhash({
           id: item.tmdbId,
         });
