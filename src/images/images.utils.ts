@@ -5,7 +5,7 @@ import {
   TMDB_IMAGE_BASE_URL,
 } from '@/common/app.constants';
 
-export const getImage = (
+export const getImageWithFallback = (
   path: string | null | undefined,
   type: 'movie_poster' | 'series_poster' | 'person' | 'watch_provider',
 ) => {
@@ -20,6 +20,13 @@ export const getImage = (
       case 'watch_provider': // to be determined
         return TV_POSTER_FALLBACK_URL;
     }
+  }
+  return getImageFullUrl(path) as string; // path is already a string if we got this far
+};
+
+export const getImageFullUrl = (path: string | null | undefined) => {
+  if (!path) {
+    return;
   }
   return `${TMDB_IMAGE_BASE_URL}${path}`;
 };

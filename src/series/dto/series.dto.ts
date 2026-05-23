@@ -33,6 +33,7 @@ export class SeriesInfoResDto {
   overview: string;
   genres: Genre[];
   posterProps: PosterProps;
+  backdropPath?: string;
   credits: SeriesCredits;
   ratings: RatingEntry[];
   watchProviders: WatchProviders;

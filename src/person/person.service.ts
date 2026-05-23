@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PersonResDto } from '@/person/dto/person.dto';
-import { getImage } from '@/images/images.utils';
+import { getImageWithFallback } from '@/images/images.utils';
 import { CacheService } from '@/cache/cache.service';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { TmdbService } from '@/tmdb/tmdb.service';
@@ -33,7 +33,7 @@ export class PersonService {
       const data: PersonResDto = {
         id: response.id,
         name: response.name,
-        profilePath: getImage(response.profile_path, 'person'),
+        profilePath: getImageWithFallback(response.profile_path, 'person'),
         knownForDepartment: response.known_for_department.toLowerCase(),
       };
       return data;
@@ -91,7 +91,7 @@ export class PersonService {
     const tmdbGenres = GENRES.filter((g) => genreIds.includes(g.id)).map(
       (g) => ({ id: g.id, name: g.name }),
     );
-    const posterPath = getImage(item.poster_path, posterType);
+    const posterPath = getImageWithFallback(item.poster_path, posterType);
     const blurhash = this.imagesService.generatePlaceholderBlurhash({
       id: item.id,
     });

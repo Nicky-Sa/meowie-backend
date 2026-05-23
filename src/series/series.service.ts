@@ -13,7 +13,7 @@ import {
   SeriesInfoResDto,
 } from '@/series/dto/series.dto';
 import { Cacheable } from '@/cache/cacheable.decorator';
-import { getImage } from '@/images/images.utils';
+import { getImageFullUrl, getImageWithFallback } from '@/images/images.utils';
 import { CreditInfo } from '@/types/credit';
 import { TmdbService } from '@/tmdb/tmdb.service';
 import { ImagesService } from '@/images/images.service';
@@ -107,7 +107,9 @@ export class SeriesService extends BaseMediaService {
       id,
       'videos,content_ratings,credits,watch/providers',
     );
-    const posterPath = getImage(item.poster_path, 'series_poster');
+    const posterPath = getImageWithFallback(item.poster_path, 'series_poster');
+    const backdropPath = getImageFullUrl(item.backdrop_path);
+
     const [blurhash, primaryColorHex] = await Promise.all([
       this.imagesService.generateRealBlurhash({ imageUrl: posterPath }),
       this.imagesService.generatePrimaryColorHex(posterPath),
@@ -133,6 +135,7 @@ export class SeriesService extends BaseMediaService {
       overview: item.overview,
       genres: formatGenres(item.genres),
       posterProps,
+      backdropPath,
       credits: this.constructSeriesCredits(item.credits, item.created_by),
       ratings,
       watchProviders: this.constructWatchProviders(
@@ -172,7 +175,10 @@ export class SeriesService extends BaseMediaService {
   }
 
   private mapToSeriesPoster(series: TMDB_DiscoveredSeriesDetail) {
-    const posterPath = getImage(series.poster_path, 'series_poster');
+    const posterPath = getImageWithFallback(
+      series.poster_path,
+      'series_poster',
+    );
     const blurhash = this.imagesService.generatePlaceholderBlurhash({
       id: series.id,
     });
@@ -215,7 +221,7 @@ export class SeriesService extends BaseMediaService {
       name: creator.name,
       role: 'Creator',
       creditId: creator.credit_id,
-      profilePath: getImage(creator.profile_path, 'person'),
+      profilePath: getImageWithFallback(creator.profile_path, 'person'),
     };
   }
 

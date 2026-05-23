@@ -95,7 +95,7 @@ export type TMDB_Recommendations<T> = {
 export type TMDB_MovieInfo = {
   id: number;
   adult: boolean;
-  backdrop_path: string;
+  backdrop_path?: string;
   belongs_to_collection: TMDB_BelongsToCollection;
   budget: number;
   genres: TMDB_Genre[];
@@ -106,7 +106,7 @@ export type TMDB_MovieInfo = {
   original_title: string;
   overview: string;
   popularity: number;
-  poster_path: string;
+  poster_path?: string;
   production_companies: TMDB_ProductionCompany[];
   production_countries: TMDB_ProductionCountry[];
   release_date: string;

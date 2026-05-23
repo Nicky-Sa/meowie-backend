@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TMDB_MultiSearchDetail } from '@/tmdb/tmdb.type';
 import { MultiSearchResDto } from '@/search/dto/search.dto';
-import { getImage } from '@/images/images.utils';
+import { getImageWithFallback } from '@/images/images.utils';
 import { extractYearFromDate } from '@/utils/dates';
 import { MultiSearchResults } from '@/search/models/search-results.model';
 import { TmdbService } from '@/tmdb/tmdb.service';
@@ -47,14 +47,17 @@ export class SearchService {
               id: result.id,
               name: result.name,
               knownForDepartment: result.known_for_department.toLowerCase(),
-              profilePath: getImage(result.profile_path, 'person'),
+              profilePath: getImageWithFallback(result.profile_path, 'person'),
             };
           case 'movie':
             return {
               mediaType: 'movie' as const,
               id: result.id,
               title: result.title,
-              posterPath: getImage(result.poster_path, 'movie_poster'),
+              posterPath: getImageWithFallback(
+                result.poster_path,
+                'movie_poster',
+              ),
               genres: result.genre_ids
                 .map((id) => movieGenresMap.get(id))
                 .filter(Boolean) as string[],
@@ -65,7 +68,10 @@ export class SearchService {
               mediaType: 'series' as const,
               id: result.id,
               title: result.name,
-              posterPath: getImage(result.poster_path, 'series_poster'),
+              posterPath: getImageWithFallback(
+                result.poster_path,
+                'series_poster',
+              ),
               genres: result.genre_ids
                 .map((id) => seriesGenresMap.get(id))
                 .filter(Boolean) as string[],

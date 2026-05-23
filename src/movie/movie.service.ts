@@ -7,7 +7,7 @@ import {
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
 } from '@/tmdb/tmdb.type';
-import { getImage } from '@/images/images.utils';
+import { getImageFullUrl, getImageWithFallback } from '@/images/images.utils';
 import {
   MovieInfoResDto,
   InterestingMovieIdsResDto,
@@ -95,7 +95,9 @@ export class MovieService extends BaseMediaService {
       'videos,release_dates,credits,watch/providers',
     );
 
-    const posterPath = getImage(item.poster_path, 'movie_poster');
+    const posterPath = getImageWithFallback(item.poster_path, 'movie_poster');
+    const backdropPath = getImageFullUrl(item.backdrop_path);
+
     const [blurhash, primaryColorHex] = await Promise.all([
       this.imagesService.generateRealBlurhash({ imageUrl: posterPath }),
       this.imagesService.generatePrimaryColorHex(posterPath),
@@ -124,6 +126,7 @@ export class MovieService extends BaseMediaService {
       genres: formatGenres(item.genres),
       ratings,
       posterProps,
+      backdropPath,
       credits: this.constructMovieCredits(item.credits),
       watchProviders: this.constructWatchProviders(
         id,
@@ -172,7 +175,7 @@ export class MovieService extends BaseMediaService {
         name: crew.name,
         role: crew.job,
         creditId: crew.credit_id,
-        profilePath: getImage(crew.profile_path, 'person'),
+        profilePath: getImageWithFallback(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
       return emptyCredit;
@@ -188,7 +191,7 @@ export class MovieService extends BaseMediaService {
   }
 
   private mapToMoviePoster(movie: TMDB_DiscoveredMovieDetail) {
-    const posterPath = getImage(movie.poster_path, 'movie_poster');
+    const posterPath = getImageWithFallback(movie.poster_path, 'movie_poster');
     const blurhash = this.imagesService.generatePlaceholderBlurhash({
       id: movie.id,
     });
