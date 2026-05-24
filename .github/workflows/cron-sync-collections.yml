@@ -36,7 +36,7 @@ jobs:
           
           echo "Syncing collections at $BASE_URL/collections/sync..."
           
-          curl -X POST "$BASE_URL/collections/sync" \
+          curl -X POST "$BASE_URL/v1/collections/sync" \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
             --fail-with-body
