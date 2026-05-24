@@ -1,4 +1,5 @@
 import axios from 'axios';
+import puppeteer from 'puppeteer';
 
 /**
  * Scrapes the IMDB Top 250 page to extract IMDB IDs.
@@ -14,20 +15,28 @@ import axios from 'axios';
  * @returns A promise that resolves to an array of IMDB IDs.
  */
 async function scrapeImdbChart(url: string, limit = 250): Promise<string[]> {
+  let browser;
   try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        Accept:
-          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-      },
-      timeout: 10000,
-    });
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    
+    // Set a realistic User-Agent
+    await page.setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    );
 
-    const html = response.data;
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+    // Wait for the main list or WAF challenge reload
+    try {
+      await page.waitForSelector('.ipc-metadata-list', { timeout: 15000 });
+    } catch (e) {
+      // If selector fails, WAF might have triggered a reload
+      await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+      await page.waitForSelector('.ipc-metadata-list', { timeout: 15000 }).catch(() => {});
+    }
+
+    const html = await page.content();
     const imdbIds: string[] = [];
 
     // Strategy A: JSON-LD (Preferred method for modern IMDB)
@@ -45,8 +54,8 @@ async function scrapeImdbChart(url: string, limit = 250): Promise<string[]> {
 
         if (list && Array.isArray(list)) {
           for (const item of list) {
-            const url = item.item?.url || item.url || '';
-            const idMatch = url.match(/\/title\/(tt\d+)\//);
+            const itemUrl = item.item?.url || item.url || '';
+            const idMatch = itemUrl.match(/\/title\/(tt\d+)\//);
             if (idMatch) {
               imdbIds.push(idMatch[1]);
             }
@@ -76,8 +85,10 @@ async function scrapeImdbChart(url: string, limit = 250): Promise<string[]> {
       }
     }
 
+    await browser.close();
     return imdbIds.slice(0, limit);
   } catch (error) {
+    if (browser) await browser.close();
     console.error(`Scraping IMDB failed (${url}): `, error);
     return [];
   }
