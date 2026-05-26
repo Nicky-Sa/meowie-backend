@@ -154,6 +154,8 @@ jobs:
           ALLOWED_DOMAIN=${{ vars.ALLOWED_DOMAIN }}
           WHATSON_API_KEY=${{ secrets.WHATSON_API_KEY }}
           CRON_SECRET=${{ secrets.CRON_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          APPLE_BUNDLE_ID=${{ vars.APPLE_BUNDLE_ID }}
           EOF
 
       - name: Copy .env.local to VPS

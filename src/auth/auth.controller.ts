@@ -10,8 +10,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '@/auth/auth.service';
-import { RequestOtpReqDto } from '@/auth/dto/request-otp.dto';
-import { VerifyOtpReqDto, VerifyOtpResDto } from '@/auth/dto/verify-otp.dto';
+import { AuthResDto } from '@/auth/dto/auth.dto';
 import { Response } from 'express';
 import {
   AuthenticatedRequest,
@@ -31,25 +30,54 @@ import {
 import { RefreshGuard } from '@/auth/guards/refresh.guard';
 import { AccessGuard } from '@/auth/guards/access.guard';
 import { Duration } from '@/common/app.constants';
+import {
+  RequestOtpReqDto,
+  VerifyOtpReqDto,
+  ThirdPartyAuthReqDto,
+} from '@/auth/dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('request-otp')
+  @Post('otp/request')
   @HttpCode(HttpStatus.OK)
   @Throttle({ short: { limit: 3, ttl: Duration.ONE_MINUTE * 1000 } })
   async requestOtp(@Body() dto: RequestOtpReqDto): Promise<void> {
     return await this.authService.requestOtp(dto);
   }
 
-  @Post('verify-otp')
+  @Post('otp/verify')
   @Throttle({ short: { limit: 5, ttl: Duration.ONE_MINUTE * 1000 } })
   async verifyOtp(
     @Body() dto: VerifyOtpReqDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<VerifyOtpResDto> {
+  ): Promise<AuthResDto> {
     const data = await this.authService.verifyOtp(dto);
+    res.status(data.isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
+    return data;
+  }
+
+  @Post('google')
+  @Throttle({ short: { limit: 5, ttl: Duration.ONE_MINUTE * 1000 } })
+  async googleLogin(
+    @Body() dto: ThirdPartyAuthReqDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResDto> {
+    // Reusing the same response dto shape as verifyOtp
+    const data = await this.authService.verifyGoogleToken(dto.token);
+    res.status(data.isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
+    return data;
+  }
+
+  @Post('apple')
+  @Throttle({ short: { limit: 5, ttl: Duration.ONE_MINUTE * 1000 } })
+  async appleLogin(
+    @Body() dto: ThirdPartyAuthReqDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResDto> {
+    // Reusing the same response dto shape as verifyOtp
+    const data = await this.authService.verifyAppleToken(dto.token);
     res.status(data.isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
     return data;
   }

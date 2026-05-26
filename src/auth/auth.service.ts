@@ -1,8 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { RequestOtpReqDto } from '@/auth/dto/request-otp.dto';
 import { UsersService } from '@/users/users.service';
 import { OtpService } from '@/otp/otp.service';
-import { VerifyOtpReqDto } from '@/auth/dto/verify-otp.dto';
+import { VerifyOtpReqDto, RequestOtpReqDto } from '@/auth/dto/auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { EnvService } from '@/env/env.service';
 import {
@@ -18,10 +17,14 @@ import type { StringValue } from 'ms';
 import { CacheService } from '@/cache/cache.service';
 import * as crypto from 'crypto';
 import { Duration } from '@/common/app.constants';
+import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly googleClient = new OAuth2Client();
+
   constructor(
     private usersService: UsersService,
     private otpService: OtpService,
@@ -38,22 +41,59 @@ export class AuthService {
   async verifyOtp(dto: VerifyOtpReqDto) {
     const isValid = await this.otpService.verifyOtp(dto.email, dto.otp);
     if (isValid) {
-      let user = await this.usersService.findOneBy({
-        key: 'email',
-        value: dto.email,
-      });
-      let isNewUser = false;
-      if (!user) {
-        user = await this.usersService.create(dto);
-        isNewUser = true;
-      }
-      // jwt
-      const { accessToken, refreshToken } = await this.generateTokens(user.id);
-      await this.updateRefreshTokenInDB(user.id, refreshToken);
-
-      return { isNewUser, accessToken, refreshToken, user };
+      return this.authenticateUser(dto.email);
     }
     throw new ForbiddenException('Invalid OTP');
+  }
+
+  async verifyGoogleToken(token: string) {
+    try {
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken: token,
+        audience: this.env.get('GOOGLE_CLIENT_ID'),
+      });
+      const payload = ticket.getPayload();
+      if (!payload?.email) {
+        throw new ForbiddenException('No email provided by Google');
+      }
+      return this.authenticateUser(payload.email);
+    } catch (error) {
+      this.logger.error(error);
+      throw new ForbiddenException('Invalid Google token');
+    }
+  }
+
+  async verifyAppleToken(token: string) {
+    try {
+      const payload = await appleSignin.verifyIdToken(token, {
+        audience: this.env.get('APPLE_BUNDLE_ID'),
+        ignoreExpiration: false,
+      });
+      if (!payload?.email) {
+        throw new ForbiddenException('No email provided by Apple');
+      }
+      return this.authenticateUser(payload.email);
+    } catch (error) {
+      this.logger.error(error);
+      throw new ForbiddenException('Invalid Apple token');
+    }
+  }
+
+  private async authenticateUser(email: string) {
+    let user = await this.usersService.findOneBy({
+      key: 'email',
+      value: email,
+    });
+    let isNewUser = false;
+    if (!user) {
+      user = await this.usersService.create({ email });
+      isNewUser = true;
+    }
+    // jwt
+    const { accessToken, refreshToken } = await this.generateTokens(user.id);
+    await this.updateRefreshTokenInDB(user.id, refreshToken);
+
+    return { isNewUser, accessToken, refreshToken, user };
   }
 
   /**
