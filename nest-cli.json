@@ -9,6 +9,11 @@
         "include": "**/*.html",
         "outDir": "dist/src",
         "watchAssets": true
+      },
+      {
+        "include": "**/*.crt",
+        "outDir": "dist/src",
+        "watchAssets": true
       }
     ],
     "plugins": [

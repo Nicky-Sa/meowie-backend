@@ -1,6 +1,8 @@
--- Assuming user (meowie_migrator and meowie_app) have already been created
+-- Assuming user (meowie_app and meowie_migrator) have already been created using:
+-- CREATE USER meowie_app WITH PASSWORD 'your_app_password';
+-- CREATE USER meowie_migrator WITH PASSWORD 'your_migrator_password';
 
--- Create the schema with the admin yser (not the app or migrator roles)
+-- Create the schema with the admin user (not the app or migrator roles, usually the postgres user)
 CREATE SCHEMA meowie;
 -- Grant all permissions to the migrator user
 GRANT
@@ -22,27 +24,16 @@ SELECT
 ON ALL SEQUENCES IN SCHEMA meowie TO meowie_app;
 
 
--- Run this as 'meowie_migrator' (terminal psql <URL>)
--- This tells the DB: "Whenever I create a table in 'meowie', give 'meowie_app' access to it."
+-- Tell the DB: "Whenever 'meowie_migrator' creates a table in 'meowie', give 'meowie_app' access to it."
+-- To alter default privileges for another role, you must be a member of that role.
+GRANT meowie_migrator TO postgres;
 
-ALTER
-DEFAULT PRIVILEGES IN SCHEMA meowie
-GRANT
-SELECT,
-INSERT
-,
-UPDATE,
-DELETE
-ON TABLES TO meowie_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE meowie_migrator IN SCHEMA meowie
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO meowie_app;
 
-ALTER
-DEFAULT PRIVILEGES IN SCHEMA meowie
-GRANT USAGE,
-SELECT
-ON SEQUENCES TO meowie_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE meowie_migrator IN SCHEMA meowie
+GRANT USAGE, SELECT ON SEQUENCES TO meowie_app;
 
-
--- Run this as 'meowie_migrator' (terminal psql <NON-POOLING-URL>)
 -- Alter the role to set the search path (default schema)
-ALTER
-ROLE meowie_migrator IN DATABASE meowie_database SET search_path TO meowie;
+-- Replace "postgres" with your custom database name if you created one
+ALTER ROLE meowie_migrator IN DATABASE postgres SET search_path TO meowie;
