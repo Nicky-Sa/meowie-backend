@@ -1,5 +1,7 @@
 import { DataSourceOptions } from 'typeorm';
 import { loadEnv, loadDbMigratorEnv } from '@/env/env.config';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type DbConnectionRole = 'app' | 'migrator';
 
@@ -22,7 +24,12 @@ export const getDataSourceOptions = (
       invalidWhereValuesBehavior: { null: 'throw', undefined: 'throw' },
       ssl: true,
       extra: {
-        ssl: { rejectUnauthorized: true },
+        ssl: {
+          rejectUnauthorized: true,
+          ca: fs
+            .readFileSync(path.join(__dirname, 'supabase-prod-ca-2021.crt'))
+            .toString(),
+        },
         max: 2,
         connectionTimeoutMillis: 2000,
       },
@@ -41,7 +48,12 @@ export const getDataSourceOptions = (
     invalidWhereValuesBehavior: { null: 'throw', undefined: 'throw' },
     ssl: true,
     extra: {
-      ssl: { rejectUnauthorized: true },
+      ssl: {
+        rejectUnauthorized: true,
+        ca: fs
+          .readFileSync(path.join(__dirname, 'supabase-prod-ca-2021.crt'))
+          .toString(),
+      },
       max: 10,
       connectionTimeoutMillis: 5000,
     },
