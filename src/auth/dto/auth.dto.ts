@@ -1,4 +1,4 @@
-import { User } from '@/users/entities/users.entity';
+import { User } from '@/user/entities/users.entity';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 

@@ -1,8 +1,15 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { User } from '@/users/entities/users.entity';
+import { User } from '@/user/entities/users.entity';
 import { RequestOtpReqDto } from '@/auth/dto/auth.dto';
+import { DeleteUserReqDto } from '@/user/dto/delete-user.dto';
+import { ChurnLog } from '@/user/entities/churn-log.entity';
+import { DataSource } from 'typeorm';
 
 type FindOneBy =
   | { key: 'email'; value: string | null }
@@ -13,10 +20,11 @@ type FindOneOptions = Partial<{
 }>;
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findOneBy(
@@ -63,11 +71,41 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updatedProps: Partial<User>): Promise<UpdateResult> {
-    return this.usersRepository.update({ id }, updatedProps);
+  async currentUser(userId: number | null) {
+    return await this.findOneBy({
+      key: 'id',
+      value: userId,
+    });
   }
 
-  async delete(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+  async deleteUser(userId: number, dto: DeleteUserReqDto) {
+    // Start the transaction
+    await this.dataSource.transaction(async (manager) => {
+      // 1. Find the user using the TRANSACTION manager (locks the row)
+      const user = await manager.findOneBy(User, { id: userId });
+
+      if (!user || user.email !== dto.email) {
+        throw new ForbiddenException('User not found or email mismatch');
+      }
+
+      // 2. Create the log entry
+      const churnLog = manager.create(ChurnLog, {
+        reason: dto.churnReasonId,
+        // Calculate tenure based on user.createdAt
+        userTenureInDays: Math.floor(
+          (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      });
+
+      await manager.save(churnLog);
+
+      // 3. Delete the user
+      await manager.remove(user);
+    });
+    return true;
+  }
+
+  async update(id: number, updatedProps: Partial<User>): Promise<UpdateResult> {
+    return this.usersRepository.update({ id }, updatedProps);
   }
 }

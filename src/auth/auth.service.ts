@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { UsersService } from '@/users/users.service';
+import { UserService } from '@/user/user.service';
 import { OtpService } from '@/otp/otp.service';
 import { VerifyOtpReqDto, RequestOtpReqDto } from '@/auth/dto/auth.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -9,10 +9,6 @@ import {
   JwtRefreshTokenPayload,
 } from '@/auth/types/jwt.type';
 import * as bcrypt from 'bcrypt';
-import { DataSource } from 'typeorm';
-import { DeleteAccountReqDto } from '@/auth/dto/delete-account.dto';
-import { User } from '@/users/entities/users.entity';
-import { ChurnLog } from '@/users/entities/churn-log.entity';
 import type { StringValue } from 'ms';
 import { CacheService } from '@/cache/cache.service';
 import * as crypto from 'crypto';
@@ -26,11 +22,10 @@ export class AuthService {
   private readonly googleClient = new OAuth2Client();
 
   constructor(
-    private usersService: UsersService,
+    private usersService: UserService,
     private otpService: OtpService,
     private jwtService: JwtService,
     private env: EnvService,
-    private readonly dataSource: DataSource,
     private cacheService: CacheService,
   ) {}
 
@@ -253,44 +248,10 @@ export class AuthService {
     await this.usersService.update(userId, { hashedRefreshToken });
   }
 
-  async currentUser(userId: number | null) {
-    return await this.usersService.findOneBy({
-      key: 'id',
-      value: userId,
-    });
-  }
-
   async logout(userId: number) {
     const result = await this.usersService.update(userId, {
       hashedRefreshToken: null,
     });
     return result.affected === 1;
-  }
-
-  async deleteAccount(userId: number, dto: DeleteAccountReqDto) {
-    // Start the transaction
-    await this.dataSource.transaction(async (manager) => {
-      // 1. Find the user using the TRANSACTION manager (locks the row)
-      const user = await manager.findOneBy(User, { id: userId });
-
-      if (!user || user.email !== dto.email) {
-        throw new ForbiddenException('User not found or email mismatch');
-      }
-
-      // 2. Create the log entry
-      const churnLog = manager.create(ChurnLog, {
-        reason: dto.churnReasonId,
-        // Calculate tenure based on user.createdAt
-        userTenureInDays: Math.floor(
-          (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24),
-        ),
-      });
-
-      await manager.save(churnLog);
-
-      // 3. Delete the user
-      await manager.remove(user);
-    });
-    return true;
   }
 }

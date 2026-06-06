@@ -25,7 +25,7 @@ export class MovieController {
     private readonly cls: ClsService,
   ) {}
 
-  @Get('interesting-ids')
+  @Get('interesting')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getInterestingMovieIds(
     @Query() query: QueryParamsDto,
@@ -33,13 +33,13 @@ export class MovieController {
     return this.movieService.getInterestingMovieIds(query);
   }
 
-  @Get('/info/:id')
+  @Get(':id')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getMovieInfo(@Param('id') id: number): Promise<MovieInfoResDto> {
     return this.movieService.getMovieInfo(id, this.cls.countryCode);
   }
 
-  @Get('/details/:id/recommendations/posters')
+  @Get(':id/recommendations/posters')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getMovieRecommendations(
     @Param('id') id: number,

@@ -4,7 +4,7 @@ import {
   ChurnReasonId,
 } from '@/constants/items/churn-reasons.constant';
 
-export class DeleteAccountReqDto {
+export class DeleteUserReqDto {
   @IsEmail()
   email: string;
 
@@ -14,6 +14,6 @@ export class DeleteAccountReqDto {
   churnReasonId: ChurnReasonId;
 }
 
-export class DeleteAccountResDto {
+export class DeleteUserResDto {
   successful: boolean;
 }

@@ -7,7 +7,7 @@ import {
 import { ChurnReasonId } from '@/constants/items/churn-reasons.constant';
 
 @Entity({
-  name: 'churn_log',
+  name: 'churn_logs',
 })
 export class ChurnLog {
   @PrimaryGeneratedColumn()

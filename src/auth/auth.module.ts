@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { AuthController } from '@/auth/auth.controller';
-import { UsersModule } from '@/users/users.module';
+import { UserModule } from '@/user/user.module';
 import { OtpModule } from '@/otp/otp.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -10,7 +10,7 @@ import { RefreshTokenStrategy } from '@/auth/strategies/refresh-token.strategy';
 
 @Module({
   imports: [
-    UsersModule,
+    UserModule,
     OtpModule,
     JwtModule.register({}), // for generating tokens
     PassportModule.register({ defaultStrategy: 'jwt-access' }), // for validating tokens and attaching user to request (@UseGuards(AccessGuard(...)))

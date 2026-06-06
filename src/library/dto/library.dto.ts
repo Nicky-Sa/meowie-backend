@@ -1,32 +1,13 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsEnum, IsInt, IsOptional } from 'class-validator';
 import { MediaType, MEDIA_TYPE_VALUES } from '@/types/media-type';
 import { LibraryCategory } from '@/library/library.constants';
 import { Page } from '@/common/types/media-query';
+import { Rating } from '@/library/types/library.types';
 
-class LibraryItemIdentifier {
-  @IsInt()
-  @IsNotEmpty()
-  tmdbId: number;
-
-  @IsEnum(MEDIA_TYPE_VALUES)
-  @IsNotEmpty()
-  mediaType: MediaType;
-}
-
-export class MarkSavedReqDto extends LibraryItemIdentifier {}
-
-export class RemoveItemReqDto extends LibraryItemIdentifier {}
-
-export class MarkSeenReqDto extends LibraryItemIdentifier {
+export class RatingReqDto {
   @IsInt()
   @IsOptional()
-  rating?: number;
-}
-
-export class UpdateRatingReqDto extends LibraryItemIdentifier {
-  @IsInt()
-  @IsOptional()
-  rating?: number;
+  rating?: Rating;
 }
 
 export type LibraryStatusResDto = Record<LibraryCategory, boolean> & {

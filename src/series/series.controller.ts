@@ -25,7 +25,7 @@ export class SeriesController {
     private readonly cls: ClsService,
   ) {}
 
-  @Get('interesting-ids')
+  @Get('interesting')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getInterestingSeriesIds(
     @Query() query: QueryParamsDto,
@@ -33,13 +33,13 @@ export class SeriesController {
     return this.seriesService.getInterestingSeriesIds(query);
   }
 
-  @Get('/info/:id')
+  @Get(':id')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesInfo(@Param('id') id: number): Promise<SeriesInfoResDto> {
     return this.seriesService.getSeriesInfo(id, this.cls.countryCode);
   }
 
-  @Get('/details/:id/recommendations/posters')
+  @Get(':id/recommendations/posters')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesRecommendations(
     @Param('id') id: number,
@@ -48,7 +48,7 @@ export class SeriesController {
     return this.seriesService.getSeriesRecommendations(id, page);
   }
 
-  @Get('/posters')
+  @Get('posters')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesPostersInBulk(
     @Query() query: QueryParamsDto,

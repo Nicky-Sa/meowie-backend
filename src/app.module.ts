@@ -11,7 +11,7 @@ import { MovieModule } from '@/movie/movie.module';
 import { EnvModule } from '@/env/env.module';
 import { EnvService } from '@/env/env.service';
 import { AuthModule } from '@/auth/auth.module';
-import { UsersModule } from '@/users/users.module';
+import { UserModule } from '@/user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@/cache/cache.module';
 import { Duration } from '@/common/app.constants';
@@ -82,7 +82,7 @@ import { ClsMiddleware } from '@/common/cls/cls.middleware';
     MovieModule,
     EnvModule,
     AuthModule,
-    UsersModule,
+    UserModule,
     TypeOrmModule.forRoot({
       ...getDataSourceOptions('app'),
       // helpful in NestJS to avoid manually importing entities in the config

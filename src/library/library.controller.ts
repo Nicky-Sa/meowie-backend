@@ -3,9 +3,11 @@ import {
   Get,
   Param,
   Patch,
-  Post,
+  Put,
   Query,
   Req,
+  Body,
+  Delete,
 } from '@nestjs/common';
 import { LibraryService } from '@/library/library.service';
 import {
@@ -17,12 +19,9 @@ import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
 import {
   LibraryStatusResDto,
   LibraryItemQueryDto,
-  MarkSeenReqDto,
-  UpdateRatingReqDto,
-  MarkSavedReqDto,
-  RemoveItemReqDto,
+  RatingReqDto,
 } from '@/library/dto/library.dto';
-import { Body, Delete } from '@nestjs/common';
+
 import { MediaType } from '@/types/media-type';
 import { LibraryCategory } from '@/library/library.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
@@ -50,7 +49,7 @@ export class LibraryController {
   }
 
   @OptionalAccessGuard()
-  @Get('status/:mediaType/:tmdbId')
+  @Get(':mediaType/:tmdbId/status')
   async getStatus(
     @Req() req: OptionallyAuthenticatedRequest,
     @Param('mediaType') mediaType: MediaType,
@@ -59,51 +58,81 @@ export class LibraryController {
     if (!req.user?.id) {
       return { saved: false, seen: false };
     }
-    return this.libraryService.getStatus(req.user.id, mediaType, tmdbId);
+    return this.libraryService.getStatus(req.user.id, { mediaType, tmdbId });
   }
 
   @AccessGuard()
-  @Post('seen')
+  @Put(':mediaType/:tmdbId/seen')
   async markAsSeen(
     @Req() req: AuthenticatedRequest,
-    @Body() dto: MarkSeenReqDto,
+    @Param('mediaType') mediaType: MediaType,
+    @Param('tmdbId') tmdbId: number,
+    @Body() dto: RatingReqDto,
   ): Promise<LibraryStatusResDto> {
-    return this.libraryService.markAsSeen(req.user.id, dto);
+    return this.libraryService.markAsSeen(
+      req.user.id,
+      {
+        mediaType,
+        tmdbId,
+      },
+      dto.rating,
+    );
   }
 
   @AccessGuard()
-  @Post('save')
-  async markAsSaved(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: MarkSavedReqDto,
-  ): Promise<LibraryStatusResDto> {
-    return this.libraryService.markAsSaved(req.user.id, dto);
-  }
-
-  @AccessGuard()
-  @Delete('seen')
-  async removeSeen(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: RemoveItemReqDto,
-  ): Promise<LibraryStatusResDto> {
-    return this.libraryService.removeItem(req.user.id, dto);
-  }
-
-  @AccessGuard()
-  @Delete('save')
-  async removeSaved(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: RemoveItemReqDto,
-  ): Promise<LibraryStatusResDto> {
-    return this.libraryService.removeItem(req.user.id, dto);
-  }
-
-  @AccessGuard()
-  @Patch('rating')
+  @Patch(':mediaType/:tmdbId/seen')
   async updateRating(
     @Req() req: AuthenticatedRequest,
-    @Body() dto: UpdateRatingReqDto,
+    @Param('mediaType') mediaType: MediaType,
+    @Param('tmdbId') tmdbId: number,
+    @Body() dto: RatingReqDto,
   ): Promise<LibraryStatusResDto> {
-    return this.libraryService.updateRating(req.user.id, dto);
+    return this.libraryService.updateRating(
+      req.user.id,
+      {
+        mediaType,
+        tmdbId,
+      },
+      dto.rating,
+    );
+  }
+
+  @AccessGuard()
+  @Delete(':mediaType/:tmdbId/seen')
+  async removeSeen(
+    @Req() req: AuthenticatedRequest,
+    @Param('mediaType') mediaType: MediaType,
+    @Param('tmdbId') tmdbId: number,
+  ): Promise<LibraryStatusResDto> {
+    return this.libraryService.removeItem(req.user.id, {
+      mediaType,
+      tmdbId,
+    });
+  }
+
+  @AccessGuard()
+  @Put(':mediaType/:tmdbId/saved')
+  async markAsSaved(
+    @Req() req: AuthenticatedRequest,
+    @Param('mediaType') mediaType: MediaType,
+    @Param('tmdbId') tmdbId: number,
+  ): Promise<LibraryStatusResDto> {
+    return this.libraryService.markAsSaved(req.user.id, {
+      mediaType,
+      tmdbId,
+    });
+  }
+
+  @AccessGuard()
+  @Delete(':mediaType/:tmdbId/saved')
+  async removeSaved(
+    @Req() req: AuthenticatedRequest,
+    @Param('mediaType') mediaType: MediaType,
+    @Param('tmdbId') tmdbId: number,
+  ): Promise<LibraryStatusResDto> {
+    return this.libraryService.removeItem(req.user.id, {
+      mediaType,
+      tmdbId,
+    });
   }
 }

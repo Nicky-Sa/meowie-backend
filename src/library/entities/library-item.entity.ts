@@ -7,7 +7,7 @@ import {
   Index,
   Unique,
 } from 'typeorm';
-import { User } from '@/users/entities/users.entity';
+import { User } from '@/user/entities/users.entity';
 import { MediaType } from '@/types/media-type';
 import { LibraryCategory } from '@/library/library.constants';
 

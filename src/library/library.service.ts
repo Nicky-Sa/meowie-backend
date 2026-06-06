@@ -6,10 +6,6 @@ import { LIMIT } from '@/common/app.constants';
 import {
   LibraryItemQueryDto,
   LibraryStatusResDto,
-  MarkSavedReqDto,
-  MarkSeenReqDto,
-  RemoveItemReqDto,
-  UpdateRatingReqDto,
 } from '@/library/dto/library.dto';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
@@ -17,10 +13,10 @@ import { ImagesService } from '@/images/images.service';
 import { TMDB_MovieInfo, TMDB_SeriesInfo } from '@/tmdb/tmdb.type';
 import { GENRES } from '@/constants/items/genres.constant';
 import { getImageWithFallback } from '@/images/images.utils';
-import { MediaType } from '@/types/media-type';
 import { LibraryCategory } from '@/library/library.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { isUniqueConstraintViolation } from '@/database/db-errors.util';
+import { LibraryItemIdentifier, Rating } from '@/library/types/library.types';
 
 @Injectable()
 export class LibraryService {
@@ -34,11 +30,10 @@ export class LibraryService {
 
   async getStatus(
     userId: number,
-    mediaType: MediaType,
-    tmdbId: number,
+    data: LibraryItemIdentifier,
   ): Promise<LibraryStatusResDto> {
     const items = await this.libraryItemRepository.find({
-      where: { userId, tmdbId, mediaType },
+      where: { userId, tmdbId: data.tmdbId, mediaType: data.mediaType },
     });
 
     const initialStatus: LibraryStatusResDto = {
@@ -57,16 +52,17 @@ export class LibraryService {
 
   async markAsSeen(
     userId: number,
-    dto: MarkSeenReqDto,
+    data: LibraryItemIdentifier,
+    rating: Rating,
   ): Promise<LibraryStatusResDto> {
     const updateResult = await this.libraryItemRepository.update(
       {
         userId,
-        tmdbId: dto.tmdbId,
-        mediaType: dto.mediaType,
+        tmdbId: data.tmdbId,
+        mediaType: data.mediaType,
         category: 'saved',
       },
-      { category: 'seen', rating: dto.rating ?? null },
+      { category: 'seen', rating: rating ?? null },
     );
 
     // user didn't have this item as saved
@@ -74,10 +70,10 @@ export class LibraryService {
       try {
         const newItem = this.libraryItemRepository.create({
           userId,
-          tmdbId: dto.tmdbId,
-          mediaType: dto.mediaType,
+          tmdbId: data.tmdbId,
+          mediaType: data.mediaType,
           category: 'seen',
-          rating: dto.rating ?? null,
+          rating: rating ?? null,
         });
         await this.libraryItemRepository.save(newItem);
       } catch (error) {
@@ -87,18 +83,18 @@ export class LibraryService {
         throw error;
       }
     }
-    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+    return this.getStatus(userId, data);
   }
 
   async markAsSaved(
     userId: number,
-    dto: MarkSavedReqDto,
+    data: LibraryItemIdentifier,
   ): Promise<LibraryStatusResDto> {
     const updateResult = await this.libraryItemRepository.update(
       {
         userId,
-        tmdbId: dto.tmdbId,
-        mediaType: dto.mediaType,
+        tmdbId: data.tmdbId,
+        mediaType: data.mediaType,
         category: 'seen',
       },
       { category: 'saved', rating: null },
@@ -109,8 +105,8 @@ export class LibraryService {
       try {
         const newItem = this.libraryItemRepository.create({
           userId,
-          tmdbId: dto.tmdbId,
-          mediaType: dto.mediaType,
+          tmdbId: data.tmdbId,
+          mediaType: data.mediaType,
           category: 'saved',
           rating: null,
         });
@@ -122,37 +118,38 @@ export class LibraryService {
         throw error;
       }
     }
-    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+    return this.getStatus(userId, data);
   }
 
   async removeItem(
     userId: number,
-    dto: RemoveItemReqDto,
+    data: LibraryItemIdentifier,
   ): Promise<LibraryStatusResDto> {
     const result = await this.libraryItemRepository.delete({
       userId,
-      tmdbId: dto.tmdbId,
-      mediaType: dto.mediaType,
+      tmdbId: data.tmdbId,
+      mediaType: data.mediaType,
     });
 
     if (result.affected === 0) {
       throw new BadRequestException('Item does not exist');
     }
-    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+    return this.getStatus(userId, data);
   }
 
   async updateRating(
     userId: number,
-    dto: UpdateRatingReqDto,
+    data: LibraryItemIdentifier,
+    rating: Rating,
   ): Promise<LibraryStatusResDto> {
     const result = await this.libraryItemRepository.update(
       {
         userId,
-        tmdbId: dto.tmdbId,
-        mediaType: dto.mediaType,
+        tmdbId: data.tmdbId,
+        mediaType: data.mediaType,
         category: 'seen',
       },
-      { rating: dto.rating },
+      { rating },
     );
 
     if (result.affected === 0) {
@@ -160,7 +157,7 @@ export class LibraryService {
         'Cannot rate an item that is not marked as seen',
       );
     }
-    return this.getStatus(userId, dto.mediaType, dto.tmdbId);
+    return this.getStatus(userId, data);
   }
 
   async getLibraryItemsPosters(
