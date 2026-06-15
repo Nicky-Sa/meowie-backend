@@ -26,6 +26,7 @@ import { SeriesModule } from '@/series/series.module';
 import { RatingsModule } from '@/ratings/ratings.module';
 import { ImagesModule } from '@/images/images.module';
 import { CollectionsModule } from '@/collections/collections.module';
+import { TasteModule } from '@/taste/taste.module';
 import { AiModule } from '@/ai/ai.module';
 import { HealthModule } from '@/health/health.module';
 import { LifecycleService } from '@/common/lifecycle.service';
@@ -99,6 +100,7 @@ import { ClsMiddleware } from '@/common/cls/cls.middleware';
     RatingsModule,
     ImagesModule,
     CollectionsModule,
+    TasteModule,
     AiModule,
     HealthModule,
     ClsModule,
