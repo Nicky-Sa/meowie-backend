@@ -1,7 +1,12 @@
 import { ChurnReason } from '@/constants/items/churn-reasons.constant';
+import { TasteGenre } from '@/constants/items/taste-keywords.constant';
 
 export class ChurnReasonsResDto {
   reasons: ChurnReason[];
+}
+
+export class TasteItemsResDto {
+  tasteGenres: TasteGenre[];
 }
 
 // the Genre type previously from items/genres.constant.ts has been copied here, or we can just import it. Let's define it here.
