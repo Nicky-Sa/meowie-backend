@@ -5,6 +5,13 @@ export const EMAIL_QUEUE = {
   },
 } as const;
 
+export const COLLECTIONS_SYNC_QUEUE = {
+  name: 'collections-sync',
+  jobs: {
+    syncAll: 'sync-all',
+  },
+} as const;
+
 export const DEFAULT_WORKER_OPTIONS = {
   // Drastically reduce Redis command usage by increasing the block timeout
   // and stalled check intervals. This is especially useful for serverless Redis.

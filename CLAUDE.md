@@ -136,8 +136,11 @@ Google and Apple sign-in are also supported (`google-auth-library`, `apple-signi
   Default job options: 3 attempts, exponential backoff. Redis is shared across queues,
   cache, and the rate limiter.
 - **Weekly collections sync:** `.github/workflows/cron-sync-collections.yml` POSTs to
-  `/v1/collections/sync` (for both envs) with the `x-cron-secret` header every Sunday.
-  There's no in-process scheduler — the cron lives in GitHub Actions.
+  `/v1/collections/sync` (for both envs) with the `x-cron-secret` header every Saturday.
+  There's no in-process scheduler — the cron lives in GitHub Actions. The endpoint only
+  *enqueues* a `collections-sync` BullMQ job and returns `202` immediately (the scrape +
+  TMDB mapping takes minutes, well past CloudFront's 30s origin timeout); the actual work
+  runs in `CollectionsProcessor`.
 
 ## DTO convention
 

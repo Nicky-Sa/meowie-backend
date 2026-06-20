@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Header,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
@@ -14,7 +16,7 @@ import {
   CollectionQueryDto,
   CollectionResDto,
 } from '@/collections/dto/collection.dto';
-import { CollectionsSyncService } from '@/collections/collections-sync.service';
+import { CollectionsSyncQueueService } from '@/collections/collections-sync-queue.service';
 import { CronGuard } from '@/auth/guards/cron.guard';
 import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
 import { PosterResDto } from '@/common/dto/poster.dto';
@@ -25,7 +27,7 @@ import { Duration } from '@/common/app.constants';
 export class CollectionsController {
   constructor(
     private readonly collectionsService: CollectionsService,
-    private readonly collectionsSyncService: CollectionsSyncService,
+    private readonly collectionsSyncQueueService: CollectionsSyncQueueService,
   ) {}
 
   @Get()
@@ -47,17 +49,13 @@ export class CollectionsController {
   }
 
   @Post('sync')
+  @HttpCode(HttpStatus.ACCEPTED)
   @UseGuards(CronGuard)
   async syncCollections() {
-    // Run them sequentially or in parallel? Parallel is faster.
-    // We don't wait for them to finish in a real cron if we want to return 200 fast,
-    // but here it's better to wait to know if it succeeded.
-    await Promise.all([
-      this.collectionsSyncService.syncImdbTop250Movies(),
-      this.collectionsSyncService.syncImdbTop250Series(),
-      this.collectionsSyncService.syncLetterboxdTop250Narrative(),
-      this.collectionsSyncService.syncLetterboxdTop250Documentaries(),
-    ]);
-    return { message: 'Sync completed successfully' };
+    // The sync scrapes four ~250-item lists and makes hundreds of TMDB calls,
+    // which takes minutes — far longer than CloudFront's 30s origin timeout.
+    // Enqueue it and return immediately; the BullMQ worker runs the actual sync.
+    await this.collectionsSyncQueueService.enqueueSyncAll();
+    return { message: 'Collection sync queued' };
   }
 }
