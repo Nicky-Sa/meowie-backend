@@ -33,6 +33,16 @@ export class SeriesController {
     return this.seriesService.getInterestingSeriesIds(query);
   }
 
+  // Static routes must precede the `:id` route, otherwise `/series/posters`
+  // is captured by `:id` (id="posters") and resolves to a NaN series id.
+  @Get('posters')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
+  async getSeriesPostersInBulk(
+    @Query() query: QueryParamsDto,
+  ): Promise<PosterResDto> {
+    return this.seriesService.getSeriesPosters(query);
+  }
+
   @Get(':id')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getSeriesInfo(@Param('id') id: number): Promise<SeriesInfoResDto> {
@@ -46,13 +56,5 @@ export class SeriesController {
     @Query('page') page: number,
   ): Promise<PosterResDto> {
     return this.seriesService.getSeriesRecommendations(id, page);
-  }
-
-  @Get('posters')
-  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
-  async getSeriesPostersInBulk(
-    @Query() query: QueryParamsDto,
-  ): Promise<PosterResDto> {
-    return this.seriesService.getSeriesPosters(query);
   }
 }
