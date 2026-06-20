@@ -25,8 +25,8 @@ export class Taste {
   @Column('text', { array: true })
   keywords: KeywordId[];
 
-  @Column({ type: 'smallint' })
-  flexibility: number;
+  @Column({ type: 'varchar' })
+  flexibility: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
