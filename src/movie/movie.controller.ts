@@ -33,6 +33,16 @@ export class MovieController {
     return this.movieService.getInterestingMovieIds(query);
   }
 
+  // Static routes must precede the `:id` route, otherwise `/movie/posters`
+  // is captured by `:id` (id="posters") and resolves to a NaN movie id.
+  @Get('posters')
+  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
+  async getMoviePostersInBulk(
+    @Query() query: QueryParamsDto,
+  ): Promise<PosterResDto> {
+    return this.movieService.getMoviesPosters(query);
+  }
+
   @Get(':id')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
   async getMovieInfo(@Param('id') id: number): Promise<MovieInfoResDto> {
@@ -46,13 +56,5 @@ export class MovieController {
     @Query('page') page: number,
   ): Promise<PosterResDto> {
     return this.movieService.getMovieRecommendations(id, page);
-  }
-
-  @Get('/posters')
-  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
-  async getMoviePostersInBulk(
-    @Query() query: QueryParamsDto,
-  ): Promise<PosterResDto> {
-    return this.movieService.getMoviesPosters(query);
   }
 }
