@@ -1,4 +1,4 @@
-import { Genre } from '@/constants/constants.dto';
+import { Genre } from '@/constants/items/genres.constant';
 
 export class SearchResultPerson {
   id: number;

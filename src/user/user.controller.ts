@@ -15,6 +15,8 @@ import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
 import { AccessGuard } from '@/auth/guards/access.guard';
 import { CurrentUserResDto } from '@/user/dto/current-user.dto';
 import { DeleteUserReqDto, DeleteUserResDto } from '@/user/dto/delete-user.dto';
+import { ChurnReasonsResDto } from '@/user/dto/churn-reasons.dto';
+import { CHURN_REASONS } from '@/user/constants/churn-reasons.constant';
 import { UserService } from '@/user/user.service';
 
 @Controller('user')
@@ -45,5 +47,10 @@ export class UserController {
     const userId = req.user.id;
     const successful = await this.usersService.deleteUser(userId, dto);
     return { successful };
+  }
+
+  @Get('churn-reasons')
+  getChurnReasons(): ChurnReasonsResDto {
+    return { reasons: CHURN_REASONS };
   }
 }

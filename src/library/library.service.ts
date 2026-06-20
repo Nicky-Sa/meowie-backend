@@ -13,7 +13,7 @@ import { ImagesService } from '@/images/images.service';
 import { TMDB_MovieInfo, TMDB_SeriesInfo } from '@/tmdb/tmdb.type';
 import { GENRES } from '@/constants/items/genres.constant';
 import { getImageWithFallback } from '@/images/images.utils';
-import { LibraryCategory } from '@/library/library.constants';
+import { LibraryCategory } from '@/library/constants/library.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { isUniqueConstraintViolation } from '@/database/db-errors.util';
 import { LibraryItemIdentifier, Rating } from '@/library/types/library.types';

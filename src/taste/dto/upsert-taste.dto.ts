@@ -1,7 +1,7 @@
 import { IsArray, IsString, ArrayMinSize, IsIn } from 'class-validator';
 import { KeywordId } from '@/taste/entities/taste.entity';
-import { TASTE_GENRES } from '@/constants/items/taste-keywords.constant';
-import { FLEXIBILITY_OPTION_IDS } from '@/constants/items/flexibility-options.constant';
+import { TASTE_GENRES } from '@/taste/constants/taste-keywords.constant';
+import { FLEXIBILITY_OPTION_IDS } from '@/taste/constants/flexibility-options.constant';
 
 const VALID_KEYWORD_IDS: string[] = TASTE_GENRES.flatMap((genre) =>
   genre.keywords.map((keyword) => keyword.id),

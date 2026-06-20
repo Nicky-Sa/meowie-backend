@@ -4,7 +4,7 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
-import { ChurnReasonId } from '@/constants/items/churn-reasons.constant';
+import { ChurnReasonId } from '@/user/constants/churn-reasons.constant';
 
 @Entity({
   name: 'churn_logs',

@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
 import { MediaType } from '@/types/media-type';
-import { LibraryCategory } from '@/library/library.constants';
+import { LibraryCategory } from '@/library/constants/library.constants';
 
 @Entity('library_items')
 @Unique(['userId', 'tmdbId', 'mediaType'])

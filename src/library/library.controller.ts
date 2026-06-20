@@ -23,7 +23,7 @@ import {
 } from '@/library/dto/library.dto';
 
 import { MediaType } from '@/types/media-type';
-import { LibraryCategory } from '@/library/library.constants';
+import { LibraryCategory } from '@/library/constants/library.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { EMPTY_PAGINATED_RESULTS } from '@/common/types/paginated-response';
 
