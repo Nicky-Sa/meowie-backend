@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { SeriesService } from '@/series/series.service';
 import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
-import {
-  InterestingSeriesIdsResDto,
-  QueryParamsDto,
-  SeriesInfoResDto,
-} from '@/series/dto/series.dto';
+import { QueryParamsDto, SeriesInfoResDto } from '@/series/dto/series.dto';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { Duration } from '@/common/app.constants';
 import { ClsService } from '@/common/cls/cls.service';
@@ -24,14 +20,6 @@ export class SeriesController {
     private readonly seriesService: SeriesService,
     private readonly cls: ClsService,
   ) {}
-
-  @Get('interesting')
-  @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
-  async getInterestingSeriesIds(
-    @Query() query: QueryParamsDto,
-  ): Promise<InterestingSeriesIdsResDto> {
-    return this.seriesService.getInterestingSeriesIds(query);
-  }
 
   // Static routes must precede the `:id` route, otherwise `/series/posters`
   // is captured by `:id` (id="posters") and resolves to a NaN series id.

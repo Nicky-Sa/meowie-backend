@@ -9,6 +9,7 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
+import { FlexibilityOptionId } from '@/taste/constants/flexibility-options.constant';
 
 export type KeywordId = `${string}_${number}`;
 
@@ -26,7 +27,7 @@ export class Taste {
   keywords: KeywordId[];
 
   @Column({ type: 'varchar' })
-  flexibility: string;
+  flexibility: FlexibilityOptionId;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

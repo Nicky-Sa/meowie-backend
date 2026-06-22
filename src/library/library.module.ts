@@ -16,5 +16,6 @@ import { ImagesModule } from '@/images/images.module';
   ],
   controllers: [LibraryController],
   providers: [LibraryService],
+  exports: [LibraryService],
 })
 export class LibraryModule {}

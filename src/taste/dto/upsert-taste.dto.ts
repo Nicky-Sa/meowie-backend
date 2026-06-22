@@ -1,7 +1,10 @@
 import { IsArray, IsString, ArrayMinSize, IsIn } from 'class-validator';
 import { KeywordId } from '@/taste/entities/taste.entity';
 import { TASTE_GENRES } from '@/taste/constants/taste-keywords.constant';
-import { FLEXIBILITY_OPTION_IDS } from '@/taste/constants/flexibility-options.constant';
+import {
+  FLEXIBILITY_OPTION_IDS,
+  FlexibilityOptionId,
+} from '@/taste/constants/flexibility-options.constant';
 
 const VALID_KEYWORD_IDS: string[] = TASTE_GENRES.flatMap((genre) =>
   genre.keywords.map((keyword) => keyword.id),
@@ -26,5 +29,5 @@ export class UpsertTasteReqDto {
 
 export type TasteResDto = {
   keywords: KeywordId[];
-  flexibility: string;
+  flexibility: FlexibilityOptionId;
 };

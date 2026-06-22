@@ -17,6 +17,7 @@ import { LibraryCategory } from '@/library/constants/library.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { isUniqueConstraintViolation } from '@/database/db-errors.util';
 import { LibraryItemIdentifier, Rating } from '@/library/types/library.types';
+import { MediaType } from '@/types/media-type';
 
 @Injectable()
 export class LibraryService {
@@ -158,6 +159,15 @@ export class LibraryService {
       );
     }
     return this.getStatus(userId, data);
+  }
+
+  async getItemsForUser(
+    userId: number,
+    mediaType?: MediaType,
+  ): Promise<LibraryItem[]> {
+    return this.libraryItemRepository.find({
+      where: { userId, ...(mediaType && { mediaType }) },
+    });
   }
 
   async getLibraryItemsPosters(
