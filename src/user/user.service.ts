@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { FindOptionsSelect, Repository, UpdateResult } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
 import { RequestOtpReqDto } from '@/auth/dto/auth.dto';
 import { DeleteUserReqDto } from '@/user/dto/delete-user.dto';
@@ -34,14 +34,14 @@ export class UserService {
     // 1. Get the list of ALL property names from the entity metadata
     const metadata = this.usersRepository.manager.connection.getMetadata(User);
 
-    let select: (keyof User)[] = metadata.columns.map(
-      (column) => column.propertyName,
-    ) as (keyof User)[];
+    // 2. Select every column, omitting hashedRefreshToken unless requested.
+    const columnNames = metadata.columns
+      .map((column) => column.propertyName as keyof User)
+      .filter((name) => withRefreshToken || name !== 'hashedRefreshToken');
 
-    // 2. Add the 'hashedRefreshToken' to the list.
-    if (!withRefreshToken) {
-      select = select.filter((c) => c !== 'hashedRefreshToken');
-    }
+    const select = Object.fromEntries(
+      columnNames.map((name) => [name, true] as const),
+    ) as FindOptionsSelect<User>;
 
     try {
       // it's using findOneOrFail to catch cases where id is undefined
