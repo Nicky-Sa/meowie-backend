@@ -1,19 +1,21 @@
-import { Controller, Get, Version, VERSION_NEUTRAL } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Version,
+  VERSION_NEUTRAL,
+  Inject,
+} from '@nestjs/common';
 import { HealthCheckService, HealthCheck } from '@nestjs/terminus';
-import { DatabaseHealthIndicator } from '@/health/indicators/database.health-indicator';
-import { RedisHealthIndicator } from '@/health/indicators/redis.health-indicator';
-import { EmailHealthIndicator } from '@/health/indicators/email.health-indicator';
-import { TmdbHealthIndicator } from '@/health/indicators/tmdb.health-indicator';
 import { AppService } from '@/app.service';
+import { HEALTH_INDICATORS } from '@/health/health.constants';
+import { BaseIndicator } from '@/health/indicators/base.indicator';
 
 @Controller()
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    private readonly db: DatabaseHealthIndicator,
-    private readonly redis: RedisHealthIndicator,
-    private readonly email: EmailHealthIndicator,
-    private readonly tmdb: TmdbHealthIndicator,
+    @Inject(HEALTH_INDICATORS)
+    private readonly indicators: BaseIndicator[],
     private readonly appService: AppService,
   ) {}
 
@@ -21,12 +23,9 @@ export class HealthController {
   @Get('health')
   @HealthCheck()
   async check() {
-    const result = await this.health.check([
-      () => this.db.isHealthy('database'),
-      () => this.redis.isHealthy('redis'),
-      () => this.email.isHealthy('email'),
-      () => this.tmdb.isHealthy('tmdb'),
-    ]);
+    const result = await this.health.check(
+      this.indicators.map((indicator) => () => indicator.isHealthy()),
+    );
 
     return {
       ...result,

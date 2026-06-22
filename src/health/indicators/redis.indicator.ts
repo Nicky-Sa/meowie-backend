@@ -1,16 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
 import { CacheService } from '@/cache/cache.service';
+import { BaseIndicator } from '@/health/indicators/base.indicator';
 
 @Injectable()
-export class RedisHealthIndicator {
+export class RedisIndicator extends BaseIndicator {
+  readonly key = 'redis';
+
   constructor(
     private readonly cacheService: CacheService,
     private readonly healthIndicatorService: HealthIndicatorService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async isHealthy(key: string) {
-    const indicator = this.healthIndicatorService.check(key);
+  async isHealthy() {
+    const indicator = this.healthIndicatorService.check(this.key);
     try {
       const result = await this.cacheService.ping();
       const isHealthy = result === 'PONG';

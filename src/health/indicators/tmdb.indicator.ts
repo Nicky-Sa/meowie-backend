@@ -1,16 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
 import { TmdbService } from '@/tmdb/tmdb.service';
+import { BaseIndicator } from '@/health/indicators/base.indicator';
 
 @Injectable()
-export class TmdbHealthIndicator {
+export class TmdbIndicator extends BaseIndicator {
+  readonly key = 'tmdb';
+
   constructor(
     private readonly tmdbService: TmdbService,
     private readonly healthIndicatorService: HealthIndicatorService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async isHealthy(key: string) {
-    const indicator = this.healthIndicatorService.check(key);
+  async isHealthy() {
+    const indicator = this.healthIndicatorService.check(this.key);
     try {
       await this.tmdbService.ping();
       return indicator.up();

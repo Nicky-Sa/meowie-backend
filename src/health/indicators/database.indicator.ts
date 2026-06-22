@@ -1,18 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
 import { DataSource } from 'typeorm';
+import { BaseIndicator } from '@/health/indicators/base.indicator';
 
 @Injectable()
-export class DatabaseHealthIndicator {
-  private readonly logger = new Logger(DatabaseHealthIndicator.name);
+export class DatabaseIndicator extends BaseIndicator {
+  private readonly logger = new Logger(DatabaseIndicator.name);
+  readonly key = 'database';
 
   constructor(
     private readonly dataSource: DataSource,
     private readonly healthIndicatorService: HealthIndicatorService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async isHealthy(key: string) {
-    const indicator = this.healthIndicatorService.check(key);
+  async isHealthy() {
+    const indicator = this.healthIndicatorService.check(this.key);
     try {
       // Direct query check is more reliable and gives us better error visibility
       await this.dataSource.query('SELECT 1');
