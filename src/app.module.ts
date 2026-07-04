@@ -28,6 +28,7 @@ import { ImagesModule } from '@/images/images.module';
 import { CollectionsModule } from '@/collections/collections.module';
 import { TasteModule } from '@/taste/taste.module';
 import { FeedModule } from '@/feed/feed.module';
+import { ReleaseNotesModule } from '@/release-notes/release-notes.module';
 import { AiModule } from '@/ai/ai.module';
 import { HealthModule } from '@/health/health.module';
 import { LifecycleService } from '@/common/lifecycle.service';
@@ -103,6 +104,7 @@ import { ClsMiddleware } from '@/common/cls/cls.middleware';
     CollectionsModule,
     TasteModule,
     FeedModule,
+    ReleaseNotesModule,
     AiModule,
     HealthModule,
     ClsModule,
