@@ -26,7 +26,6 @@ export class LibraryContributor extends BaseContributor {
     const items = await this.libraryService.getItemsForUser(userId);
 
     return {
-      keywordIds: [],
       genreIds: [],
       libraryMovieIds: this.toWeightedIds(items, 'movie'),
       librarySeriesIds: this.toWeightedIds(items, 'series'),

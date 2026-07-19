@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Taste } from '@/taste/entities/taste.entity';
-import { UpsertTasteReqDto, TasteResDto } from '@/taste/dto/upsert-taste.dto';
+import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
 import { UserService } from '@/user/user.service';
-import { DataSource } from 'typeorm';
-import { TASTE_GENRES } from '@/taste/constants/taste-keywords.constant';
-import { ResolvedTaste } from '@/taste/types/taste.type';
 import { CacheService } from '@/cache/cache.service';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { MEDIA_TYPE_VALUES } from '@/types/media-type';
+import { personalityFor } from '@/taste/personality';
+import { GenreRarityService } from '@/taste/genre-rarity.service';
+import { TasteForFeed } from '@/taste/types/taste.type';
+import { DEFAULT_EXPLORE_LEVEL } from '@/taste/constants/journey.constant';
 
-const resolvedTasteKey = (userId: number) => `taste-resolved-${userId}`;
+type TasteProfile = Omit<TasteResDto, 'personality'>;
+
+const tasteForFeedCacheKey = (userId: number) => `taste-resolved-${userId}`;
 
 @Injectable()
 export class TasteService {
@@ -22,29 +25,36 @@ export class TasteService {
     private readonly userService: UserService,
     private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
+    private readonly genreRarityService: GenreRarityService,
   ) {}
 
-  async upsert(userId: number, dto: UpsertTasteReqDto): Promise<TasteResDto> {
+  async save(userId: number, dto: SaveTasteReqDto): Promise<TasteResDto> {
     await this.dataSource.transaction(async (manager) => {
-      // 1. Upsert taste data
       await manager.upsert(
         Taste,
         {
           userId,
-          keywords: dto.keywords,
-          flexibility: dto.flexibility,
+          movieIds: dto.movieIds,
+          seriesIds: dto.seriesIds,
+          seriesSkipped: dto.seriesSkipped,
+          genreIds: dto.genreIds,
+          era: dto.era,
+          reality: dto.reality,
+          tasteAuthority: dto.tasteAuthority,
+          commitment: dto.commitment,
+          avoid: dto.avoid,
+          exploreLevel: dto.exploreLevel,
         },
         {
           conflictPaths: ['userId'],
         },
       );
 
-      // 2. Mark user as having filled in taste
       await this.userService.update(userId, { hasFilledInTaste: true });
     });
 
-    // Taste changed → drop the cached resolved form so the feed picks it up.
-    await this.cacheService.del(resolvedTasteKey(userId));
+    // Taste changed → drop the cached feed copy so the feed picks it up.
+    await this.cacheService.del(tasteForFeedCacheKey(userId));
 
     // Invalidate feed cache for all media types so the new taste takes immediate effect
     const keysToDelete: string[] = [];
@@ -59,10 +69,7 @@ export class TasteService {
     }
     await Promise.all(keysToDelete.map((key) => this.cacheService.del(key)));
 
-    return {
-      keywords: dto.keywords,
-      flexibility: dto.flexibility,
-    };
+    return this.toResDto(dto);
   }
 
   async findByUserId(userId: number): Promise<TasteResDto | null> {
@@ -72,42 +79,58 @@ export class TasteService {
       return null;
     }
 
-    return {
-      keywords: taste.keywords,
-      flexibility: taste.flexibility,
-    };
+    return this.toResDto(taste);
   }
 
   /**
-   * Stored taste resolved into TMDB keyword + genre ids for the discovery layer.
-   * Keywords are encoded `GenreName_TMDBKeywordId`; the genre ids come from
-   * matching those genre names against TASTE_GENRES. Returns empty ids with
-   * `normal` flexibility when the user has no taste yet.
+   * Stored taste reduced to what the feed personalizes on, with neutral
+   * defaults when the user has no taste yet.
    */
-  @Cacheable({ key: resolvedTasteKey, ttl: Duration.ONE_DAY })
-  async getResolvedTaste(userId: number): Promise<ResolvedTaste> {
-    const taste = await this.findByUserId(userId);
+  @Cacheable({ key: tasteForFeedCacheKey, ttl: Duration.ONE_DAY })
+  async getTasteForFeed(userId: number): Promise<TasteForFeed> {
+    const taste = await this.tasteRepository.findOneBy({ userId });
+
     if (!taste) {
-      return { keywordIds: [], genreIds: [], flexibility: 'normal' };
+      return {
+        hasTaste: false,
+        genreIds: [],
+        avoid: [],
+        exploreLevel: DEFAULT_EXPLORE_LEVEL,
+        era: null,
+        reality: null,
+        tasteAuthority: null,
+        commitment: null,
+      };
     }
 
-    const keywordIds = [
-      ...new Set(
-        taste.keywords
-          .map((keyword) => Number(keyword.slice(keyword.lastIndexOf('_') + 1)))
-          .filter((id) => !Number.isNaN(id)),
-      ),
-    ];
+    return {
+      hasTaste: true,
+      genreIds: taste.genreIds,
+      avoid: taste.avoid,
+      exploreLevel: taste.exploreLevel,
+      era: taste.era,
+      reality: taste.reality,
+      tasteAuthority: taste.tasteAuthority,
+      commitment: taste.commitment,
+    };
+  }
 
-    const genreNames = new Set(
-      taste.keywords.map((keyword) =>
-        keyword.slice(0, keyword.lastIndexOf('_')),
+  private async toResDto(profile: TasteProfile): Promise<TasteResDto> {
+    return {
+      movieIds: profile.movieIds,
+      seriesIds: profile.seriesIds,
+      seriesSkipped: profile.seriesSkipped,
+      genreIds: profile.genreIds,
+      era: profile.era,
+      reality: profile.reality,
+      tasteAuthority: profile.tasteAuthority,
+      commitment: profile.commitment,
+      avoid: profile.avoid,
+      exploreLevel: profile.exploreLevel,
+      personality: personalityFor(
+        profile,
+        await this.genreRarityService.getWeights(),
       ),
-    );
-    const genreIds = [...genreNames]
-      .map((name) => TASTE_GENRES.find((genre) => genre.name === name)?.id)
-      .filter((id): id is number => typeof id === 'number');
-
-    return { keywordIds, genreIds, flexibility: taste.flexibility };
+    };
   }
 }

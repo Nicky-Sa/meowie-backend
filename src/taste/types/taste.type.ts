@@ -1,11 +1,23 @@
-import { FlexibilityOptionId } from '@/taste/constants/flexibility-options.constant';
+import { GenreId } from '@/taste/constants/pools.constant';
+import {
+  AuthorityAnswer,
+  CommitmentAnswer,
+  EraAnswer,
+  RealityAnswer,
+} from '@/taste/constants/journey.constant';
 
 /**
- * Stored taste resolved into ids the discovery layer can use: the TMDB keyword
- * ids and genre ids derived from the encoded `KeywordId`s, plus flexibility.
+ * Stored taste reduced to what the feed personalizes on. `hasTaste` is false
+ * for users who never completed the wizard — the other fields then hold
+ * neutral defaults (no genres, no avoids, balanced explore, null answers).
  */
-export type ResolvedTaste = {
-  keywordIds: number[];
-  genreIds: number[];
-  flexibility: FlexibilityOptionId;
+export type TasteForFeed = {
+  hasTaste: boolean;
+  genreIds: GenreId[];
+  avoid: string[];
+  exploreLevel: number;
+  era: EraAnswer | null;
+  reality: RealityAnswer | null;
+  tasteAuthority: AuthorityAnswer | null;
+  commitment: CommitmentAnswer | null;
 };

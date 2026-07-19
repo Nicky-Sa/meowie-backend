@@ -9,9 +9,13 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
-import { FlexibilityOptionId } from '@/taste/constants/flexibility-options.constant';
-
-export type KeywordId = `${string}_${number}`;
+import { GenreId } from '@/taste/constants/pools.constant';
+import {
+  AuthorityAnswer,
+  CommitmentAnswer,
+  EraAnswer,
+  RealityAnswer,
+} from '@/taste/constants/journey.constant';
 
 @Entity('taste')
 @Unique(['userId'])
@@ -23,11 +27,38 @@ export class Taste {
   @Column()
   userId: number;
 
-  @Column('text', { array: true })
-  keywords: KeywordId[];
+  // TMDB ids of the titles picked in the movie / series steps.
+  @Column('int', { array: true })
+  movieIds: number[];
+
+  @Column('int', { array: true })
+  seriesIds: number[];
+
+  @Column()
+  seriesSkipped: boolean;
+
+  // TMDB genre ids confirmed in the genres step.
+  @Column('int', { array: true })
+  genreIds: GenreId[];
+
+  // The four taste-question answers: a side value or 'both' per axis.
+  @Column({ type: 'varchar' })
+  era: EraAnswer;
 
   @Column({ type: 'varchar' })
-  flexibility: FlexibilityOptionId;
+  reality: RealityAnswer;
+
+  @Column({ type: 'varchar' })
+  tasteAuthority: AuthorityAnswer;
+
+  @Column({ type: 'varchar' })
+  commitment: CommitmentAnswer;
+
+  @Column('text', { array: true })
+  avoid: string[];
+
+  @Column('int')
+  exploreLevel: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

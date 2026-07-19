@@ -10,10 +10,9 @@ export class TasteContributor extends BaseContributor {
   }
 
   async contribute(userId: number): Promise<FeedProfileContribution> {
-    const taste = await this.tasteService.getResolvedTaste(userId);
+    const taste = await this.tasteService.getTasteForFeed(userId);
 
     return {
-      keywordIds: taste.keywordIds.map((id) => ({ id, weight: 1 })),
       genreIds: taste.genreIds.map((id) => ({ id, weight: 1 })),
       libraryMovieIds: [],
       librarySeriesIds: [],

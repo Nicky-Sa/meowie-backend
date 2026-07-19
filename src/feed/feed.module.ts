@@ -23,18 +23,23 @@ import { BaseFilter } from '@/feed/engine/filters/base.filter';
 import { BaseScorer } from '@/feed/engine/scorers/base.scorer';
 import { AlreadyServedFilter } from '@/feed/engine/filters/already-served.filter';
 import { ExcludeIdsFilter } from '@/feed/engine/filters/exclude-ids.filter';
+import { AvoidGenresFilter } from '@/feed/engine/filters/avoid-genres.filter';
 import { GenreMatchScorer } from '@/feed/engine/scorers/genre-match.scorer';
 import { QualityScorer } from '@/feed/engine/scorers/quality.scorer';
-import { SimilarSourceScorer } from '@/feed/engine/scorers/similar-source.scorer';
 import { ShuffleScorer } from '@/feed/engine/scorers/shuffle.scorer';
+import { EraScorer } from '@/feed/engine/scorers/era.scorer';
+import { RealityScorer } from '@/feed/engine/scorers/reality.scorer';
+import { AuthorityScorer } from '@/feed/engine/scorers/authority.scorer';
 
 const profileContributors = [TasteContributor, LibraryContributor];
-const filters = [AlreadyServedFilter, ExcludeIdsFilter];
+const filters = [AlreadyServedFilter, ExcludeIdsFilter, AvoidGenresFilter];
 const scorers = [
   GenreMatchScorer,
   QualityScorer,
-  SimilarSourceScorer,
   ShuffleScorer,
+  EraScorer,
+  RealityScorer,
+  AuthorityScorer,
 ];
 
 @Module({

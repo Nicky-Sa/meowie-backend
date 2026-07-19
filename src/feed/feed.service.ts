@@ -10,7 +10,8 @@ import { FeedProfile } from '@/feed/profile/profile.types';
 import { MediaType } from '@/types/media-type';
 import { SortOption } from '@/common/types/media-query';
 import { FeedResDto } from '@/feed/dto/feed.dto';
-import { FlexibilityOptionId } from '@/taste/constants/flexibility-options.constant';
+import { TasteForFeed } from '@/taste/types/taste.type';
+import { buildAvoidRules, AvoidRules } from '@/feed/avoid.constant';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import {
@@ -27,7 +28,8 @@ type FeedInputs = {
   userId: number;
   mediaType: MediaType;
   profile: FeedProfile;
-  flexibility: FlexibilityOptionId;
+  taste: TasteForFeed;
+  avoid: AvoidRules;
   excludeIds: Set<number>;
 };
 
@@ -74,7 +76,7 @@ export class FeedService {
     }
 
     // Cold start: no taste and nothing in the library for this media type.
-    const inputs = await this.resolveInputs(userId, mediaType);
+    const inputs = await this.buildInputs(userId, mediaType);
     if (!inputs) {
       return this.guestFeed(mediaType, page);
     }
@@ -102,17 +104,17 @@ export class FeedService {
   }
 
   /**
-   * Resolves the personalization inputs for a user, or `null` when there's
-   * nothing to personalize from (no taste and an empty library for this media
-   * type) — the caller falls back to the public feed.
+   * Collects everything the engine personalizes with for a user, or `null`
+   * when there's nothing to work with (no taste and an empty library for this
+   * media type) — the caller falls back to the public feed.
    */
-  private async resolveInputs(
+  private async buildInputs(
     userId: number,
     mediaType: MediaType,
   ): Promise<FeedInputs | null> {
     const [profile, taste] = await Promise.all([
       this.profileBuilder.build(userId),
-      this.tasteService.getResolvedTaste(userId),
+      this.tasteService.getTasteForFeed(userId),
     ]);
 
     const libraryIds =
@@ -120,10 +122,7 @@ export class FeedService {
         ? profile.libraryMovieIds
         : profile.librarySeriesIds;
 
-    const canPersonalize =
-      profile.keywordIds.length > 0 ||
-      profile.genreIds.length > 0 ||
-      libraryIds.length > 0;
+    const canPersonalize = profile.genreIds.length > 0 || libraryIds.length > 0;
     if (!canPersonalize) {
       return null;
     }
@@ -132,7 +131,8 @@ export class FeedService {
       userId,
       mediaType,
       profile,
-      flexibility: taste.flexibility,
+      taste,
+      avoid: buildAvoidRules(taste.avoid),
       excludeIds: new Set(libraryIds.map((item) => item.id)),
     };
   }
@@ -145,8 +145,8 @@ export class FeedService {
   ): Promise<void> {
     await this.extendPool(inputs, state, needed);
 
-    // Suppression exhausted the catalog → restart from page 1. The shuffle seed
-    // reorders the same titles, so a refresh still looks different.
+    // Filtering used up the whole catalog → start again from page 1. The
+    // shuffle seed reorders the same titles, so a refresh still looks different.
     if (state.pool.length === 0) {
       state.served.clear();
       state.nextTmdbPageToFetch = 1;

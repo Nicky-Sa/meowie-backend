@@ -7,8 +7,8 @@ export class ShuffleScorer extends BaseScorer {
   readonly key = 'shuffle';
 
   score(candidate: FeedCandidate, context: FeedContext): number {
-    let x = (candidate.id * 2654435761) ^ (context.shuffleSeed * 40503);
-    x = (x ^ (x >>> 15)) >>> 0;
-    return (x % 100000) / 100000;
+    let hashed = (candidate.id * 2654435761) ^ (context.shuffleSeed * 40503);
+    hashed = (hashed ^ (hashed >>> 15)) >>> 0;
+    return (hashed % 100000) / 100000;
   }
 }

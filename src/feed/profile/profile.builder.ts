@@ -17,7 +17,7 @@ export class ProfileBuilder {
 
   async build(userId: number): Promise<FeedProfile> {
     const contributions = await Promise.all(
-      this.contributors.map((c) => c.contribute(userId)),
+      this.contributors.map((contributor) => contributor.contribute(userId)),
     );
 
     return this.merge(contributions);
@@ -25,15 +25,14 @@ export class ProfileBuilder {
 
   private merge(contributions: FeedProfileContribution[]): FeedProfile {
     return {
-      keywordIds: this.mergeWeightedIds(
-        contributions.flatMap((c) => c.keywordIds),
+      genreIds: this.mergeWeightedIds(
+        contributions.flatMap((contribution) => contribution.genreIds),
       ),
-      genreIds: this.mergeWeightedIds(contributions.flatMap((c) => c.genreIds)),
       libraryMovieIds: this.mergeWeightedIds(
-        contributions.flatMap((c) => c.libraryMovieIds),
+        contributions.flatMap((contribution) => contribution.libraryMovieIds),
       ),
       librarySeriesIds: this.mergeWeightedIds(
-        contributions.flatMap((c) => c.librarySeriesIds),
+        contributions.flatMap((contribution) => contribution.librarySeriesIds),
       ),
     };
   }
