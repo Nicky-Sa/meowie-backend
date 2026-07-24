@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { TasteService } from '@/taste/taste.service';
 import { BaseContributor } from '@/feed/profile/contributors/base.contributor';
-import { FeedProfileContribution } from '@/feed/profile/profile.types';
+import {
+  FeedProfileContribution,
+  WeightedId,
+} from '@/feed/profile/profile.types';
+
+// Below every positive library weight, so real saves and ratings always take
+// the recommendation slots first.
+const PICKED_TITLE_WEIGHT = 0.2;
 
 @Injectable()
 export class TasteContributor extends BaseContributor {
@@ -14,8 +21,12 @@ export class TasteContributor extends BaseContributor {
 
     return {
       genreIds: taste.genreIds.map((id) => ({ id, weight: 1 })),
-      libraryMovieIds: [],
-      librarySeriesIds: [],
+      knownMovieIds: this.toWeightedIds(taste.movieIds),
+      knownSeriesIds: this.toWeightedIds(taste.seriesIds),
     };
+  }
+
+  private toWeightedIds(tmdbIds: number[]): WeightedId[] {
+    return tmdbIds.map((id) => ({ id, weight: PICKED_TITLE_WEIGHT }));
   }
 }

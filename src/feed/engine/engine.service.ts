@@ -7,7 +7,7 @@ import {
 import { BaseFilter } from '@/feed/engine/filters/base.filter';
 import { BaseScorer } from '@/feed/engine/scorers/base.scorer';
 import { CandidateGenerator } from '@/feed/engine/candidate-generator';
-import { positiveLibraryItemsFor } from '@/feed/profile/profile.types';
+import { likedTitlesFor } from '@/feed/profile/profile.types';
 import {
   RankingWeights,
   rankingWeightsFor,
@@ -120,11 +120,11 @@ export class EngineService {
     rankedBySource: Map<FeedCandidateSource, number[]>,
     context: FeedContext,
   ): number[] {
-    const librarySize = positiveLibraryItemsFor(
+    const likedCount = likedTitlesFor(
       context.profile,
       context.mediaType,
     ).length;
-    const shares = sourceSharesFor(context.taste.exploreLevel, librarySize);
+    const shares = sourceSharesFor(context.taste.exploreLevel, likedCount);
 
     const queues: SourceQueue[] = [...rankedBySource.entries()].map(
       ([source, ids]) => ({

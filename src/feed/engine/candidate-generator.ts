@@ -21,7 +21,7 @@ import {
   CRITICS_CHOICE_MIN_RATING,
   DISCOVER_PAGES_PER_BUILD,
   LONG_MIN_RUNTIME,
-  MAX_LIBRARY_SOURCES,
+  MAX_SIMILAR_SOURCES,
   MIN_MOVIE_RUNTIME,
   POPULAR_VOTE_COUNT_FLOOR,
   SHORT_MAX_RUNTIME,
@@ -29,7 +29,7 @@ import {
   VOTE_COUNT_FOR_FULL_CONFIDENCE,
 } from '@/feed/feed.constants';
 import { tvGenreIdsFor } from '@/feed/movie-to-tv-genres.constant';
-import { positiveLibraryItemsFor } from '@/feed/profile/profile.types';
+import { likedTitlesFor } from '@/feed/profile/profile.types';
 import {
   CLASSIC_MAX_YEAR,
   COMMITMENT,
@@ -65,7 +65,7 @@ type TasteQuery = {
 /**
  * The single candidate-generation stage: takes a context (profile + paging)
  * and turns it into catalog items via TMDB. Three sources always run
- * together — taste discovery, library recommendations, and popular titles —
+ * together — taste discovery, lookalikes of liked titles, and popular titles —
  * and the engine mixes them by share, so no single source owns the feed.
  */
 @Injectable()
@@ -81,7 +81,7 @@ export class CandidateGenerator {
   async generate(context: FeedContext): Promise<FeedCandidate[]> {
     const [discovered, recommended, popular] = await Promise.all([
       this.discoverByTaste(context),
-      this.recommendFromLibrary(context),
+      this.recommendFromLikedTitles(context),
       this.fetchPopular(context),
     ]);
 
@@ -233,19 +233,19 @@ export class CandidateGenerator {
     };
   }
 
-  private async recommendFromLibrary(
+  private async recommendFromLikedTitles(
     context: FeedContext,
   ): Promise<FeedCandidate[]> {
     // Recommendations don't paginate alongside discover pages, so pull them once
-    // on the first build batch — they cluster "more like your library" up top.
+    // on the first build batch — they cluster the lookalikes up top.
     if (context.nextTmdbPageToFetch !== 1) {
       return [];
     }
 
     const { mediaType, profile } = context;
-    const sourceIds = positiveLibraryItemsFor(profile, mediaType)
+    const sourceIds = likedTitlesFor(profile, mediaType)
       .sort((a, b) => b.weight - a.weight)
-      .slice(0, MAX_LIBRARY_SOURCES)
+      .slice(0, MAX_SIMILAR_SOURCES)
       .map((source) => source.id);
 
     const lists = await Promise.all(

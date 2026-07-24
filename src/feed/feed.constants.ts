@@ -4,7 +4,7 @@ import { FeedCandidateSource } from '@/feed/engine/engine.types';
 
 export const FEED_PAGE_SIZE = 20;
 export const DISCOVER_PAGES_PER_BUILD = 3;
-export const MAX_LIBRARY_SOURCES = 5;
+export const MAX_SIMILAR_SOURCES = 5;
 export const MAX_POOL_SIZE = 500;
 export const VOTE_COUNT_FLOOR = 50;
 export const POPULAR_VOTE_COUNT_FLOOR = 100;
@@ -71,7 +71,7 @@ export const rankingWeightsFor = (exploreLevel: number): RankingWeights => {
 export type SourceShares = Record<FeedCandidateSource, number>;
 
 // How the feed splits between candidate sources: mostly taste discovery, a
-// slice of library lookalikes, and always some popular titles so no single
+// slice of lookalikes, and always some popular titles so no single
 // signal owns the feed. Higher explore levels hand more of it to popular.
 const SOURCE_SHARE_RANGES: Record<FeedCandidateSource, ExploreRange> = {
   taste: { tight: 0.7, loose: 0.45 },
@@ -79,13 +79,13 @@ const SOURCE_SHARE_RANGES: Record<FeedCandidateSource, ExploreRange> = {
   popular: { tight: 0.1, loose: 0.35 },
 };
 
-// A tiny library must not steer the feed: the similar share grows with the
-// number of positively-weighted library items and is full from this count on.
-const LIBRARY_SIZE_FOR_FULL_SIMILAR_SHARE = 10;
+// A couple of liked titles must not steer the feed: the similar share grows
+// with how many the user has, and is full from this count on.
+const LIKED_TITLES_FOR_FULL_SIMILAR_SHARE = 10;
 
 export const sourceSharesFor = (
   exploreLevel: number,
-  librarySize: number,
+  likedCount: number,
 ): SourceShares => {
   const taste = blendByExploreLevel(SOURCE_SHARE_RANGES.taste, exploreLevel);
   const popular = blendByExploreLevel(
@@ -98,9 +98,8 @@ export const sourceSharesFor = (
   );
 
   const similar =
-    fullSimilar *
-    Math.min(librarySize / LIBRARY_SIZE_FOR_FULL_SIMILAR_SHARE, 1);
+    fullSimilar * Math.min(likedCount / LIKED_TITLES_FOR_FULL_SIMILAR_SHARE, 1);
 
-  // The share a small library can't claim goes back to taste discovery.
+  // The share too few liked titles can't claim goes back to taste discovery.
   return { taste: taste + (fullSimilar - similar), similar, popular };
 };

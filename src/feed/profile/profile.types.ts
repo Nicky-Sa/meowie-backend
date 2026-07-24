@@ -7,22 +7,22 @@ export type WeightedId = {
 
 export type FeedProfileContribution = {
   genreIds: WeightedId[];
-  libraryMovieIds: WeightedId[];
-  librarySeriesIds: WeightedId[];
+  knownMovieIds: WeightedId[];
+  knownSeriesIds: WeightedId[];
 };
 
 export type FeedProfile = {
   genreIds: WeightedId[];
-  libraryMovieIds: WeightedId[];
-  librarySeriesIds: WeightedId[];
+  knownMovieIds: WeightedId[];
+  knownSeriesIds: WeightedId[];
 };
 
-/** Library items that count as positive signal — they fuel the similar source. */
-export const positiveLibraryItemsFor = (
+/** Titles the user likes — saved, well rated, or picked in the wizard. */
+export const likedTitlesFor = (
   profile: FeedProfile,
   mediaType: MediaType,
 ): WeightedId[] => {
   const items =
-    mediaType === 'movie' ? profile.libraryMovieIds : profile.librarySeriesIds;
+    mediaType === 'movie' ? profile.knownMovieIds : profile.knownSeriesIds;
   return items.filter((item) => item.weight > 0);
 };

@@ -117,12 +117,10 @@ export class FeedService {
       this.tasteService.getTasteForFeed(userId),
     ]);
 
-    const libraryIds =
-      mediaType === 'movie'
-        ? profile.libraryMovieIds
-        : profile.librarySeriesIds;
+    const knownIds =
+      mediaType === 'movie' ? profile.knownMovieIds : profile.knownSeriesIds;
 
-    const canPersonalize = profile.genreIds.length > 0 || libraryIds.length > 0;
+    const canPersonalize = profile.genreIds.length > 0 || knownIds.length > 0;
     if (!canPersonalize) {
       return null;
     }
@@ -133,7 +131,7 @@ export class FeedService {
       profile,
       taste,
       avoid: buildAvoidRules(taste.avoid),
-      excludeIds: new Set(libraryIds.map((item) => item.id)),
+      excludeIds: new Set(knownIds.map((item) => item.id)),
     };
   }
 

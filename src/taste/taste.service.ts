@@ -15,7 +15,7 @@ import { DEFAULT_EXPLORE_LEVEL } from '@/taste/constants/journey.constant';
 
 type TasteProfile = Omit<TasteResDto, 'personality'>;
 
-const tasteForFeedCacheKey = (userId: number) => `taste-resolved-${userId}`;
+const tasteForFeedCacheKey = (userId: number) => `taste-for-feed-${userId}`;
 
 @Injectable()
 export class TasteService {
@@ -94,6 +94,8 @@ export class TasteService {
       return {
         hasTaste: false,
         genreIds: [],
+        movieIds: [],
+        seriesIds: [],
         avoid: [],
         exploreLevel: DEFAULT_EXPLORE_LEVEL,
         era: null,
@@ -106,6 +108,8 @@ export class TasteService {
     return {
       hasTaste: true,
       genreIds: taste.genreIds,
+      movieIds: taste.movieIds,
+      seriesIds: taste.seriesIds,
       avoid: taste.avoid,
       exploreLevel: taste.exploreLevel,
       era: taste.era,

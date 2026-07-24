@@ -5,10 +5,7 @@ import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { TMDB_DiscoverMovieQuery } from '@/tmdb/tmdb.type';
 import { GenreId } from '@/taste/constants/pools.constant';
-import {
-  GENRE_CHIPS,
-  RARITY_WEIGHTS,
-} from '@/taste/constants/journey.constant';
+import { GENRE_IDS, RARITY_WEIGHTS } from '@/taste/constants/journey.constant';
 
 // Titles below this vote count barely surface in the app, so they don't count.
 const MIN_VOTE_COUNT_FOR_CATALOG = 50;
@@ -92,9 +89,9 @@ export class GenreRarityService {
   @Cacheable({ key: () => 'genre-rarity-weights', ttl: Duration.ONE_WEEK })
   private async weightsFromTmdb(): Promise<Record<GenreId, number>> {
     const counts = await Promise.all(
-      GENRE_CHIPS.map(async (chip) => ({
-        id: chip.id,
-        count: await this.genreTitleCount(chip.id),
+      GENRE_IDS.map(async (genreId) => ({
+        id: genreId,
+        count: await this.genreTitleCount(genreId),
       })),
     );
     return weightsFromCounts(counts);

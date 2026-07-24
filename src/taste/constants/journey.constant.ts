@@ -1,10 +1,5 @@
 import { GenreId } from '@/taste/constants/pools.constant';
 
-export type GenreChip = {
-  id: GenreId;
-  example: string;
-};
-
 export type TasteAxis = 'era' | 'reality' | 'tasteAuthority' | 'commitment';
 
 // Single source of truth for the answer values: change a value in one of
@@ -70,25 +65,25 @@ export type TasteQuestion<TAxis extends TasteAxis = TasteAxis> = {
   both: TasteOption<Extract<AnswerFor<TAxis>, typeof BOTH>>;
 };
 
-export const GENRE_CHIPS: GenreChip[] = [
-  { id: 28, example: 'Mad Max, Dark Knight' }, // Action
-  { id: 12, example: 'Dune, The Fall' }, // Adventure
-  { id: 16, example: 'Spirited Away' }, // Animation
-  { id: 35, example: 'Fleabag, The Bear' }, // Comedy
-  { id: 80, example: 'True Detective' }, // Crime
-  { id: 99, example: 'real events' }, // Documentary
-  { id: 18, example: 'Parasite, Succession' }, // Drama
-  { id: 10751, example: 'all-ages' }, // Family
-  { id: 14, example: 'The Fall' }, // Fantasy
-  { id: 36, example: 'Chernobyl, Shogun' }, // History
-  { id: 27, example: 'scares, dread' }, // Horror
-  { id: 10402, example: 'La La Land' }, // Music
-  { id: 9648, example: 'Dark, Coherence' }, // Mystery
-  { id: 10749, example: 'La La Land' }, // Romance
-  { id: 878, example: 'Interstellar' }, // Science Fiction
-  { id: 53, example: 'Blue Ruin' }, // Thriller
-  { id: 10752, example: 'conflict' }, // War
-  { id: 37, example: 'frontier' }, // Western
+export const GENRE_IDS: GenreId[] = [
+  28, // Action
+  12, // Adventure
+  16, // Animation
+  35, // Comedy
+  80, // Crime
+  99, // Documentary
+  18, // Drama
+  10751, // Family
+  14, // Fantasy
+  36, // History
+  27, // Horror
+  10402, // Music
+  9648, // Mystery
+  10749, // Romance
+  878, // Science Fiction
+  53, // Thriller
+  10752, // War
+  37, // Western
 ];
 
 export const TASTE_QUESTIONS: [
@@ -237,5 +232,3 @@ export const RARITY_WEIGHTS: Record<GenreId, number> = {
   36: 1.6, // History
   37: 1.8, // Western
 };
-
-export const AUTO_SELECT_THRESHOLD = 1.6;

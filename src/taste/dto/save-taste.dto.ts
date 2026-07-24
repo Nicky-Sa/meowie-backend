@@ -15,13 +15,11 @@ import {
   CommitmentAnswer,
   EraAnswer,
   EXPLORE_LEVELS,
-  GENRE_CHIPS,
+  GENRE_IDS,
   RealityAnswer,
 } from '@/taste/constants/journey.constant';
 import { GenreId } from '@/taste/constants/pools.constant';
 import { Personality } from '@/taste/personality';
-
-const GENRE_CHIP_IDS = GENRE_CHIPS.map((chip) => chip.id);
 
 export class SaveTasteReqDto {
   // TMDB ids of the picked titles. Not validated against the seed pools so a
@@ -40,7 +38,7 @@ export class SaveTasteReqDto {
 
   @IsArray()
   @IsInt({ each: true })
-  @IsIn(GENRE_CHIP_IDS, {
+  @IsIn(GENRE_IDS, {
     each: true,
     message: 'genreIds contains an unknown genre',
   })

@@ -27,8 +27,8 @@ export class LibraryContributor extends BaseContributor {
 
     return {
       genreIds: [],
-      libraryMovieIds: this.toWeightedIds(items, 'movie'),
-      librarySeriesIds: this.toWeightedIds(items, 'series'),
+      knownMovieIds: this.toWeightedIds(items, 'movie'),
+      knownSeriesIds: this.toWeightedIds(items, 'series'),
     };
   }
 

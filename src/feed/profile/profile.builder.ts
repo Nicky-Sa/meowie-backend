@@ -28,11 +28,11 @@ export class ProfileBuilder {
       genreIds: this.mergeWeightedIds(
         contributions.flatMap((contribution) => contribution.genreIds),
       ),
-      libraryMovieIds: this.mergeWeightedIds(
-        contributions.flatMap((contribution) => contribution.libraryMovieIds),
+      knownMovieIds: this.mergeWeightedIds(
+        contributions.flatMap((contribution) => contribution.knownMovieIds),
       ),
-      librarySeriesIds: this.mergeWeightedIds(
-        contributions.flatMap((contribution) => contribution.librarySeriesIds),
+      knownSeriesIds: this.mergeWeightedIds(
+        contributions.flatMap((contribution) => contribution.knownSeriesIds),
       ),
     };
   }

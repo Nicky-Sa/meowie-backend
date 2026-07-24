@@ -14,6 +14,8 @@ import {
 export type TasteForFeed = {
   hasTaste: boolean;
   genreIds: GenreId[];
+  movieIds: number[];
+  seriesIds: number[];
   avoid: string[];
   exploreLevel: number;
   era: EraAnswer | null;

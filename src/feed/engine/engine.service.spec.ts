@@ -28,20 +28,22 @@ const candidates = (
     candidate(fromId + offset, source),
   );
 
-const contextWithLibrarySize = (librarySize: number): FeedContext => ({
+const contextWithLikedCount = (likedCount: number): FeedContext => ({
   userId: 1,
   mediaType: 'movie',
   profile: {
     genreIds: [{ id: 18, weight: 1 }],
-    libraryMovieIds: Array.from({ length: librarySize }, (_, offset) => ({
+    knownMovieIds: Array.from({ length: likedCount }, (_, offset) => ({
       id: 9000 + offset,
       weight: 1,
     })),
-    librarySeriesIds: [],
+    knownSeriesIds: [],
   },
   taste: {
     hasTaste: true,
     genreIds: [18],
+    movieIds: [],
+    seriesIds: [],
     avoid: [],
     exploreLevel: 2,
     era: null,
@@ -75,9 +77,10 @@ describe('EngineService source mixing', () => {
 
   it('keeps popular titles on the first page even with a one-item library', async () => {
     const engine = engineFor([...tasteBatch, ...similarBatch, ...popularBatch]);
-    const firstPage = (
-      await engine.buildBatch(contextWithLibrarySize(1))
-    ).slice(0, 20);
+    const firstPage = (await engine.buildBatch(contextWithLikedCount(1))).slice(
+      0,
+      20,
+    );
 
     expect(countBySource(firstPage, popularIds)).toBeGreaterThanOrEqual(3);
     expect(countBySource(firstPage, similarIds)).toBeLessThanOrEqual(2);
@@ -86,7 +89,7 @@ describe('EngineService source mixing', () => {
   it('gives the similar source its full share once the library is big enough', async () => {
     const engine = engineFor([...tasteBatch, ...similarBatch, ...popularBatch]);
     const firstPage = (
-      await engine.buildBatch(contextWithLibrarySize(10))
+      await engine.buildBatch(contextWithLikedCount(10))
     ).slice(0, 20);
 
     const similarCount = countBySource(firstPage, similarIds);
@@ -101,7 +104,7 @@ describe('EngineService source mixing', () => {
       candidate(shared, 'popular'),
       ...candidates(1, 5, 'taste'),
     ]);
-    const batch = await engine.buildBatch(contextWithLibrarySize(0));
+    const batch = await engine.buildBatch(contextWithLikedCount(0));
 
     expect(batch.filter((id) => id === shared)).toHaveLength(1);
     expect(new Set(batch).size).toBe(batch.length);
@@ -112,7 +115,7 @@ describe('EngineService source mixing', () => {
       ...candidates(1, 2, 'taste'),
       ...candidates(201, 5, 'popular'),
     ]);
-    const batch = await engine.buildBatch(contextWithLibrarySize(0));
+    const batch = await engine.buildBatch(contextWithLikedCount(0));
 
     expect(batch).toHaveLength(7);
   });

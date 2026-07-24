@@ -3,36 +3,29 @@ import { TasteService } from '@/taste/taste.service';
 import { AuthenticatedRequest } from '@/auth/types/authenticated-request.type';
 import { AccessGuard } from '@/auth/guards/access.guard';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
-import { TasteJourneyResDto } from '@/taste/dto/journey.dto';
-import { GenreRarityService } from '@/taste/genre-rarity.service';
+import { TasteJourneyResDto, toJourneyTitle } from '@/taste/dto/journey.dto';
 import { MOVIES, SERIES } from '@/taste/constants/pools.constant';
 import {
-  AUTO_SELECT_THRESHOLD,
   AVOID_CHIPS,
   EXPLORE_LEVELS,
-  GENRE_CHIPS,
+  GENRE_IDS,
   TASTE_QUESTIONS,
 } from '@/taste/constants/journey.constant';
 
 @Controller('taste')
 export class TasteController {
-  constructor(
-    private readonly tasteService: TasteService,
-    private readonly genreRarityService: GenreRarityService,
-  ) {}
+  constructor(private readonly tasteService: TasteService) {}
 
   // Wizard bootstrap: everything each step needs, fetched once on entry.
   @Get('journey')
-  async getJourney(): Promise<TasteJourneyResDto> {
+  getJourney(): TasteJourneyResDto {
     return {
-      movies: MOVIES,
-      series: SERIES,
-      genreChips: GENRE_CHIPS,
+      movies: MOVIES.map(toJourneyTitle),
+      series: SERIES.map(toJourneyTitle),
+      genreIds: GENRE_IDS,
       questions: TASTE_QUESTIONS,
       avoidChips: [...AVOID_CHIPS],
       exploreLevels: EXPLORE_LEVELS,
-      rarityWeights: await this.genreRarityService.getWeights(),
-      autoSelectThreshold: AUTO_SELECT_THRESHOLD,
     };
   }
 
