@@ -3,12 +3,16 @@ import { personalityFor, PersonalityInput } from '@/taste/personality';
 import { MOVIES, SERIES, Title } from '@/taste/constants/pools.constant';
 import {
   BOTH,
-  COMMITMENT,
   ERA,
   RARITY_WEIGHTS,
   REALITY,
   TASTE_AUTHORITY,
 } from '@/taste/constants/journey.constant';
+import {
+  Character,
+  EVERYTHING_CAT,
+  PERSONALITY_GROUPS,
+} from '@/taste/constants/personality.constant';
 
 const idFromPool = (pool: Title[], title: string): number => {
   const found = pool.find((entry) => entry.title === title);
@@ -25,7 +29,6 @@ const inputWith = (overrides: Partial<PersonalityInput>): PersonalityInput => ({
   era: ERA.NEW_RELEASE,
   reality: REALITY.REALISTIC,
   tasteAuthority: TASTE_AUTHORITY.POPULAR,
-  commitment: COMMITMENT.BOTH,
   ...overrides,
 });
 
@@ -144,7 +147,7 @@ describe('tie boundaries keep the old fixed defaults', () => {
   });
 });
 
-describe('the omnivore', () => {
+describe('the everything cat', () => {
   it("wins with two or more 'both' answers regardless of picks", () => {
     const result = personality({
       era: BOTH,
@@ -152,6 +155,61 @@ describe('the omnivore', () => {
       movieIds: [movieId('The Godfather')],
     });
 
-    expect(result.isOmnivore).toBe(true);
+    expect(result).toEqual(EVERYTHING_CAT);
+  });
+});
+
+describe('picking the cat', () => {
+  it('uses the top genre of the picks when the group has one for it', () => {
+    // Three crime titles, so Crime beats Drama on count.
+    const result = personality({
+      era: ERA.CLASSIC,
+      reality: REALITY.REALISTIC,
+      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      movieIds: [
+        movieId('The Godfather'),
+        movieId('Pulp Fiction'),
+        movieId('Blue Ruin'),
+      ],
+    });
+
+    expect(result.name).toBe('Tony Meowtana');
+  });
+
+  it("falls back to the group's own cat for an unlisted top genre", () => {
+    // Music is the top genre here, and that group has no music cat.
+    const result = personality({
+      era: ERA.CLASSIC,
+      reality: REALITY.REALISTIC,
+      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      movieIds: [movieId('Whiplash')],
+    });
+
+    expect(result.name).toBe('Rocky Pawboa');
+  });
+});
+
+describe('every cat card', () => {
+  const everyCat: Character[] = [
+    EVERYTHING_CAT,
+    ...Object.values(PERSONALITY_GROUPS).flatMap((group) => [
+      group.default,
+      ...Object.values(group.byGenre).filter(
+        (cat): cat is Character => cat !== undefined,
+      ),
+    ]),
+  ];
+
+  it('has a name and a picture', () => {
+    for (const cat of everyCat) {
+      expect(cat.name).not.toBe('');
+      expect(cat.image).toMatch(/^https:\/\/.+\.png$/);
+    }
+  });
+
+  it('is used by only one entry', () => {
+    const images = everyCat.map((cat) => cat.image);
+
+    expect(new Set(images).size).toBe(images.length);
   });
 });

@@ -1,9 +1,10 @@
 import {
   AuthorityValue,
-  CellKey,
+  Character,
+  GroupKey,
   EraValue,
-  OMNIVORE,
-  PERSONALITY_CELLS,
+  EVERYTHING_CAT,
+  PERSONALITY_GROUPS,
   RealityValue,
 } from '@/taste/constants/personality.constant';
 import {
@@ -16,8 +17,6 @@ import {
   AuthorityAnswer,
   BOTH,
   CLASSIC_MAX_YEAR,
-  COMMITMENT,
-  CommitmentAnswer,
   ERA,
   ESCAPIST_GENRE_IDS,
   EraAnswer,
@@ -29,21 +28,13 @@ import {
 } from '@/taste/constants/journey.constant';
 
 /**
- * Picks the shareable "You watch like ..." personality from a stored taste
- * profile. PRESENTATION ONLY — never feeds the recommendation taste vector.
+ * Picks the shareable cat card from a stored taste profile.
+ * PRESENTATION ONLY — never feeds the recommendation taste vector.
  */
 
-export type Personality = {
-  name: string;
-  source: string;
-  description: string;
-  rarityPercent: number;
-  isOmnivore: boolean;
-  // Movie poster of the character's source title, used as the reveal card
-  // backdrop. Empty for the omnivore (no single source).
-  poster: string;
-  flair: string;
-};
+// The picked cat: `image` is the finished share card (all of its wording is
+// drawn into the picture), `name` is only for the share message.
+export type Personality = Character;
 
 export type PersonalityInput = {
   movieIds: number[];
@@ -51,7 +42,6 @@ export type PersonalityInput = {
   era: EraAnswer;
   reality: RealityAnswer;
   tasteAuthority: AuthorityAnswer;
-  commitment: CommitmentAnswer;
 };
 
 // Movie and series TMDB ids are separate namespaces that can collide, so each
@@ -98,9 +88,9 @@ const topGenre = (
   return best;
 };
 
-// A 'both' answer on an identity axis is broken by the lean of the user's
-// poster picks below. Each tie (or no picks) falls back to what used to be
-// the fixed default: new-release / realistic / popular.
+// A 'both' answer on one of the three main questions is decided by the lean of
+// the user's poster picks below. Each tie (or no picks) falls back to what used
+// to be the fixed default: new-release / realistic / popular.
 
 const eraFromPicks = (picks: Title[]): EraValue => {
   const classic = picks.filter((pick) => pick.year <= CLASSIC_MAX_YEAR).length;
@@ -125,37 +115,20 @@ const authorityFromPicks = (picks: Title[]): AuthorityValue => {
     : TASTE_AUTHORITY.POPULAR;
 };
 
-const IDENTITY_AXES = ['era', 'reality', 'tasteAuthority'] as const;
-
-const flairFor = (commitment: CommitmentAnswer): string => {
-  switch (commitment) {
-    case COMMITMENT.SHORT:
-      return 'Quick-hit watcher';
-    case COMMITMENT.LONG:
-      return 'Epic binger';
-    default:
-      return 'Any-length watcher';
-  }
-};
+// The three questions that decide which group of cats the user lands in.
+// Commitment is not one of them — it only steers the feed.
+const MAIN_QUESTIONS = ['era', 'reality', 'tasteAuthority'] as const;
 
 export const personalityFor = (
   input: PersonalityInput,
   rarityWeights: Record<GenreId, number>,
 ): Personality => {
-  const flair = flairFor(input.commitment);
-
-  const bothCount = IDENTITY_AXES.filter((axis) => input[axis] === BOTH).length;
+  const bothCount = MAIN_QUESTIONS.filter(
+    (question) => input[question] === BOTH,
+  ).length;
 
   if (bothCount >= 2) {
-    return {
-      name: OMNIVORE.default.name,
-      source: OMNIVORE.default.source,
-      description: OMNIVORE.description,
-      rarityPercent: OMNIVORE.rarityPercent,
-      isOmnivore: true,
-      poster: '',
-      flair,
-    };
+    return EVERYTHING_CAT;
   }
 
   const picks = pickedTitles(input.movieIds, input.seriesIds);
@@ -168,19 +141,9 @@ export const personalityFor = (
       ? authorityFromPicks(picks)
       : input.tasteAuthority;
 
-  const cellKey: CellKey = `${era}_${reality}_${authority}`;
-  const cell = PERSONALITY_CELLS[cellKey];
+  const key: GroupKey = `${era}_${reality}_${authority}`;
+  const group = PERSONALITY_GROUPS[key];
 
   const top = topGenre(picks, rarityWeights);
-  const character = (top !== null && cell.byGenre[top]) || cell.default;
-
-  return {
-    name: character.name,
-    source: character.source,
-    description: cell.description,
-    rarityPercent: cell.rarityPercent,
-    isOmnivore: false,
-    poster: character.poster,
-    flair,
-  };
+  return (top !== null && group.byGenre[top]) || group.default;
 };
