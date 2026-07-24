@@ -51,6 +51,6 @@ export class UserController {
 
   @Get('churn-reasons')
   getChurnReasons(): ChurnReasonsResDto {
-    return { reasons: CHURN_REASONS };
+    return { reasons: [...CHURN_REASONS] };
   }
 }

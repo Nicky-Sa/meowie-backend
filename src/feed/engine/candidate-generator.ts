@@ -85,7 +85,41 @@ export class CandidateGenerator {
       this.fetchPopular(context),
     ]);
 
-    return [...discovered, ...recommended, ...popular];
+    return this.withoutOverlongSeries(
+      [...discovered, ...recommended, ...popular],
+      context,
+    );
+  }
+
+  /**
+   * TMDB discover can't filter on episode count, so the "long watches" cap for
+   * series is checked here — one cached lookup per candidate, and only when the
+   * user picked that chip.
+   */
+  private async withoutOverlongSeries(
+    candidates: FeedCandidate[],
+    context: FeedContext,
+  ): Promise<FeedCandidate[]> {
+    const cap = context.avoid.seriesMaxEpisodes;
+    if (cap === null || context.mediaType !== 'series') return candidates;
+
+    const checked = await Promise.all(
+      candidates.map(async (candidate) => {
+        try {
+          const episodes = await this.tmdbService.getSeriesEpisodeCount(
+            candidate.id,
+          );
+          return episodes > cap ? null : candidate;
+        } catch {
+          this.logger.warn(
+            `Failed to read the episode count for series/${candidate.id}; keeping it`,
+          );
+          return candidate;
+        }
+      }),
+    );
+
+    return checked.filter((candidate) => candidate !== null);
   }
 
   private async discoverByTaste(
@@ -201,10 +235,14 @@ export class CandidateGenerator {
 
   /** Discover-time exclusions from the avoid chips. */
   private avoidParams(context: FeedContext): AvoidParams {
-    const { genreIds, keywordIds } = context.avoid;
+    const { blockedGenreIds, blockedKeywordIds } = context.avoid;
     return {
-      ...(genreIds.size && { without_genres: [...genreIds].join(',') }),
-      ...(keywordIds.length && { without_keywords: keywordIds.join(',') }),
+      ...(blockedGenreIds.size && {
+        without_genres: [...blockedGenreIds].join(','),
+      }),
+      ...(blockedKeywordIds.length && {
+        without_keywords: blockedKeywordIds.join(','),
+      }),
     };
   }
 
@@ -251,7 +289,39 @@ export class CandidateGenerator {
     const lists = await Promise.all(
       sourceIds.map((id) => this.recommendationsFor(mediaType, id)),
     );
-    return lists.flat();
+    return this.withoutAvoidedKeywords(lists.flat(), context);
+  }
+
+  /**
+   * The recommendations endpoint takes no filters, so avoided keywords have to
+   * be checked here — one cached TMDB call per candidate. A title whose
+   * keywords can't be read is dropped, because an avoid is a hard rule.
+   */
+  private async withoutAvoidedKeywords(
+    candidates: FeedCandidate[],
+    context: FeedContext,
+  ): Promise<FeedCandidate[]> {
+    const blocked = new Set(context.avoid.blockedKeywordIds);
+    if (blocked.size === 0) return candidates;
+
+    const checked = await Promise.all(
+      candidates.map(async (candidate) => {
+        try {
+          const keywordIds = await this.tmdbService.getKeywordIds(
+            candidate.mediaType,
+            candidate.id,
+          );
+          return keywordIds.some((id) => blocked.has(id)) ? null : candidate;
+        } catch {
+          this.logger.warn(
+            `Failed to read keywords for ${candidate.mediaType}/${candidate.id}; dropping it`,
+          );
+          return null;
+        }
+      }),
+    );
+
+    return checked.filter((candidate) => candidate !== null);
   }
 
   private async recommendationsFor(

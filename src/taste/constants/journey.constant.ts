@@ -1,4 +1,5 @@
 import { GenreId } from '@/taste/constants/pools.constant';
+import { Option } from '@/types/option';
 
 export type TasteAxis = 'era' | 'reality' | 'tasteAuthority' | 'commitment';
 
@@ -50,19 +51,13 @@ export type RealityAnswer = AnswerFor<'reality'>;
 export type AuthorityAnswer = AnswerFor<'tasteAuthority'>;
 export type CommitmentAnswer = AnswerFor<'commitment'>;
 
-export type TasteOption<TValue extends string = string> = {
-  label: string;
-  description?: string;
-  value: TValue;
-};
-
 export type TasteQuestion<TAxis extends TasteAxis = TasteAxis> = {
   id: TAxis;
   axis: string;
   prompt: string;
-  sideA: TasteOption<Exclude<AnswerFor<TAxis>, typeof BOTH>>;
-  sideB: TasteOption<Exclude<AnswerFor<TAxis>, typeof BOTH>>;
-  both: TasteOption<Extract<AnswerFor<TAxis>, typeof BOTH>>;
+  sideA: Option<Exclude<AnswerFor<TAxis>, typeof BOTH>>;
+  sideB: Option<Exclude<AnswerFor<TAxis>, typeof BOTH>>;
+  both: Option<Extract<AnswerFor<TAxis>, typeof BOTH>>;
 };
 
 export const GENRE_IDS: GenreId[] = [
@@ -99,17 +94,17 @@ export const TASTE_QUESTIONS: [
     sideA: {
       label: 'Classics',
       description: 'Older, timeless picks',
-      value: ERA.CLASSIC,
+      id: ERA.CLASSIC,
     },
     sideB: {
       label: 'New releases',
       description: 'Recent and current',
-      value: ERA.NEW_RELEASE,
+      id: ERA.NEW_RELEASE,
     },
     both: {
       label: 'No preference',
       description: 'I like both',
-      value: BOTH,
+      id: BOTH,
     },
   },
   {
@@ -119,17 +114,17 @@ export const TASTE_QUESTIONS: [
     sideA: {
       label: 'Realistic',
       description: 'Real, believable, true to life',
-      value: REALITY.REALISTIC,
+      id: REALITY.REALISTIC,
     },
     sideB: {
       label: 'Fantasy',
       description: 'Escapist, sci-fi, the unreal',
-      value: REALITY.FANTASY,
+      id: REALITY.FANTASY,
     },
     both: {
       label: 'No preference',
       description: 'I like both',
-      value: BOTH,
+      id: BOTH,
     },
   },
   {
@@ -139,17 +134,17 @@ export const TASTE_QUESTIONS: [
     sideA: {
       label: 'Most Popular',
       description: "What everyone's watching",
-      value: TASTE_AUTHORITY.POPULAR,
+      id: TASTE_AUTHORITY.POPULAR,
     },
     sideB: {
       label: "Critics' Choice",
       description: 'Highly rated, award winning',
-      value: TASTE_AUTHORITY.CRITICS_CHOICE,
+      id: TASTE_AUTHORITY.CRITICS_CHOICE,
     },
     both: {
       label: 'No preference',
       description: 'I like both',
-      value: BOTH,
+      id: BOTH,
     },
   },
   {
@@ -159,35 +154,38 @@ export const TASTE_QUESTIONS: [
     sideA: {
       label: 'Short & mini',
       description: 'Quick films, limited series',
-      value: COMMITMENT.SHORT,
+      id: COMMITMENT.SHORT,
     },
     sideB: {
       label: 'Long & epic',
       description: 'Long films, many seasons',
-      value: COMMITMENT.LONG,
+      id: COMMITMENT.LONG,
     },
     both: {
       label: 'No preference',
       description: 'I like both',
-      value: BOTH,
+      id: BOTH,
     },
   },
 ];
 
 export const AVOID_CHIPS = [
-  'Horror',
-  'Gore',
-  'Very long commitment',
-  'Reality TV',
-  'Anime',
-  'War',
-  'Kids content',
-  'Soap opera',
+  { id: 'horror', label: 'Horror' },
+  { id: 'gore', label: 'Gore' },
+  { id: 'long-watches', label: 'Long watches' },
+  { id: 'reality-tv', label: 'Reality TV' },
+  { id: 'anime', label: 'Anime' },
+  { id: 'war', label: 'War' },
+  { id: 'kids-content', label: 'Kids content' },
+  { id: 'soap-opera', label: 'Soap opera' },
 ] as const;
 
-// The feed's avoid-rule map is keyed by this, so renaming a chip in one place
-// but not the other fails to compile.
-export type AvoidChip = (typeof AVOID_CHIPS)[number];
+// Stored rows hold the id, never the label, so a label can be reworded
+// without orphaning what users already picked.
+export type AvoidId = (typeof AVOID_CHIPS)[number]['id'];
+export type AvoidChip = Option<AvoidId>;
+
+export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;

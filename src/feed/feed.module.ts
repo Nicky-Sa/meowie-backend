@@ -23,7 +23,7 @@ import { BaseFilter } from '@/feed/engine/filters/base.filter';
 import { BaseScorer } from '@/feed/engine/scorers/base.scorer';
 import { AlreadyServedFilter } from '@/feed/engine/filters/already-served.filter';
 import { ExcludeIdsFilter } from '@/feed/engine/filters/exclude-ids.filter';
-import { AvoidGenresFilter } from '@/feed/engine/filters/avoid-genres.filter';
+import { AvoidFilter } from '@/feed/engine/filters/avoid.filter';
 import { GenreMatchScorer } from '@/feed/engine/scorers/genre-match.scorer';
 import { QualityScorer } from '@/feed/engine/scorers/quality.scorer';
 import { ShuffleScorer } from '@/feed/engine/scorers/shuffle.scorer';
@@ -32,7 +32,7 @@ import { RealityScorer } from '@/feed/engine/scorers/reality.scorer';
 import { AuthorityScorer } from '@/feed/engine/scorers/authority.scorer';
 
 const profileContributors = [TasteContributor, LibraryContributor];
-const filters = [AlreadyServedFilter, ExcludeIdsFilter, AvoidGenresFilter];
+const filters = [AlreadyServedFilter, ExcludeIdsFilter, AvoidFilter];
 const scorers = [
   GenreMatchScorer,
   QualityScorer,

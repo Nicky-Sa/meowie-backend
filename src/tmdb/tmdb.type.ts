@@ -85,6 +85,13 @@ export type TMDB_WatchProviders = {
   };
 };
 
+// Movies return `keywords`, series return `results`.
+export type TMDB_Keywords = {
+  id: number;
+  keywords?: { id: number; name: string }[];
+  results?: { id: number; name: string }[];
+};
+
 export type TMDB_Recommendations<T> = {
   page: number;
   results: T[];

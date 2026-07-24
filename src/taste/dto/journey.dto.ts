@@ -1,4 +1,4 @@
-import { TasteQuestion } from '@/taste/constants/journey.constant';
+import { AvoidChip, TasteQuestion } from '@/taste/constants/journey.constant';
 import { GenreId, Title } from '@/taste/constants/pools.constant';
 
 // hiddenGem stays on the server — only the personality card reads it.
@@ -18,6 +18,6 @@ export type TasteJourneyResDto = {
   series: JourneyTitle[];
   genreIds: GenreId[];
   questions: TasteQuestion[];
-  avoidChips: string[];
+  avoidChips: AvoidChip[];
   exploreLevels: string[];
 };

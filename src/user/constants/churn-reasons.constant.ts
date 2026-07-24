@@ -1,9 +1,8 @@
-export class ChurnReason {
-  id: string;
-  label: string;
-}
+import { Option } from '@/types/option';
 
-export const CHURN_REASONS: ChurnReason[] = [
+// `satisfies` rather than a type annotation: an annotation widens every id back
+// to string, which quietly turns ChurnReasonId below into string.
+export const CHURN_REASONS = [
   {
     id: 'dont_like_app',
     label: "I don't like the app.",
@@ -24,10 +23,10 @@ export const CHURN_REASONS: ChurnReason[] = [
     id: 'other',
     label: 'Other',
   },
-] as const;
+] as const satisfies readonly Option[];
 
-// Extract the Type (Result: "dont_like_app" | "found_better_app" | ...)
+// "dont_like_app" | "found_better_app" | ...
 export type ChurnReasonId = (typeof CHURN_REASONS)[number]['id'];
 
-// Extract the IDs for runtime validation (Result: ["dont_like_app", ...])
-export const CHURN_REASONS_IDS = CHURN_REASONS.map((r) => r.id);
+// The same ids at runtime, for validation.
+export const CHURN_REASONS_IDS = CHURN_REASONS.map((reason) => reason.id);

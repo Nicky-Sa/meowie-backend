@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import {
   ANSWER_VALUES,
-  AVOID_CHIPS,
+  AVOID_IDS,
   AuthorityAnswer,
   CommitmentAnswer,
   EraAnswer,
@@ -62,7 +62,7 @@ export class SaveTasteReqDto {
 
   @IsArray()
   @IsString({ each: true })
-  @IsIn(AVOID_CHIPS, { each: true, message: 'avoid contains an unknown chip' })
+  @IsIn(AVOID_IDS, { each: true, message: 'avoid contains an unknown chip' })
   avoid: string[];
 
   @IsInt()

@@ -100,14 +100,18 @@ understands for that idea, and there are three kinds (`avoid.constant.ts`):
 
 | Chip | Becomes | Kind |
 |---|---|---|
-| Horror | genre 27 (Horror) | genre |
+| Horror | genre 27 (films) + keyword 315058 (series) | both |
 | Reality TV | genre 10764 (Reality) | genre |
 | War | genres 10752 (War) + 10768 (War & Politics) | genre |
-| Kids content | genres 10751 (Family) + 10762 (Kids) | genre |
+| Kids content | genre 10762 (Kids) | genre |
 | Soap opera | genre 10766 (Soap) | genre |
 | Gore | keyword 10292 | keyword |
 | Anime | keyword 210024 | keyword |
-| Very long commitment | films capped at 150 min | runtime |
+| Long watches | films over 150 min, series over 100 episodes | length |
+
+Horror needs both because TMDB has no Horror genre for TV. The keyword covers
+around 150 well-known series — Supernatural, Stranger Things, The Walking Dead,
+American Horror Story — so it's good, not perfect.
 
 Genres and keywords are TMDB's own two ways of labelling a title. A genre is one
 of ~18 fixed buckets; a keyword is a free tag out of thousands. "Gore" and
@@ -115,26 +119,41 @@ of ~18 fixed buckets; a keyword is a free tag out of thousands. "Gore" and
 
 Where each kind bites:
 
-| Kind | Blocked at discover time | Blocked again after |
-|---|---|---|
-| Genre | `without_genres` | yes, by `AvoidGenres` |
-| Keyword | `without_keywords` | **no** |
-| Runtime | `with_runtime.lte` | no |
+| Kind | taste (discover) | popular (discover) | similar (recommendations) |
+|---|---|---|---|
+| Genre | `without_genres` | `without_genres` | `AvoidFilter` drops them |
+| Keyword | `without_keywords` | `without_keywords` | one keyword lookup per candidate |
+| Film length | `with_runtime.lte` | `with_runtime.lte` | not checked |
+| Series length | one episode-count lookup per candidate — same for all three sources | | |
 
-Three gaps worth knowing:
+The recommendations endpoint takes no filters and its results carry no
+keywords, so the only way to honour a keyword avoid there is to ask TMDB for
+each candidate's keywords and drop the matches. That's what
+`withoutAvoidedKeywords` does — cached for a week per title, and only when the
+user actually picked a keyword chip. A title whose keywords can't be read is
+dropped, since an avoid is a hard rule.
 
-- **Keyword rules only work on the discover source.** TMDB's recommendation and
-  popular responses don't carry keywords, so a gory or anime title can still
-  reach the feed through those two. Genre rules don't have this problem — the
-  `AvoidGenres` filter catches them everywhere.
-- **"Horror" only blocks films.** TMDB has no Horror genre for TV, so horror
-  series slip through.
-- **"Very long commitment" only caps films.** Series carry no runtime at
-  discover time.
+Series length is capped on **episodes, not seasons** — a season means nothing
+consistent (Midsomer Murders: 25 seasons, 144 episodes; Doraemon: 27 and 1836).
+100 episodes blocks roughly the longest third of popular scripted series. TMDB
+discover can't filter on either, so it costs one cached lookup per series
+candidate whenever the chip is on.
 
-Chips are stored as their English labels (`["Horror", "Gore"]`), and a stored
-label that no longer exists is skipped, so renaming a chip silently drops
-whatever users had picked.
+One gap remains:
+
+- **"Kids content" only blocks series.** TMDB has no kids genre for films, and
+  Family isn't the same thing — plenty of Family films are made for adults too.
+  Blocking kids' films properly would need TMDB certifications (G / PG), which
+  is a fourth kind of rule.
+
+Note that horror is the most likely chip to be picked, and it now carries a
+keyword, so the per-candidate keyword lookup on the similar source will run for
+most users who avoid anything at all.
+
+Chips are stored as their stable id (`["horror", "long-watches"]`), not their
+label, so a label can be reworded without orphaning what users picked. Saving validates
+against the id list, and an unknown id logs a warning instead of vanishing
+quietly.
 
 ### Step 4 — Score what's left
 

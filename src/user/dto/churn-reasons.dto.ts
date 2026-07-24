@@ -1,5 +1,5 @@
-import { ChurnReason } from '@/user/constants/churn-reasons.constant';
+import { Option } from '@/types/option';
 
 export class ChurnReasonsResDto {
-  reasons: ChurnReason[];
+  reasons: Option[];
 }
