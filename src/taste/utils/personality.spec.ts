@@ -49,10 +49,7 @@ describe("breaking a single 'both' answer with the poster picks", () => {
   });
 
   it('reads recent picks as a new-release era lean', () => {
-    const movieIds = [
-      movieId('Dune'),
-      movieId('Everything Everywhere All at Once'),
-    ];
+    const movieIds = [movieId('Dune'), movieId('Oppenheimer')];
 
     expect(personality({ era: BOTH, movieIds })).toEqual(
       personality({ era: ERA.NEW_RELEASE, movieIds }),
@@ -80,9 +77,9 @@ describe("breaking a single 'both' answer with the poster picks", () => {
 
   it("reads mostly hidden gems as a critics' choice lean", () => {
     const movieIds = [
-      movieId('Coherence'),
+      movieId('Hereditary'),
       movieId('Blue Ruin'),
-      movieId('Moon'),
+      movieId('Whiplash'),
     ];
 
     expect(personality({ authority: BOTH, movieIds })).toEqual(
@@ -102,7 +99,7 @@ describe("breaking a single 'both' answer with the poster picks", () => {
     const seriesIds = [
       seriesId('Dark'),
       seriesId('Fleabag'),
-      seriesId('Chernobyl'),
+      seriesId('Deadwood'),
     ];
 
     expect(personality({ authority: BOTH, seriesIds })).toEqual(
@@ -139,7 +136,7 @@ describe('tie boundaries keep the old fixed defaults', () => {
   });
 
   it('exactly half hidden gems resolve to popular', () => {
-    const movieIds = [movieId('The Dark Knight'), movieId('Coherence')];
+    const movieIds = [movieId('The Dark Knight'), movieId('Hereditary')];
 
     expect(personality({ authority: BOTH, movieIds })).toEqual(
       personality({ authority: AUTHORITY.POPULAR, movieIds }),
