@@ -56,7 +56,7 @@ export class LibraryController {
     @Param('tmdbId') tmdbId: number,
   ): Promise<LibraryStatusResDto> {
     if (!req.user?.id) {
-      return { saved: false, seen: false };
+      return { saved: false, seen: false, rating: null };
     }
     return this.libraryService.getStatus(req.user.id, { mediaType, tmdbId });
   }

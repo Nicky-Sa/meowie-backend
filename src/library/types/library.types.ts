@@ -5,4 +5,5 @@ export type LibraryItemIdentifier = {
   mediaType: MediaType;
 };
 
-export type Rating = number | undefined;
+// null is a skipped rating.
+export type Rating = number | null;

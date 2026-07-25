@@ -1,17 +1,32 @@
-import { IsEnum, IsInt, IsOptional } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { MediaType, MEDIA_TYPE_VALUES } from '@/types/media-type';
-import { LibraryCategory } from '@/library/constants/library.constants';
+import {
+  HIGHEST_RATING,
+  LibraryCategory,
+  LOWEST_RATING,
+} from '@/library/constants/library.constants';
 import { Page } from '@/common/types/media-query';
 import { Rating } from '@/library/types/library.types';
 
 export class RatingReqDto {
+  // Skipping is sent as null, so the field always has to be there and the
+  // checks below only apply to a real score.
+  @ValidateIf((dto: RatingReqDto) => dto.rating !== null)
   @IsInt()
-  @IsOptional()
-  rating?: Rating;
+  @Min(LOWEST_RATING)
+  @Max(HIGHEST_RATING)
+  rating: Rating;
 }
 
 export type LibraryStatusResDto = Record<LibraryCategory, boolean> & {
-  rating?: number | null;
+  rating: Rating;
 };
 
 export class LibraryItemQueryDto extends Page {

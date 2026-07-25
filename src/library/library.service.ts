@@ -40,12 +40,13 @@ export class LibraryService {
     const initialStatus: LibraryStatusResDto = {
       saved: false,
       seen: false,
+      rating: null,
     };
 
     return items.reduce<LibraryStatusResDto>((acc, item) => {
       acc[item.category] = true;
       if (item.category === 'seen') {
-        acc.rating = item.rating ?? null;
+        acc.rating = item.rating;
       }
       return acc;
     }, initialStatus);
@@ -63,7 +64,7 @@ export class LibraryService {
         mediaType: data.mediaType,
         category: 'saved',
       },
-      { category: 'seen', rating: rating ?? null },
+      { category: 'seen', rating },
     );
 
     // user didn't have this item as saved
@@ -74,7 +75,7 @@ export class LibraryService {
           tmdbId: data.tmdbId,
           mediaType: data.mediaType,
           category: 'seen',
-          rating: rating ?? null,
+          rating,
         });
         await this.libraryItemRepository.save(newItem);
       } catch (error) {
