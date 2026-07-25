@@ -60,13 +60,13 @@ export class FeedService {
     refresh: boolean,
   ): Promise<FeedResDto> {
     if (userId === null) {
-      return this.guestFeed(mediaType, page);
+      return this.publicFeed(mediaType, page, refresh);
     }
 
     // Cold start: no taste and nothing in the library for this media type.
     const inputs = await this.buildInputs(userId, mediaType);
     if (!inputs) {
-      return this.guestFeed(mediaType, page);
+      return this.publicFeed(mediaType, page, refresh);
     }
 
     const keys = feedCacheKeys(userId, mediaType);
@@ -89,7 +89,7 @@ export class FeedService {
     // Nothing personalized to show at all → public feed (never return empty).
     if (state.pool.length === 0) {
       await this.saveState(keys, state);
-      return this.guestFeed(mediaType, page);
+      return this.publicFeed(mediaType, page, refresh);
     }
 
     const feedPage = this.toPage(state.pool, page);
@@ -128,7 +128,7 @@ export class FeedService {
     };
   }
 
-  /** Tops the pool up to `needed`, restarting once from page 1 if the catalog runs dry. */
+  /** Tops the pool up to `needed`, dropping exclusions a step at a time when filtering leaves nothing. */
   private async buildPool(
     inputs: FeedInputs,
     state: FeedState,
@@ -136,14 +136,30 @@ export class FeedService {
     droppedOnRefresh: Set<number>,
   ): Promise<void> {
     await this.extendPool(inputs, state, needed, droppedOnRefresh);
+    if (state.pool.length > 0) return;
 
     // Filtering used up the whole catalog → start again from page 1. The
     // shuffle seed reorders the same titles, so a refresh still looks different.
-    if (state.pool.length === 0) {
-      state.alreadyShown.clear();
-      state.nextTmdbPageToFetch = 1;
-      await this.extendPool(inputs, state, needed, droppedOnRefresh);
+    await this.restartFromFirstPage(inputs, state, needed, droppedOnRefresh);
+    if (state.pool.length > 0) return;
+
+    // Still nothing, so the titles this refresh dropped are all the taste
+    // matches. Take them back — the new seed puts them in a new order — rather
+    // than falling through to the public feed, which looks like a broken pull.
+    if (droppedOnRefresh.size > 0) {
+      await this.restartFromFirstPage(inputs, state, needed, new Set());
     }
+  }
+
+  private async restartFromFirstPage(
+    inputs: FeedInputs,
+    state: FeedState,
+    needed: number,
+    droppedOnRefresh: Set<number>,
+  ): Promise<void> {
+    state.alreadyShown.clear();
+    state.nextTmdbPageToFetch = 1;
+    await this.extendPool(inputs, state, needed, droppedOnRefresh);
   }
 
   /**
@@ -230,7 +246,31 @@ export class FeedService {
     ]);
   }
 
-  /** The public, non-personalized feed (popular titles) — for guests and cold starts. */
+  /**
+   * The public feed, for guests and cold starts. There's no per-user pool to
+   * re-roll here, so a refresh serves a different stretch of the popular list
+   * while still reporting the page the client asked for — otherwise a refresh
+   * landing on the last page would end the feed.
+   */
+  private async publicFeed(
+    mediaType: MediaType,
+    page: number,
+    refresh: boolean,
+  ): Promise<FeedResDto> {
+    const feed = await this.guestFeed(
+      mediaType,
+      refresh ? this.otherPublicPage(page) : page,
+    );
+    return { ...feed, page };
+  }
+
+  /** A page of the public list other than the one being shown. */
+  private otherPublicPage(page: number): number {
+    const offset = 1 + Math.floor(Math.random() * (MAX_FEED_PAGE - 1));
+    return ((page - 1 + offset) % MAX_FEED_PAGE) + 1;
+  }
+
+  /** One page of popular titles, shared by everyone on the public feed. */
   @Cacheable({
     key: (mediaType: MediaType, page: number) =>
       `feed-guest-${mediaType}-p${page}`,

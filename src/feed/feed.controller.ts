@@ -32,7 +32,7 @@ export class FeedController {
       query.page,
       query.refresh,
     );
-    this.setCacheHeaders(res, req.user.id);
+    this.setCacheHeaders(res, req.user.id, query.refresh);
     return feed;
   }
 
@@ -49,7 +49,7 @@ export class FeedController {
       query.page,
       query.refresh,
     );
-    this.setCacheHeaders(res, req.user.id);
+    this.setCacheHeaders(res, req.user.id, query.refresh);
     return feed;
   }
 
@@ -58,8 +58,14 @@ export class FeedController {
   // Guest feeds are identical for everyone, so they're CDN-cacheable;
   // personalized responses must never be shared. CloudFront's cache key doesn't
   // include Authorization, so the client tags guest requests `audience=guest`.
-  private setCacheHeaders(res: Response, userId: number | null): void {
-    if (userId === null) {
+  // A refresh is never cacheable — `refresh=true` is its own cache key, so the
+  // CDN would hand every later pull the same "fresh" feed for an hour.
+  private setCacheHeaders(
+    res: Response,
+    userId: number | null,
+    refresh: boolean,
+  ): void {
+    if (userId === null && !refresh) {
       res.setHeader('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`);
     } else {
       res.setHeader('Cache-Control', 'private, no-store');

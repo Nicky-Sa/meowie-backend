@@ -80,6 +80,19 @@ const builderReturning = (...batches: number[][]) => {
 const ids = (fromId: number, count: number): number[] =>
   Array.from({ length: count }, (_, offset) => fromId + offset);
 
+/** One fixed catalog minus whatever the build hides — a taste nothing else matches. */
+const builderForCatalog = (catalog: number[]) => {
+  const batchBuilder = {
+    build: (context: FeedContext) =>
+      Promise.resolve(
+        context.nextTmdbPageToFetch > 1
+          ? []
+          : catalog.filter((id) => !context.hiddenIds.has(id)),
+      ),
+  } as unknown as BatchBuilderService;
+  return { batchBuilder };
+};
+
 const serviceWith = (batchBuilder: BatchBuilderService, cache: FakeCache) =>
   new FeedService(
     cache as unknown as CacheService,
@@ -200,6 +213,18 @@ describe('FeedService remembers what it showed', () => {
     );
   });
 
+  it('reuses the dropped titles when a refresh finds no new ones', async () => {
+    const catalog = ids(1, 40);
+    const { batchBuilder } = builderForCatalog(catalog);
+    const service = serviceWith(batchBuilder, cache);
+
+    await service.getFeed(USER_ID, 'movie', 1, false);
+    const refreshed = await service.getFeed(USER_ID, 'movie', 1, true);
+
+    expect(refreshed.results).not.toEqual(guestResponse.results);
+    refreshed.results.forEach((id) => expect(catalog).toContain(id));
+  });
+
   it('asks for similar titles again after a refresh', async () => {
     const { batchBuilder, seen } = builderReturning(
       ids(1, 40),
@@ -213,6 +238,49 @@ describe('FeedService remembers what it showed', () => {
 
     expect(seen[0].includeSimilar).toBe(true);
     expect(seen[1].includeSimilar).toBe(true);
+  });
+});
+
+describe('FeedService public feed', () => {
+  const pagesAsked: number[] = [];
+  const pagedMovieService = {
+    getInterestingMovieIds: ({ page }: { page: number }) => {
+      pagesAsked.push(page);
+      return Promise.resolve({ ...guestResponse, page, results: ids(page, 2) });
+    },
+  } as unknown as MovieService;
+
+  const guestService = (cache: FakeCache) =>
+    new FeedService(
+      cache as unknown as CacheService,
+      taste,
+      libraryService,
+      pagedMovieService,
+      seriesService,
+      builderReturning([]).batchBuilder,
+    );
+
+  beforeEach(() => {
+    pagesAsked.length = 0;
+  });
+
+  it('serves a guest a different stretch of the list on refresh', async () => {
+    const service = guestService(new FakeCache());
+
+    const first = await service.getFeed(null, 'movie', 1, false);
+    const refreshed = await service.getFeed(null, 'movie', 1, true);
+
+    expect(refreshed.results).not.toEqual(first.results);
+  });
+
+  it('keeps the page a guest asked for, so paging carries on after a refresh', async () => {
+    const service = guestService(new FakeCache());
+
+    const refreshed = await service.getFeed(null, 'movie', 1, true);
+
+    expect(refreshed.page).toBe(1);
+    expect(refreshed.total_pages).toBeGreaterThan(1);
+    expect(pagesAsked[0]).not.toBe(1);
   });
 });
 
