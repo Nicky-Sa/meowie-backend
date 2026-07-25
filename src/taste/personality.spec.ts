@@ -26,6 +26,7 @@ const seriesId = (title: string): number => idFromPool(SERIES, title);
 const inputWith = (overrides: Partial<PersonalityInput>): PersonalityInput => ({
   movieIds: [],
   seriesIds: [],
+  genreIds: [],
   era: ERA.NEW_RELEASE,
   reality: REALITY.REALISTIC,
   tasteAuthority: TASTE_AUTHORITY.POPULAR,
@@ -148,11 +149,31 @@ describe('tie boundaries keep the old fixed defaults', () => {
 });
 
 describe('the everything cat', () => {
-  it("wins with two or more 'both' answers regardless of picks", () => {
+  it("wins when all three answers are 'both'", () => {
     const result = personality({
       era: BOTH,
       reality: BOTH,
+      tasteAuthority: BOTH,
+    });
+
+    expect(result).toEqual(EVERYTHING_CAT);
+  });
+
+  it("stays away while two 'both' answers can be read from the picks", () => {
+    const movieIds = [movieId('The Godfather'), movieId('Pulp Fiction')];
+
+    expect(personality({ era: BOTH, reality: BOTH, movieIds })).toEqual(
+      personality({ era: ERA.CLASSIC, reality: REALITY.REALISTIC, movieIds }),
+    );
+  });
+
+  it("still wins on three 'both' answers with picks in hand", () => {
+    const result = personality({
+      era: BOTH,
+      reality: BOTH,
+      tasteAuthority: BOTH,
       movieIds: [movieId('The Godfather')],
+      genreIds: [80],
     });
 
     expect(result).toEqual(EVERYTHING_CAT);
@@ -174,6 +195,45 @@ describe('picking the cat', () => {
     });
 
     expect(result.name).toBe('Tony Meowtana');
+  });
+
+  it('counts the tapped genre chips alongside the picks', () => {
+    // Whiplash brings Music and Drama; the Crime chip outweighs both.
+    const result = personality({
+      era: ERA.CLASSIC,
+      reality: REALITY.REALISTIC,
+      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      movieIds: [movieId('Whiplash')],
+      genreIds: [80],
+    });
+
+    expect(result.name).toBe('Tony Meowtana');
+  });
+
+  it('picks the cat from the chips alone when nothing was picked', () => {
+    const result = personality({
+      era: ERA.CLASSIC,
+      reality: REALITY.REALISTIC,
+      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      genreIds: [18],
+    });
+
+    expect(result.name).toBe('Furrest Gump');
+  });
+
+  it("leaves the 'both' answers to the picks, not the chips", () => {
+    // Fantasy and Science Fiction chips must not flip the reality lean.
+    const movieIds = [movieId('The Godfather'), movieId('Titanic')];
+
+    expect(
+      personality({ reality: BOTH, movieIds, genreIds: [14, 878] }),
+    ).toEqual(
+      personality({
+        reality: REALITY.REALISTIC,
+        movieIds,
+        genreIds: [14, 878],
+      }),
+    );
   });
 
   it("falls back to the group's own cat for an unlisted top genre", () => {

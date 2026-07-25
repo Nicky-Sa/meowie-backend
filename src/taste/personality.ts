@@ -39,6 +39,7 @@ export type Personality = Character;
 export type PersonalityInput = {
   movieIds: number[];
   seriesIds: number[];
+  genreIds: GenreId[];
   era: EraAnswer;
   reality: RealityAnswer;
   tasteAuthority: AuthorityAnswer;
@@ -58,13 +59,19 @@ const pickedTitles = (movieIds: number[], seriesIds: number[]): Title[] =>
     ...seriesIds.map((tmdbId) => seriesByTmdbId.get(tmdbId)),
   ].filter((title): title is Title => title !== undefined);
 
+// A tapped genre chip is a direct statement of taste, while a title carries
+// three genres it did not choose, so a chip counts for more than one title.
+const GENRE_CHIP_WEIGHT = 2;
+
 /**
- * Highest-count genre across all selected titles (movies + series combined).
- * Tie-break: higher rarity weight (more distinctive) wins. Null when no picks
- * or none of the ids are in the seed pools.
+ * Highest-count genre across the selected titles (movies + series combined)
+ * and the tapped genre chips. Tie-break: higher rarity weight (more
+ * distinctive) wins. Null when nothing was picked or none of the title ids are
+ * in the seed pools.
  */
 const topGenre = (
   picks: Title[],
+  chipGenreIds: GenreId[],
   rarityWeights: Record<GenreId, number>,
 ): GenreId | null => {
   const counts = new Map<GenreId, number>();
@@ -72,6 +79,9 @@ const topGenre = (
     for (const genre of pick.genreIds) {
       counts.set(genre, (counts.get(genre) ?? 0) + 1);
     }
+  }
+  for (const genre of chipGenreIds) {
+    counts.set(genre, (counts.get(genre) ?? 0) + GENRE_CHIP_WEIGHT);
   }
 
   let best: GenreId | null = null;
@@ -88,9 +98,9 @@ const topGenre = (
   return best;
 };
 
-// A 'both' answer on one of the three main questions is decided by the lean of
-// the user's poster picks below. Each tie (or no picks) falls back to what used
-// to be the fixed default: new-release / realistic / popular.
+// Every 'both' answer is decided by the lean of the user's poster picks below.
+// Each tie (or no picks) falls back to what used to be the fixed default:
+// new-release / realistic / popular.
 
 const eraFromPicks = (picks: Title[]): EraValue => {
   const classic = picks.filter((pick) => pick.year <= CLASSIC_MAX_YEAR).length;
@@ -123,11 +133,11 @@ export const personalityFor = (
   input: PersonalityInput,
   rarityWeights: Record<GenreId, number>,
 ): Personality => {
-  const bothCount = MAIN_QUESTIONS.filter(
+  const noPreferenceEverywhere = MAIN_QUESTIONS.every(
     (question) => input[question] === BOTH,
-  ).length;
+  );
 
-  if (bothCount >= 2) {
+  if (noPreferenceEverywhere) {
     return EVERYTHING_CAT;
   }
 
@@ -144,6 +154,6 @@ export const personalityFor = (
   const key: GroupKey = `${era}_${reality}_${authority}`;
   const group = PERSONALITY_GROUPS[key];
 
-  const top = topGenre(picks, rarityWeights);
+  const top = topGenre(picks, input.genreIds, rarityWeights);
   return (top !== null && group.byGenre[top]) || group.default;
 };

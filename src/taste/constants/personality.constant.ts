@@ -113,5 +113,6 @@ export const PERSONALITY_GROUPS: Record<GroupKey, PersonalityGroup> = {
     },
 };
 
-// Shown when two or more of the three main questions were answered 'both'.
+// Shown only when all three main questions were answered 'both', so there is
+// nothing stated to place the user in a group.
 export const EVERYTHING_CAT = cat('The Cativore', 'the-cativore.png');
