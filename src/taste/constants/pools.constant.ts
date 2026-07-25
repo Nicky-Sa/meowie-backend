@@ -8,7 +8,6 @@ export type Title = {
   year: number;
   mainGenreId: GenreId;
   genreIds: GenreId[];
-  hiddenGem: boolean;
   tmdbId: number;
   poster: string | null;
 };
@@ -26,7 +25,6 @@ export const MOVIES: Title[] = [
     year: 1994,
     mainGenreId: 18,
     genreIds: [18, 80], // Drama, Crime
-    hiddenGem: false,
     tmdbId: 278,
     poster: 'https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg',
   },
@@ -35,7 +33,6 @@ export const MOVIES: Title[] = [
     year: 2014,
     mainGenreId: 35,
     genreIds: [35, 18], // Comedy, Drama
-    hiddenGem: false,
     tmdbId: 120467,
     poster: 'https://image.tmdb.org/t/p/w500/eWdyYQreja6JGCzqHWXpWHDrrPo.jpg',
   },
@@ -44,7 +41,6 @@ export const MOVIES: Title[] = [
     year: 2008,
     mainGenreId: 28,
     genreIds: [28, 80, 53], // Action, Crime, Thriller
-    hiddenGem: false,
     tmdbId: 155,
     poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
   },
@@ -53,7 +49,6 @@ export const MOVIES: Title[] = [
     year: 2019,
     mainGenreId: 53,
     genreIds: [53, 18, 35], // Thriller, Drama, Comedy
-    hiddenGem: false,
     tmdbId: 496243,
     poster: 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
   },
@@ -62,7 +57,6 @@ export const MOVIES: Title[] = [
     year: 2014,
     mainGenreId: 878,
     genreIds: [878, 18, 12], // Science Fiction, Drama, Adventure
-    hiddenGem: false,
     tmdbId: 157336,
     poster: 'https://image.tmdb.org/t/p/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg',
   },
@@ -71,7 +65,6 @@ export const MOVIES: Title[] = [
     year: 1972,
     mainGenreId: 80,
     genreIds: [80, 18], // Crime, Drama
-    hiddenGem: false,
     tmdbId: 238,
     poster: 'https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg',
   },
@@ -80,7 +73,6 @@ export const MOVIES: Title[] = [
     year: 1981,
     mainGenreId: 12,
     genreIds: [12, 28], // Adventure, Action
-    hiddenGem: false,
     tmdbId: 85,
     poster: 'https://image.tmdb.org/t/p/w500/ceG9VzoRAVGwivFU403Wc3AHRys.jpg',
   },
@@ -89,7 +81,6 @@ export const MOVIES: Title[] = [
     year: 1997,
     mainGenreId: 10749,
     genreIds: [10749, 18], // Romance, Drama
-    hiddenGem: false,
     tmdbId: 597,
     poster: 'https://image.tmdb.org/t/p/w500/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg',
   },
@@ -98,7 +89,6 @@ export const MOVIES: Title[] = [
     year: 2001,
     mainGenreId: 14,
     genreIds: [14, 12, 28], // Fantasy, Adventure, Action
-    hiddenGem: false,
     tmdbId: 120,
     poster: 'https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg',
   },
@@ -107,7 +97,6 @@ export const MOVIES: Title[] = [
     year: 2001,
     mainGenreId: 16,
     genreIds: [16, 10751, 14], // Animation, Family, Fantasy
-    hiddenGem: false,
     tmdbId: 129,
     poster: 'https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',
   },
@@ -116,7 +105,6 @@ export const MOVIES: Title[] = [
     year: 2017,
     mainGenreId: 27,
     genreIds: [27, 9648, 53], // Horror, Mystery, Thriller
-    hiddenGem: false,
     tmdbId: 419430,
     poster: 'https://image.tmdb.org/t/p/w500/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg',
   },
@@ -125,7 +113,6 @@ export const MOVIES: Title[] = [
     year: 2019,
     mainGenreId: 9648,
     genreIds: [9648, 80, 35], // Mystery, Crime, Comedy
-    hiddenGem: false,
     tmdbId: 546554,
     poster: 'https://image.tmdb.org/t/p/w500/pThyQovXQrw2m0s9x82twj48Jq4.jpg',
   },
@@ -134,7 +121,6 @@ export const MOVIES: Title[] = [
     year: 1995,
     mainGenreId: 10751,
     genreIds: [10751, 16, 35, 12], // Family, Animation, Comedy, Adventure
-    hiddenGem: false,
     tmdbId: 862,
     poster: 'https://image.tmdb.org/t/p/w500/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg',
   },
@@ -143,7 +129,6 @@ export const MOVIES: Title[] = [
     year: 1998,
     mainGenreId: 10752,
     genreIds: [10752, 18, 36], // War, Drama, History
-    hiddenGem: false,
     tmdbId: 857,
     poster: 'https://image.tmdb.org/t/p/w500/uqx37cS8cpHg8U35f9U5IBlrCV3.jpg',
   },
@@ -152,7 +137,6 @@ export const MOVIES: Title[] = [
     year: 1993,
     mainGenreId: 36,
     genreIds: [36, 18, 10752], // History, Drama, War
-    hiddenGem: false,
     tmdbId: 424,
     poster: 'https://image.tmdb.org/t/p/w500/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg',
   },
@@ -161,7 +145,6 @@ export const MOVIES: Title[] = [
     year: 2018,
     mainGenreId: 10402,
     genreIds: [10402, 18], // Music, Drama
-    hiddenGem: false,
     tmdbId: 424694,
     poster: 'https://image.tmdb.org/t/p/w500/lHu1wtNaczFPGFDTrjCSzeLPTKN.jpg',
   },
@@ -170,7 +153,6 @@ export const MOVIES: Title[] = [
     year: 2018,
     mainGenreId: 99,
     genreIds: [99, 12], // Documentary, Adventure
-    hiddenGem: false,
     tmdbId: 515042,
     poster: 'https://image.tmdb.org/t/p/w500/v4QfYZMACODlWul9doN9RxE99ag.jpg',
   },
@@ -179,7 +161,6 @@ export const MOVIES: Title[] = [
     year: 2012,
     mainGenreId: 37,
     genreIds: [37, 18], // Western, Drama
-    hiddenGem: false,
     tmdbId: 68718,
     poster: 'https://image.tmdb.org/t/p/w500/7oWY8VDWW7thTzWh3OKYRkWUlD5.jpg',
   },
@@ -188,7 +169,6 @@ export const MOVIES: Title[] = [
     year: 1994,
     mainGenreId: 18,
     genreIds: [18, 35, 10749], // Drama, Comedy, Romance
-    hiddenGem: false,
     tmdbId: 13,
     poster: 'https://image.tmdb.org/t/p/w500/Cw4hIUIAmSYfK9QfaUW5igp9La.jpg',
   },
@@ -197,7 +177,6 @@ export const MOVIES: Title[] = [
     year: 2023,
     mainGenreId: 35,
     genreIds: [35, 12, 14], // Comedy, Adventure, Fantasy
-    hiddenGem: false,
     tmdbId: 346698,
     poster: 'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg',
   },
@@ -206,7 +185,6 @@ export const MOVIES: Title[] = [
     year: 2015,
     mainGenreId: 28,
     genreIds: [28, 12, 878], // Action, Adventure, Science Fiction
-    hiddenGem: false,
     tmdbId: 76341,
     poster: 'https://image.tmdb.org/t/p/w500/ulcAi4dKpAjHwYGS08vNyx9H6I9.jpg',
   },
@@ -215,7 +193,6 @@ export const MOVIES: Title[] = [
     year: 2014,
     mainGenreId: 53,
     genreIds: [53, 80], // Thriller, Crime
-    hiddenGem: true,
     tmdbId: 188166,
     poster: 'https://image.tmdb.org/t/p/w500/q0itEsso2drJXqH9kfdidxIT5dF.jpg',
   },
@@ -224,7 +201,6 @@ export const MOVIES: Title[] = [
     year: 2021,
     mainGenreId: 878,
     genreIds: [878, 12], // Science Fiction, Adventure
-    hiddenGem: false,
     tmdbId: 438631,
     poster: 'https://image.tmdb.org/t/p/w500/gDzOcq0pfeCeqMBwKIJlSmQpjkZ.jpg',
   },
@@ -233,7 +209,6 @@ export const MOVIES: Title[] = [
     year: 1994,
     mainGenreId: 80,
     genreIds: [80, 53, 35], // Crime, Thriller, Comedy
-    hiddenGem: false,
     tmdbId: 680,
     poster: 'https://image.tmdb.org/t/p/w500/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg',
   },
@@ -242,7 +217,6 @@ export const MOVIES: Title[] = [
     year: 1985,
     mainGenreId: 12,
     genreIds: [12, 35, 878], // Adventure, Comedy, Science Fiction
-    hiddenGem: false,
     tmdbId: 105,
     poster: 'https://image.tmdb.org/t/p/w500/vN5B5WgYscRGcQpVhHl6p9DDTP0.jpg',
   },
@@ -251,7 +225,6 @@ export const MOVIES: Title[] = [
     year: 2016,
     mainGenreId: 10749,
     genreIds: [10749, 53, 18], // Romance, Thriller, Drama
-    hiddenGem: true,
     tmdbId: 290098,
     poster: 'https://image.tmdb.org/t/p/w500/dLlH4aNHdnmf62umnInL8xPlPzw.jpg',
   },
@@ -260,7 +233,6 @@ export const MOVIES: Title[] = [
     year: 2006,
     mainGenreId: 14,
     genreIds: [14, 18, 10752], // Fantasy, Drama, War
-    hiddenGem: true,
     tmdbId: 1417,
     poster: 'https://image.tmdb.org/t/p/w500/z7xXihu5wHuSMWymq5VAulPVuvg.jpg',
   },
@@ -269,7 +241,6 @@ export const MOVIES: Title[] = [
     year: 2018,
     mainGenreId: 16,
     genreIds: [16, 28, 12, 878], // Animation, Action, Adventure, Science Fiction
-    hiddenGem: false,
     tmdbId: 324857,
     poster: 'https://image.tmdb.org/t/p/w500/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg',
   },
@@ -278,7 +249,6 @@ export const MOVIES: Title[] = [
     year: 2018,
     mainGenreId: 27,
     genreIds: [27, 9648, 53], // Horror, Mystery, Thriller
-    hiddenGem: true,
     tmdbId: 493922,
     poster: 'https://image.tmdb.org/t/p/w500/4GFPuL14eXi66V96xBWY73Y9PfR.jpg',
   },
@@ -287,7 +257,6 @@ export const MOVIES: Title[] = [
     year: 2000,
     mainGenreId: 9648,
     genreIds: [9648, 53], // Mystery, Thriller
-    hiddenGem: false,
     tmdbId: 77,
     poster: 'https://image.tmdb.org/t/p/w500/nzlv62aC0octS5AklAiWpXLX9Z0.jpg',
   },
@@ -296,7 +265,6 @@ export const MOVIES: Title[] = [
     year: 2017,
     mainGenreId: 10751,
     genreIds: [10751, 12, 35], // Family, Adventure, Comedy
-    hiddenGem: false,
     tmdbId: 346648,
     poster: 'https://image.tmdb.org/t/p/w500/1OJ9vkD5xPt3skC6KguyXAgagRZ.jpg',
   },
@@ -305,7 +273,6 @@ export const MOVIES: Title[] = [
     year: 2019,
     mainGenreId: 10752,
     genreIds: [10752, 18, 36], // War, Drama, History
-    hiddenGem: false,
     tmdbId: 530915,
     poster: 'https://image.tmdb.org/t/p/w500/iZf0KyrE25z1sage4SYFLCCrMi9.jpg',
   },
@@ -314,7 +281,6 @@ export const MOVIES: Title[] = [
     year: 2023,
     mainGenreId: 36,
     genreIds: [36, 18], // History, Drama
-    hiddenGem: false,
     tmdbId: 872585,
     poster: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
   },
@@ -323,7 +289,6 @@ export const MOVIES: Title[] = [
     year: 2014,
     mainGenreId: 10402,
     genreIds: [10402, 18, 53], // Music, Drama, Thriller
-    hiddenGem: true,
     tmdbId: 244786,
     poster: 'https://image.tmdb.org/t/p/w500/7fn624j5lj3xTme2SgiLCeuedmO.jpg',
   },
@@ -332,7 +297,6 @@ export const MOVIES: Title[] = [
     year: 2012,
     mainGenreId: 99,
     genreIds: [99, 10402], // Documentary, Music
-    hiddenGem: true,
     tmdbId: 84334,
     poster: 'https://image.tmdb.org/t/p/w500/ucM98HuBHSWmn44oiE83hIDc6VB.jpg',
   },
@@ -341,7 +305,6 @@ export const MOVIES: Title[] = [
     year: 1966,
     mainGenreId: 37,
     genreIds: [37], // Western
-    hiddenGem: false,
     tmdbId: 429,
     poster: 'https://image.tmdb.org/t/p/w500/bX2xnavhMYjWDoZp1VM6VnU1xwe.jpg',
   },
@@ -356,7 +319,6 @@ export const SERIES: Title[] = [
     year: 2008,
     mainGenreId: 18,
     genreIds: [18, 80], // Drama, Crime
-    hiddenGem: false,
     tmdbId: 1396,
     poster: 'https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg',
   },
@@ -365,7 +327,6 @@ export const SERIES: Title[] = [
     year: 2005,
     mainGenreId: 35,
     genreIds: [35], // Comedy
-    hiddenGem: false,
     tmdbId: 2316,
     poster: 'https://image.tmdb.org/t/p/w500/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
   },
@@ -374,7 +335,6 @@ export const SERIES: Title[] = [
     year: 1999,
     mainGenreId: 80,
     genreIds: [80, 18], // Crime, Drama
-    hiddenGem: false,
     tmdbId: 1398,
     poster: 'https://image.tmdb.org/t/p/w500/rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg',
   },
@@ -383,7 +343,6 @@ export const SERIES: Title[] = [
     year: 2016,
     mainGenreId: 878,
     genreIds: [878, 9648, 27], // Science Fiction, Mystery, Horror
-    hiddenGem: false,
     tmdbId: 66732,
     poster: 'https://image.tmdb.org/t/p/w500/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg',
   },
@@ -392,7 +351,6 @@ export const SERIES: Title[] = [
     year: 2010,
     mainGenreId: 9648,
     genreIds: [9648, 80, 18], // Mystery, Crime, Drama
-    hiddenGem: false,
     tmdbId: 19885,
     poster: 'https://image.tmdb.org/t/p/w500/7WTsnHkbA0FaG6R9twfFde0I9hl.jpg',
   },
@@ -401,7 +359,6 @@ export const SERIES: Title[] = [
     year: 2021,
     mainGenreId: 28,
     genreIds: [28, 9648, 18], // Action, Mystery, Drama
-    hiddenGem: false,
     tmdbId: 93405,
     poster: 'https://image.tmdb.org/t/p/w500/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg',
   },
@@ -410,7 +367,6 @@ export const SERIES: Title[] = [
     year: 2011,
     mainGenreId: 14,
     genreIds: [14, 18, 12], // Fantasy, Drama, Adventure
-    hiddenGem: false,
     tmdbId: 1399,
     poster: 'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
   },
@@ -419,7 +375,6 @@ export const SERIES: Title[] = [
     year: 2021,
     mainGenreId: 16,
     genreIds: [16, 28, 12], // Animation, Action, Adventure
-    hiddenGem: false,
     tmdbId: 94605,
     poster: 'https://image.tmdb.org/t/p/w500/abf8tHznhSvl9BAElD2cQeRr7do.jpg',
   },
@@ -428,7 +383,6 @@ export const SERIES: Title[] = [
     year: 2019,
     mainGenreId: 12,
     genreIds: [12, 28, 878], // Adventure, Action, Science Fiction
-    hiddenGem: false,
     tmdbId: 82856,
     poster: 'https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg',
   },
@@ -437,7 +391,6 @@ export const SERIES: Title[] = [
     year: 1989,
     mainGenreId: 10751,
     genreIds: [10751, 16, 35], // Family, Animation, Comedy
-    hiddenGem: false,
     tmdbId: 456,
     poster: 'https://image.tmdb.org/t/p/w500/uWpG7GqfKGQqX4YMAo3nv5OrglV.jpg',
   },
@@ -446,7 +399,6 @@ export const SERIES: Title[] = [
     year: 2006,
     mainGenreId: 99,
     genreIds: [99], // Documentary
-    hiddenGem: false,
     tmdbId: 1044,
     poster: 'https://image.tmdb.org/t/p/w500/bNcNxUtZ520d5de5s78onoiSiwQ.jpg',
   },
@@ -455,7 +407,6 @@ export const SERIES: Title[] = [
     year: 2001,
     mainGenreId: 10752,
     genreIds: [10752, 18, 36], // War, Drama, History
-    hiddenGem: true,
     tmdbId: 4613,
     poster: 'https://image.tmdb.org/t/p/w500/pGzV187ogXzgJrvPRy2YPi29ofH.jpg',
   },
@@ -464,7 +415,6 @@ export const SERIES: Title[] = [
     year: 2018,
     mainGenreId: 37,
     genreIds: [37, 18], // Western, Drama
-    hiddenGem: false,
     tmdbId: 73586,
     poster: 'https://image.tmdb.org/t/p/w500/vOYfRZ0NpUK5hG2CB2dJFnYJlGe.jpg',
   },
@@ -473,7 +423,6 @@ export const SERIES: Title[] = [
     year: 2018,
     mainGenreId: 18,
     genreIds: [18, 35], // Drama, Comedy
-    hiddenGem: false,
     tmdbId: 76331,
     poster: 'https://image.tmdb.org/t/p/w500/z0XiwdrCQ9yVIr4O0pxzaAYRxdW.jpg',
   },
@@ -482,7 +431,6 @@ export const SERIES: Title[] = [
     year: 2016,
     mainGenreId: 35,
     genreIds: [35, 18], // Comedy, Drama
-    hiddenGem: true,
     tmdbId: 67070,
     poster: 'https://image.tmdb.org/t/p/w500/27vEYsRKa3eAniwmoccOoluEXQ1.jpg',
   },
@@ -491,7 +439,6 @@ export const SERIES: Title[] = [
     year: 2002,
     mainGenreId: 80,
     genreIds: [80, 18], // Crime, Drama
-    hiddenGem: false,
     tmdbId: 1438,
     poster: 'https://image.tmdb.org/t/p/w500/4lbclFySvugI51fwsyxBTOm4DqK.jpg',
   },
@@ -500,7 +447,6 @@ export const SERIES: Title[] = [
     year: 2022,
     mainGenreId: 878,
     genreIds: [878, 18, 9648], // Science Fiction, Drama, Mystery
-    hiddenGem: false,
     tmdbId: 95396,
     poster: 'https://image.tmdb.org/t/p/w500/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg',
   },
@@ -509,7 +455,6 @@ export const SERIES: Title[] = [
     year: 2017,
     mainGenreId: 9648,
     genreIds: [9648, 80, 18, 878], // Mystery, Crime, Drama, Science Fiction
-    hiddenGem: true,
     tmdbId: 70523,
     poster: 'https://image.tmdb.org/t/p/w500/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg',
   },
@@ -518,7 +463,6 @@ export const SERIES: Title[] = [
     year: 2019,
     mainGenreId: 28,
     genreIds: [28, 878, 35], // Action, Science Fiction, Comedy
-    hiddenGem: false,
     tmdbId: 76479,
     poster: 'https://image.tmdb.org/t/p/w500/in1R2dDc421JxsoRWaIIAqVI2KE.jpg',
   },
@@ -527,7 +471,6 @@ export const SERIES: Title[] = [
     year: 2022,
     mainGenreId: 14,
     genreIds: [14, 18, 28], // Fantasy, Drama, Action
-    hiddenGem: false,
     tmdbId: 94997,
     poster: 'https://image.tmdb.org/t/p/w500/7V0Ebks0GgpKvQ7QbLAIdX5dos4.jpg',
   },
@@ -536,7 +479,6 @@ export const SERIES: Title[] = [
     year: 2014,
     mainGenreId: 16,
     genreIds: [16, 35, 18], // Animation, Comedy, Drama
-    hiddenGem: true,
     tmdbId: 61222,
     poster: 'https://image.tmdb.org/t/p/w500/6JFWzlChcGgLiIUo2COgNlWGFKy.jpg',
   },
@@ -545,7 +487,6 @@ export const SERIES: Title[] = [
     year: 2005,
     mainGenreId: 12,
     genreIds: [12, 16, 14], // Adventure, Animation, Fantasy
-    hiddenGem: false,
     tmdbId: 246,
     poster: 'https://image.tmdb.org/t/p/w500/yaGt4GIutpbXHsv48tWceWg6s56.jpg',
   },
@@ -554,7 +495,6 @@ export const SERIES: Title[] = [
     year: 2017,
     mainGenreId: 10751,
     genreIds: [10751, 18], // Family, Drama
-    hiddenGem: true,
     tmdbId: 70785,
     poster: 'https://image.tmdb.org/t/p/w500/6P6tXhjT5tK3qOXzxF9OMLlG7iz.jpg',
   },
@@ -563,7 +503,6 @@ export const SERIES: Title[] = [
     year: 2015,
     mainGenreId: 99,
     genreIds: [99], // Documentary
-    hiddenGem: true,
     tmdbId: 62391,
     poster: 'https://image.tmdb.org/t/p/w500/2aTdai1vsWr2NjdYEBDxA2hffXb.jpg',
   },
@@ -572,7 +511,6 @@ export const SERIES: Title[] = [
     year: 2010,
     mainGenreId: 10752,
     genreIds: [10752, 18, 28], // War, Drama, Action
-    hiddenGem: true,
     tmdbId: 16997,
     poster: 'https://image.tmdb.org/t/p/w500/x9Y1IMFdY8Ma222KcQadFEau0EB.jpg',
   },
@@ -581,7 +519,6 @@ export const SERIES: Title[] = [
     year: 2004,
     mainGenreId: 37,
     genreIds: [37, 80, 18], // Western, Crime, Drama
-    hiddenGem: true,
     tmdbId: 1406,
     poster: 'https://image.tmdb.org/t/p/w500/fWwxYAuqY4Na7fKI3Qq2nFWCwG8.jpg',
   },

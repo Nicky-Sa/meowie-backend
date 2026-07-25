@@ -35,111 +35,86 @@ const inputWith = (overrides: Partial<PersonalityInput>): PersonalityInput => ({
 const personality = (overrides: Partial<PersonalityInput>) =>
   personalityFor(inputWith(overrides));
 
-describe("breaking a single 'both' answer with the poster picks", () => {
-  it('reads mostly-classic picks as a classic era lean', () => {
-    const movieIds = [
-      movieId('The Godfather'),
-      movieId('Pulp Fiction'),
-      movieId('Titanic'),
-    ];
+describe('the top genre leads', () => {
+  it('gives the same cat whatever the answers are, when the genre has one', () => {
+    // Crime has a single cat, so no set of answers can steer away from it.
+    const movieIds = [movieId('The Godfather'), movieId('Pulp Fiction')];
 
-    expect(personality({ era: BOTH, movieIds })).toEqual(
-      personality({ era: ERA.CLASSIC, movieIds }),
-    );
-  });
-
-  it('reads recent picks as a new-release era lean', () => {
-    const movieIds = [movieId('Dune'), movieId('Oppenheimer')];
-
-    expect(personality({ era: BOTH, movieIds })).toEqual(
-      personality({ era: ERA.NEW_RELEASE, movieIds }),
-    );
-  });
-
-  it('reads fantasy-heavy picks as a fantasy lean', () => {
-    const movieIds = [
-      movieId('Spirited Away'),
-      movieId('The Lord of the Rings'),
-    ];
-
-    expect(personality({ reality: BOTH, movieIds })).toEqual(
-      personality({ reality: REALITY.FANTASY, movieIds }),
-    );
-  });
-
-  it('reads realistic picks as a realistic lean', () => {
-    const movieIds = [movieId('The Godfather'), movieId('Titanic')];
-
-    expect(personality({ reality: BOTH, movieIds })).toEqual(
-      personality({ reality: REALITY.REALISTIC, movieIds }),
-    );
-  });
-
-  it("reads mostly hidden gems as a critics' choice lean", () => {
-    const movieIds = [
-      movieId('Hereditary'),
-      movieId('Blue Ruin'),
-      movieId('Whiplash'),
-    ];
-
-    expect(personality({ authority: BOTH, movieIds })).toEqual(
-      personality({ authority: AUTHORITY.CRITICS_CHOICE, movieIds }),
-    );
-  });
-
-  it('reads mainstream picks as a popular lean', () => {
-    const movieIds = [movieId('The Dark Knight'), movieId('Titanic')];
-
-    expect(personality({ authority: BOTH, movieIds })).toEqual(
-      personality({ authority: AUTHORITY.POPULAR, movieIds }),
-    );
-  });
-
-  it('works on series picks too', () => {
-    const seriesIds = [
-      seriesId('Dark'),
-      seriesId('Fleabag'),
-      seriesId('Deadwood'),
-    ];
-
-    expect(personality({ authority: BOTH, seriesIds })).toEqual(
+    expect(
       personality({
+        era: ERA.NEW_RELEASE,
+        reality: REALITY.FANTASY,
         authority: AUTHORITY.CRITICS_CHOICE,
-        seriesIds,
-      }),
-    );
+        movieIds,
+      }).name,
+    ).toBe('Tony Meowtana');
   });
 
-  it('falls back to the popular-modern side without any picks', () => {
-    expect(personality({ era: BOTH })).toEqual(
-      personality({ era: ERA.NEW_RELEASE }),
+  it('lets the answers choose between a genre with several cats', () => {
+    const movieIds = [movieId('The Lord of the Rings')]; // Fantasy
+
+    const cat = (overrides: Partial<PersonalityInput>) =>
+      personality({ reality: REALITY.FANTASY, movieIds, ...overrides }).name;
+
+    expect(cat({ era: ERA.CLASSIC, authority: AUTHORITY.CRITICS_CHOICE })).toBe(
+      'Edward Scissorpaws',
     );
+    expect(cat({ era: ERA.NEW_RELEASE, authority: AUTHORITY.POPULAR })).toBe(
+      'Hairy Pawter',
+    );
+    expect(
+      cat({ era: ERA.NEW_RELEASE, authority: AUTHORITY.CRITICS_CHOICE }),
+    ).toBe('Furrodo Bagpaws');
+  });
+
+  it('counts a genre once per pick that locked it, plus once as a chip', () => {
+    // Two crime picks outrank one music chip, though Music is the rarer genre.
+    const result = personality({
+      movieIds: [movieId('The Godfather'), movieId('Pulp Fiction')],
+      genreIds: [80, 10402],
+    });
+
+    expect(result.name).toBe('Tony Meowtana');
   });
 });
 
-describe('tie boundaries keep the old fixed defaults', () => {
-  it('equal classic and modern picks resolve to new-release', () => {
-    const movieIds = [movieId('The Godfather'), movieId('Dune')];
+describe("a 'no preference' answer steps aside", () => {
+  it('leaves the choice to the two answers given', () => {
+    const movieIds = [movieId('The Lord of the Rings')]; // Fantasy
 
-    expect(personality({ era: BOTH, movieIds })).toEqual(
-      personality({ era: ERA.NEW_RELEASE, movieIds }),
-    );
+    expect(
+      personality({
+        era: ERA.CLASSIC,
+        reality: REALITY.FANTASY,
+        authority: BOTH,
+        movieIds,
+      }).name,
+    ).toBe('Edward Scissorpaws');
   });
 
-  it('equal realistic and fantasy genre hits fall back to realistic', () => {
-    // Interstellar carries one fantasy genre (878) and one realistic (18).
-    const movieIds = [movieId('Interstellar')];
+  it('breaks a tie between two cats on the popular-modern side', () => {
+    // Fantasy has a critics' cat on both sides of era, and era went unanswered.
+    const movieIds = [movieId('The Lord of the Rings')];
 
-    expect(personality({ reality: BOTH, movieIds })).toEqual(
-      personality({ reality: REALITY.REALISTIC, movieIds }),
-    );
+    expect(
+      personality({
+        era: BOTH,
+        reality: REALITY.FANTASY,
+        authority: AUTHORITY.CRITICS_CHOICE,
+        movieIds,
+      }).name,
+    ).toBe('Furrodo Bagpaws');
   });
 
-  it('exactly half hidden gems resolve to popular', () => {
-    const movieIds = [movieId('The Dark Knight'), movieId('Hereditary')];
-
-    expect(personality({ authority: BOTH, movieIds })).toEqual(
-      personality({ authority: AUTHORITY.POPULAR, movieIds }),
+  it('falls back to the popular-modern side when nothing else decides', () => {
+    expect(personality({ era: BOTH })).toEqual(
+      personality({ era: ERA.NEW_RELEASE }),
+    );
+    expect(personality({ reality: BOTH })).toEqual(
+      personality({ reality: REALITY.REALISTIC }),
+    );
+    expect(personality({ authority: BOTH })).toEqual(
+      personality({ authority: AUTHORITY.POPULAR }),
     );
   });
 });
@@ -155,11 +130,15 @@ describe('the everything cat', () => {
     expect(result).toEqual(EVERYTHING_CAT);
   });
 
-  it("stays away while two 'both' answers can be read from the picks", () => {
+  it("stays away while one answer is not 'both'", () => {
     const movieIds = [movieId('The Godfather'), movieId('Pulp Fiction')];
 
     expect(personality({ era: BOTH, reality: BOTH, movieIds })).toEqual(
-      personality({ era: ERA.CLASSIC, reality: REALITY.REALISTIC, movieIds }),
+      personality({
+        era: ERA.NEW_RELEASE,
+        reality: REALITY.REALISTIC,
+        movieIds,
+      }),
     );
   });
 
@@ -177,35 +156,6 @@ describe('the everything cat', () => {
 });
 
 describe('picking the cat', () => {
-  it('uses the top genre of the picks when the group has one for it', () => {
-    // Three crime titles, so Crime beats Drama on count.
-    const result = personality({
-      era: ERA.CLASSIC,
-      reality: REALITY.REALISTIC,
-      authority: AUTHORITY.POPULAR,
-      movieIds: [
-        movieId('The Godfather'),
-        movieId('Pulp Fiction'),
-        movieId('Blue Ruin'),
-      ],
-    });
-
-    expect(result.name).toBe('Tony Meowtana');
-  });
-
-  it('counts the tapped genre chips alongside the picks', () => {
-    // Whiplash brings Music and Drama; the Crime chip outweighs both.
-    const result = personality({
-      era: ERA.CLASSIC,
-      reality: REALITY.REALISTIC,
-      authority: AUTHORITY.POPULAR,
-      movieIds: [movieId('Whiplash')],
-      genreIds: [80],
-    });
-
-    expect(result.name).toBe('Tony Meowtana');
-  });
-
   it('picks the cat from the chips alone when nothing was picked', () => {
     const result = personality({
       era: ERA.CLASSIC,
@@ -217,31 +167,28 @@ describe('picking the cat', () => {
     expect(result.name).toBe('Furrest Gump');
   });
 
-  it("leaves the 'both' answers to the picks, not the chips", () => {
-    // Fantasy and Science Fiction chips must not flip the reality lean.
-    const movieIds = [movieId('The Godfather'), movieId('Titanic')];
-
-    expect(
-      personality({ reality: BOTH, movieIds, genreIds: [14, 878] }),
-    ).toEqual(
-      personality({
-        reality: REALITY.REALISTIC,
-        movieIds,
-        genreIds: [14, 878],
-      }),
-    );
-  });
-
-  it("falls back to the group's own cat for an unlisted top genre", () => {
-    // Music is the top genre here, and that group has no music cat.
+  it("falls back to a group's own cat for a genre no cat covers", () => {
+    // Comedy is the top genre here, and no group has a comedy cat.
     const result = personality({
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
       authority: AUTHORITY.POPULAR,
-      movieIds: [movieId('Whiplash')],
+      movieIds: [movieId('The Grand Budapest Hotel')],
     });
 
     expect(result.name).toBe('Rocky Pawboa');
+  });
+
+  it('works on series picks too', () => {
+    // Dark locks Mystery, which only the new-release critics group has a cat for.
+    const result = personality({
+      era: ERA.NEW_RELEASE,
+      reality: REALITY.REALISTIC,
+      authority: AUTHORITY.CRITICS_CHOICE,
+      seriesIds: [seriesId('Dark')],
+    });
+
+    expect(result.name).toBe('Rust Clawle');
   });
 });
 

@@ -4,6 +4,7 @@ import {
   EVERYTHING_CAT,
   GroupKey,
   Personality,
+  PersonalityGroup,
   PERSONALITY_GROUPS,
   RealityValue,
 } from '@/taste/constants/personality.constant';
@@ -16,12 +17,8 @@ import {
 import {
   AuthorityAnswer,
   BOTH,
-  CLASSIC_MAX_YEAR,
   ERA,
-  FANTASY_GENRE_IDS,
   EraAnswer,
-  REALISTIC_GENRE_IDS,
-  MODERN_MIN_YEAR,
   RARITY_WEIGHTS,
   REALITY,
   RealityAnswer,
@@ -51,20 +48,15 @@ const pickedTitles = (movieIds: number[], seriesIds: number[]): Title[] =>
     ...seriesIds.map((tmdbId) => seriesByTmdbId.get(tmdbId)),
   ].filter((title): title is Title => title !== undefined);
 
-// A tapped genre chip is a direct statement of taste, while a title carries
-// three genres it did not choose, so a chip counts for more than one title.
-const GENRE_CHIP_WEIGHT = 2;
-
-/** Ties go to the rarer genre, so a common one can't win by being everywhere. */
-const topGenre = (picks: Title[], chipGenreIds: GenreId[]): GenreId | null => {
+/**
+ * The genre the user leant on most. Saved genres already hold every genre their
+ * picks locked, so a genre two titles brought in beats one they only tapped.
+ * Ties go to the rarer genre, so a common one can't win by being everywhere.
+ */
+const topGenre = (picks: Title[], genreIds: GenreId[]): GenreId | null => {
   const counts = new Map<GenreId, number>();
-  for (const pick of picks) {
-    for (const genre of pick.genreIds) {
-      counts.set(genre, (counts.get(genre) ?? 0) + 1);
-    }
-  }
-  for (const genre of chipGenreIds) {
-    counts.set(genre, (counts.get(genre) ?? 0) + GENRE_CHIP_WEIGHT);
+  for (const genre of [...picks.map((pick) => pick.mainGenreId), ...genreIds]) {
+    counts.set(genre, (counts.get(genre) ?? 0) + 1);
   }
 
   let best: GenreId | null = null;
@@ -81,35 +73,49 @@ const topGenre = (picks: Title[], chipGenreIds: GenreId[]): GenreId | null => {
   return best;
 };
 
-// Every 'both' answer is read from the picks instead. Each tie (or no picks)
-// falls back to new-release / realistic / popular.
-
-const eraFromPicks = (picks: Title[]): EraValue => {
-  const classic = picks.filter((pick) => pick.year <= CLASSIC_MAX_YEAR).length;
-  const modern = picks.filter((pick) => pick.year >= MODERN_MIN_YEAR).length;
-  return classic > modern ? ERA.CLASSIC : ERA.NEW_RELEASE;
+type GroupSides = {
+  era: EraValue;
+  reality: RealityValue;
+  authority: AuthorityValue;
 };
 
-const genreHits = (picks: Title[], family: GenreId[]): number =>
-  picks
-    .flatMap((pick) => pick.genreIds)
-    .filter((genre) => family.includes(genre)).length;
+// Answered sides first, so a group that matches nothing — every answer was
+// 'no preference' — still lands on the popular-modern side it always used to.
+const ERA_SIDES = [ERA.NEW_RELEASE, ERA.CLASSIC];
+const REALITY_SIDES = [REALITY.REALISTIC, REALITY.FANTASY];
+const AUTHORITY_SIDES = [AUTHORITY.POPULAR, AUTHORITY.CRITICS_CHOICE];
 
-const realityFromPicks = (picks: Title[]): RealityValue =>
-  genreHits(picks, FANTASY_GENRE_IDS) > genreHits(picks, REALISTIC_GENRE_IDS)
-    ? REALITY.FANTASY
-    : REALITY.REALISTIC;
+const ALL_GROUP_SIDES: GroupSides[] = ERA_SIDES.flatMap((era) =>
+  REALITY_SIDES.flatMap((reality) =>
+    AUTHORITY_SIDES.map((authority) => ({ era, reality, authority })),
+  ),
+);
 
-const authorityFromPicks = (picks: Title[]): AuthorityValue => {
-  const hiddenGems = picks.filter((pick) => pick.hiddenGem).length;
-  return hiddenGems * 2 > picks.length
-    ? AUTHORITY.CRITICS_CHOICE
-    : AUTHORITY.POPULAR;
+const groupFor = (sides: GroupSides): PersonalityGroup => {
+  const key: GroupKey = `${sides.era}_${sides.reality}_${sides.authority}`;
+  return PERSONALITY_GROUPS[key];
 };
+
+const answersMatched = (sides: GroupSides, input: PersonalityInput): number =>
+  (sides.era === input.era ? 1 : 0) +
+  (sides.reality === input.reality ? 1 : 0) +
+  (sides.authority === input.authority ? 1 : 0);
 
 /**
- * Picks the shareable cat card. Commitment plays no part — it only steers the
- * feed.
+ * Groups the user's answers agree with most, first. A 'no preference' answer
+ * matches neither side, so it steps aside and lets the others decide.
+ */
+const groupsByAnswers = (input: PersonalityInput): PersonalityGroup[] =>
+  [...ALL_GROUP_SIDES]
+    .sort(
+      (one, other) => answersMatched(other, input) - answersMatched(one, input),
+    )
+    .map(groupFor);
+
+/**
+ * Picks the shareable cat card. The top genre leads: the closest group that has
+ * a cat for it wins, and the answers only choose between that genre's cats.
+ * Commitment plays no part — it only steers the feed.
  */
 export const personalityFor = (input: PersonalityInput): Personality => {
   if (
@@ -120,18 +126,14 @@ export const personalityFor = (input: PersonalityInput): Personality => {
     return EVERYTHING_CAT;
   }
 
+  const groups = groupsByAnswers(input);
   const picks = pickedTitles(input.movieIds, input.seriesIds);
-
-  const era = input.era === BOTH ? eraFromPicks(picks) : input.era;
-  const reality =
-    input.reality === BOTH ? realityFromPicks(picks) : input.reality;
-  const authority =
-    input.authority === BOTH ? authorityFromPicks(picks) : input.authority;
-
-  const key: GroupKey = `${era}_${reality}_${authority}`;
-  const group = PERSONALITY_GROUPS[key];
-
   const top = topGenre(picks, input.genreIds);
-  const catForGenre = top === null ? undefined : group.byGenre[top];
-  return catForGenre ?? group.default;
+
+  const catForGenre =
+    top === null
+      ? undefined
+      : groups.map((group) => group.byGenre[top]).find((cat) => cat);
+
+  return catForGenre ?? groups[0].default;
 };
