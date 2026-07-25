@@ -1,16 +1,18 @@
 import { describe, expect, it } from '@jest/globals';
-import { EngineService } from '@/feed/engine/engine.service';
-import { CandidateGenerator } from '@/feed/engine/candidate-generator';
+import { BatchBuilderService } from '@/feed/batch-builder.service';
+import { TitleFinderService } from '@/feed/title-finder.service';
 import {
   FeedCandidate,
   FeedCandidateSource,
   FeedContext,
-} from '@/feed/engine/engine.types';
-import { rankingWeightsFor, sourceSharesFor } from '@/feed/feed.constants';
+} from '@/feed/types/feed.types';
+import {
+  rankingWeightsFor,
+  sourceSharesFor,
+} from '@/feed/constants/feed.constant';
 
 const candidate = (id: number, source: FeedCandidateSource): FeedCandidate => ({
   id,
-  mediaType: 'movie',
   genreIds: [],
   voteAverage: 5,
   voteCount: 100,
@@ -29,27 +31,21 @@ const candidates = (
   );
 
 const contextWithLikedCount = (likedCount: number): FeedContext => ({
-  userId: 1,
   mediaType: 'movie',
-  profile: {
-    genreIds: [{ id: 18, weight: 1 }],
-    knownMovieIds: Array.from({ length: likedCount }, (_, offset) => ({
-      id: 9000 + offset,
-      weight: 1,
-    })),
-    knownSeriesIds: [],
-  },
+  likedTitles: Array.from({ length: likedCount }, (_, offset) => ({
+    id: 9000 + offset,
+    weight: 1,
+  })),
   taste: {
-    hasTaste: true,
     genreIds: [18],
     movieIds: [],
     seriesIds: [],
     avoid: [],
     exploreLevel: 2,
-    era: null,
-    reality: null,
-    tasteAuthority: null,
-    commitment: null,
+    era: 'both',
+    reality: 'both',
+    authority: 'both',
+    commitment: 'both',
   },
   avoid: {
     blockedGenreIds: new Set(),
@@ -58,22 +54,23 @@ const contextWithLikedCount = (likedCount: number): FeedContext => ({
     seriesMaxEpisodes: null,
   },
   excludeIds: new Set(),
-  served: new Set(),
+  hiddenIds: new Set(),
+  includeSimilar: true,
   shuffleSeed: 1,
   nextTmdbPageToFetch: 1,
 });
 
-const engineFor = (batch: FeedCandidate[]): EngineService => {
-  const generator = {
-    generate: () => Promise.resolve(batch),
-  } as unknown as CandidateGenerator;
-  return new EngineService(generator, [], []);
+const builderFor = (batch: FeedCandidate[]): BatchBuilderService => {
+  const titleFinder = {
+    find: () => Promise.resolve(batch),
+  } as unknown as TitleFinderService;
+  return new BatchBuilderService(titleFinder);
 };
 
 const countBySource = (ids: number[], sourceIds: Set<number>): number =>
   ids.filter((id) => sourceIds.has(id)).length;
 
-describe('EngineService source mixing', () => {
+describe('BatchBuilderService source mixing', () => {
   const tasteBatch = candidates(1, 40, 'taste');
   const similarBatch = candidates(101, 40, 'similar');
   const popularBatch = candidates(201, 20, 'popular');
@@ -81,8 +78,12 @@ describe('EngineService source mixing', () => {
   const popularIds = new Set(popularBatch.map((item) => item.id));
 
   it('keeps popular titles on the first page even with a one-item library', async () => {
-    const engine = engineFor([...tasteBatch, ...similarBatch, ...popularBatch]);
-    const firstPage = (await engine.buildBatch(contextWithLikedCount(1))).slice(
+    const builder = builderFor([
+      ...tasteBatch,
+      ...similarBatch,
+      ...popularBatch,
+    ]);
+    const firstPage = (await builder.build(contextWithLikedCount(1))).slice(
       0,
       20,
     );
@@ -92,10 +93,15 @@ describe('EngineService source mixing', () => {
   });
 
   it('gives the similar source its full share once the library is big enough', async () => {
-    const engine = engineFor([...tasteBatch, ...similarBatch, ...popularBatch]);
-    const firstPage = (
-      await engine.buildBatch(contextWithLikedCount(10))
-    ).slice(0, 20);
+    const builder = builderFor([
+      ...tasteBatch,
+      ...similarBatch,
+      ...popularBatch,
+    ]);
+    const firstPage = (await builder.build(contextWithLikedCount(10))).slice(
+      0,
+      20,
+    );
 
     const similarCount = countBySource(firstPage, similarIds);
     expect(similarCount).toBeGreaterThanOrEqual(3);
@@ -104,25 +110,56 @@ describe('EngineService source mixing', () => {
 
   it('emits a title only once when several sources find it', async () => {
     const shared = 777;
-    const engine = engineFor([
+    const builder = builderFor([
       candidate(shared, 'taste'),
       candidate(shared, 'popular'),
       ...candidates(1, 5, 'taste'),
     ]);
-    const batch = await engine.buildBatch(contextWithLikedCount(0));
+    const batch = await builder.build(contextWithLikedCount(0));
 
     expect(batch.filter((id) => id === shared)).toHaveLength(1);
     expect(new Set(batch).size).toBe(batch.length);
   });
 
   it('lets the other sources fill in when one runs dry', async () => {
-    const engine = engineFor([
+    const builder = builderFor([
       ...candidates(1, 2, 'taste'),
       ...candidates(201, 5, 'popular'),
     ]);
-    const batch = await engine.buildBatch(contextWithLikedCount(0));
+    const batch = await builder.build(contextWithLikedCount(0));
 
     expect(batch).toHaveLength(7);
+  });
+});
+
+// Ranking decides the order inside a source, so these check membership only.
+const sortedIds = (ids: number[]): number[] =>
+  [...ids].sort((first, second) => first - second);
+
+describe('BatchBuilderService filtering', () => {
+  it('drops titles the user has already been shown', async () => {
+    const context = contextWithLikedCount(0);
+    context.hiddenIds.add(2);
+    const builder = builderFor(candidates(1, 3, 'taste'));
+
+    expect(sortedIds(await builder.build(context))).toEqual([1, 3]);
+  });
+
+  it('drops titles the user already knows', async () => {
+    const context = contextWithLikedCount(0);
+    context.excludeIds.add(3);
+    const builder = builderFor(candidates(1, 3, 'taste'));
+
+    expect(sortedIds(await builder.build(context))).toEqual([1, 2]);
+  });
+
+  it('drops titles carrying an avoided genre', async () => {
+    const context = contextWithLikedCount(0);
+    context.avoid.blockedGenreIds.add(27);
+    const horror = { ...candidate(9, 'popular'), genreIds: [27, 18] };
+    const builder = builderFor([...candidates(1, 2, 'taste'), horror]);
+
+    expect(await builder.build(context)).not.toContain(9);
   });
 });
 

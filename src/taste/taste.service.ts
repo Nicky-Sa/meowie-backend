@@ -3,17 +3,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Taste } from '@/taste/entities/taste.entity';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
-import { UserService } from '@/user/user.service';
+import { User } from '@/user/entities/users.entity';
 import { CacheService } from '@/cache/cache.service';
+import { feedCacheKeys } from '@/feed/constants/feed.constant';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { MEDIA_TYPE_VALUES } from '@/types/media-type';
-import { personalityFor } from '@/taste/personality';
-import { GenreRarityService } from '@/taste/genre-rarity.service';
+import { personalityFor } from '@/taste/utils/personality';
 import { TasteForFeed } from '@/taste/types/taste.type';
-import { DEFAULT_EXPLORE_LEVEL } from '@/taste/constants/journey.constant';
-
-type TasteProfile = Omit<TasteResDto, 'personality'>;
+import {
+  BOTH,
+  DEFAULT_EXPLORE_LEVEL,
+} from '@/taste/constants/journey.constant';
 
 const tasteForFeedCacheKey = (userId: number) => `taste-for-feed-${userId}`;
 
@@ -22,52 +23,29 @@ export class TasteService {
   constructor(
     @InjectRepository(Taste)
     private readonly tasteRepository: Repository<Taste>,
-    private readonly userService: UserService,
     private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
-    private readonly genreRarityService: GenreRarityService,
   ) {}
 
   async save(userId: number, dto: SaveTasteReqDto): Promise<TasteResDto> {
     await this.dataSource.transaction(async (manager) => {
+      // The global pipe strips unknown fields, so the DTO holds columns only.
       await manager.upsert(
         Taste,
-        {
-          userId,
-          movieIds: dto.movieIds,
-          seriesIds: dto.seriesIds,
-          seriesSkipped: dto.seriesSkipped,
-          genreIds: dto.genreIds,
-          era: dto.era,
-          reality: dto.reality,
-          tasteAuthority: dto.tasteAuthority,
-          commitment: dto.commitment,
-          avoid: dto.avoid,
-          exploreLevel: dto.exploreLevel,
-        },
-        {
-          conflictPaths: ['userId'],
-        },
+        { userId, ...dto },
+        { conflictPaths: ['userId'] },
       );
 
-      await this.userService.update(userId, { hasFilledInTaste: true });
+      await manager.update(User, { id: userId }, { hasFilledInTaste: true });
     });
 
-    // Taste changed → drop the cached feed copy so the feed picks it up.
-    await this.cacheService.del(tasteForFeedCacheKey(userId));
-
-    // Invalidate feed cache for all media types so the new taste takes immediate effect
-    const keysToDelete: string[] = [];
-    for (const mediaType of MEDIA_TYPE_VALUES) {
-      const base = `feed:${userId}:${mediaType}`;
-      keysToDelete.push(
-        `${base}:pool`,
-        `${base}:next-discover-page`,
-        `${base}:shuffle-seed`,
-        `${base}:served`,
-      );
-    }
-    await Promise.all(keysToDelete.map((key) => this.cacheService.del(key)));
+    const staleKeys = [
+      tasteForFeedCacheKey(userId),
+      ...MEDIA_TYPE_VALUES.flatMap((mediaType) =>
+        Object.values(feedCacheKeys(userId, mediaType)),
+      ),
+    ];
+    await Promise.all(staleKeys.map((key) => this.cacheService.del(key)));
 
     return this.toResDto(dto);
   }
@@ -83,58 +61,41 @@ export class TasteService {
   }
 
   /**
-   * Stored taste reduced to what the feed personalizes on, with neutral
-   * defaults when the user has no taste yet.
+   * Stored taste reduced to what the feed personalizes on. A user with no
+   * taste yet reads as "no preference" everywhere.
    */
   @Cacheable({ key: tasteForFeedCacheKey, ttl: Duration.ONE_DAY })
   async getTasteForFeed(userId: number): Promise<TasteForFeed> {
     const taste = await this.tasteRepository.findOneBy({ userId });
 
-    if (!taste) {
-      return {
-        hasTaste: false,
-        genreIds: [],
-        movieIds: [],
-        seriesIds: [],
-        avoid: [],
-        exploreLevel: DEFAULT_EXPLORE_LEVEL,
-        era: null,
-        reality: null,
-        tasteAuthority: null,
-        commitment: null,
-      };
-    }
-
     return {
-      hasTaste: true,
-      genreIds: taste.genreIds,
-      movieIds: taste.movieIds,
-      seriesIds: taste.seriesIds,
-      avoid: taste.avoid,
-      exploreLevel: taste.exploreLevel,
-      era: taste.era,
-      reality: taste.reality,
-      tasteAuthority: taste.tasteAuthority,
-      commitment: taste.commitment,
+      genreIds: taste?.genreIds ?? [],
+      movieIds: taste?.movieIds ?? [],
+      seriesIds: taste?.seriesIds ?? [],
+      avoid: taste?.avoid ?? [],
+      exploreLevel: taste?.exploreLevel ?? DEFAULT_EXPLORE_LEVEL,
+      era: taste?.era ?? BOTH,
+      reality: taste?.reality ?? BOTH,
+      authority: taste?.authority ?? BOTH,
+      commitment: taste?.commitment ?? BOTH,
     };
   }
 
-  private async toResDto(profile: TasteProfile): Promise<TasteResDto> {
+  // Listed field by field on purpose: a stored row also carries its id, its
+  // owner and its timestamps, and none of those belong in the response.
+  private toResDto(taste: SaveTasteReqDto): TasteResDto {
     return {
-      movieIds: profile.movieIds,
-      seriesIds: profile.seriesIds,
-      seriesSkipped: profile.seriesSkipped,
-      genreIds: profile.genreIds,
-      era: profile.era,
-      reality: profile.reality,
-      tasteAuthority: profile.tasteAuthority,
-      commitment: profile.commitment,
-      avoid: profile.avoid,
-      exploreLevel: profile.exploreLevel,
-      personality: personalityFor(
-        profile,
-        await this.genreRarityService.getWeights(),
-      ),
+      movieIds: taste.movieIds,
+      seriesIds: taste.seriesIds,
+      seriesSkipped: taste.seriesSkipped,
+      genreIds: taste.genreIds,
+      era: taste.era,
+      reality: taste.reality,
+      authority: taste.authority,
+      commitment: taste.commitment,
+      avoid: taste.avoid,
+      exploreLevel: taste.exploreLevel,
+      personality: personalityFor(taste),
     };
   }
 }

@@ -1,15 +1,14 @@
 import { describe, expect, it } from '@jest/globals';
-import { personalityFor, PersonalityInput } from '@/taste/personality';
+import { personalityFor, PersonalityInput } from '@/taste/utils/personality';
 import { MOVIES, SERIES, Title } from '@/taste/constants/pools.constant';
 import {
   BOTH,
   ERA,
-  RARITY_WEIGHTS,
   REALITY,
-  TASTE_AUTHORITY,
+  AUTHORITY,
 } from '@/taste/constants/journey.constant';
 import {
-  Character,
+  Personality,
   EVERYTHING_CAT,
   PERSONALITY_GROUPS,
 } from '@/taste/constants/personality.constant';
@@ -29,12 +28,12 @@ const inputWith = (overrides: Partial<PersonalityInput>): PersonalityInput => ({
   genreIds: [],
   era: ERA.NEW_RELEASE,
   reality: REALITY.REALISTIC,
-  tasteAuthority: TASTE_AUTHORITY.POPULAR,
+  authority: AUTHORITY.POPULAR,
   ...overrides,
 });
 
 const personality = (overrides: Partial<PersonalityInput>) =>
-  personalityFor(inputWith(overrides), RARITY_WEIGHTS);
+  personalityFor(inputWith(overrides));
 
 describe("breaking a single 'both' answer with the poster picks", () => {
   it('reads mostly-classic picks as a classic era lean', () => {
@@ -71,7 +70,7 @@ describe("breaking a single 'both' answer with the poster picks", () => {
     );
   });
 
-  it('reads grounded picks as a realistic lean', () => {
+  it('reads realistic picks as a realistic lean', () => {
     const movieIds = [movieId('The Godfather'), movieId('Titanic')];
 
     expect(personality({ reality: BOTH, movieIds })).toEqual(
@@ -86,16 +85,16 @@ describe("breaking a single 'both' answer with the poster picks", () => {
       movieId('Moon'),
     ];
 
-    expect(personality({ tasteAuthority: BOTH, movieIds })).toEqual(
-      personality({ tasteAuthority: TASTE_AUTHORITY.CRITICS_CHOICE, movieIds }),
+    expect(personality({ authority: BOTH, movieIds })).toEqual(
+      personality({ authority: AUTHORITY.CRITICS_CHOICE, movieIds }),
     );
   });
 
   it('reads mainstream picks as a popular lean', () => {
     const movieIds = [movieId('The Dark Knight'), movieId('Titanic')];
 
-    expect(personality({ tasteAuthority: BOTH, movieIds })).toEqual(
-      personality({ tasteAuthority: TASTE_AUTHORITY.POPULAR, movieIds }),
+    expect(personality({ authority: BOTH, movieIds })).toEqual(
+      personality({ authority: AUTHORITY.POPULAR, movieIds }),
     );
   });
 
@@ -106,9 +105,9 @@ describe("breaking a single 'both' answer with the poster picks", () => {
       seriesId('Chernobyl'),
     ];
 
-    expect(personality({ tasteAuthority: BOTH, seriesIds })).toEqual(
+    expect(personality({ authority: BOTH, seriesIds })).toEqual(
       personality({
-        tasteAuthority: TASTE_AUTHORITY.CRITICS_CHOICE,
+        authority: AUTHORITY.CRITICS_CHOICE,
         seriesIds,
       }),
     );
@@ -130,8 +129,8 @@ describe('tie boundaries keep the old fixed defaults', () => {
     );
   });
 
-  it('equal grounded and escapist genre hits resolve to realistic', () => {
-    // Interstellar carries one escapist genre (878) and one grounded (18).
+  it('equal realistic and fantasy genre hits fall back to realistic', () => {
+    // Interstellar carries one fantasy genre (878) and one realistic (18).
     const movieIds = [movieId('Interstellar')];
 
     expect(personality({ reality: BOTH, movieIds })).toEqual(
@@ -142,8 +141,8 @@ describe('tie boundaries keep the old fixed defaults', () => {
   it('exactly half hidden gems resolve to popular', () => {
     const movieIds = [movieId('The Dark Knight'), movieId('Coherence')];
 
-    expect(personality({ tasteAuthority: BOTH, movieIds })).toEqual(
-      personality({ tasteAuthority: TASTE_AUTHORITY.POPULAR, movieIds }),
+    expect(personality({ authority: BOTH, movieIds })).toEqual(
+      personality({ authority: AUTHORITY.POPULAR, movieIds }),
     );
   });
 });
@@ -153,7 +152,7 @@ describe('the everything cat', () => {
     const result = personality({
       era: BOTH,
       reality: BOTH,
-      tasteAuthority: BOTH,
+      authority: BOTH,
     });
 
     expect(result).toEqual(EVERYTHING_CAT);
@@ -171,7 +170,7 @@ describe('the everything cat', () => {
     const result = personality({
       era: BOTH,
       reality: BOTH,
-      tasteAuthority: BOTH,
+      authority: BOTH,
       movieIds: [movieId('The Godfather')],
       genreIds: [80],
     });
@@ -186,7 +185,7 @@ describe('picking the cat', () => {
     const result = personality({
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
-      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      authority: AUTHORITY.POPULAR,
       movieIds: [
         movieId('The Godfather'),
         movieId('Pulp Fiction'),
@@ -202,7 +201,7 @@ describe('picking the cat', () => {
     const result = personality({
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
-      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      authority: AUTHORITY.POPULAR,
       movieIds: [movieId('Whiplash')],
       genreIds: [80],
     });
@@ -214,7 +213,7 @@ describe('picking the cat', () => {
     const result = personality({
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
-      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      authority: AUTHORITY.POPULAR,
       genreIds: [18],
     });
 
@@ -241,7 +240,7 @@ describe('picking the cat', () => {
     const result = personality({
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
-      tasteAuthority: TASTE_AUTHORITY.POPULAR,
+      authority: AUTHORITY.POPULAR,
       movieIds: [movieId('Whiplash')],
     });
 
@@ -250,12 +249,12 @@ describe('picking the cat', () => {
 });
 
 describe('every cat card', () => {
-  const everyCat: Character[] = [
+  const everyCat: Personality[] = [
     EVERYTHING_CAT,
     ...Object.values(PERSONALITY_GROUPS).flatMap((group) => [
       group.default,
       ...Object.values(group.byGenre).filter(
-        (cat): cat is Character => cat !== undefined,
+        (cat): cat is Personality => cat !== undefined,
       ),
     ]),
   ];

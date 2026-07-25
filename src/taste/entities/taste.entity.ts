@@ -5,13 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  Index,
   Unique,
 } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
 import { GenreId } from '@/taste/constants/pools.constant';
 import {
   AuthorityAnswer,
+  AvoidId,
   CommitmentAnswer,
   EraAnswer,
   RealityAnswer,
@@ -23,11 +23,9 @@ export class Taste {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
   @Column()
   userId: number;
 
-  // TMDB ids of the titles picked in the movie / series steps.
   @Column('int', { array: true })
   movieIds: number[];
 
@@ -37,11 +35,9 @@ export class Taste {
   @Column()
   seriesSkipped: boolean;
 
-  // TMDB genre ids confirmed in the genres step.
   @Column('int', { array: true })
   genreIds: GenreId[];
 
-  // The four taste-question answers: a side value or 'both' per axis.
   @Column({ type: 'varchar' })
   era: EraAnswer;
 
@@ -49,13 +45,13 @@ export class Taste {
   reality: RealityAnswer;
 
   @Column({ type: 'varchar' })
-  tasteAuthority: AuthorityAnswer;
+  authority: AuthorityAnswer;
 
   @Column({ type: 'varchar' })
   commitment: CommitmentAnswer;
 
   @Column('text', { array: true })
-  avoid: string[];
+  avoid: AvoidId[];
 
   @Column('int')
   exploreLevel: number;

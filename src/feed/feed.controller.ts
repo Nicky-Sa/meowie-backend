@@ -26,13 +26,14 @@ export class FeedController {
     @Query() query: FeedQueryDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<FeedResDto> {
-    this.setCacheHeaders(res, req.user.id);
-    return this.feedService.getFeed(
+    const feed = await this.feedService.getFeed(
       req.user.id,
       'movie',
       query.page,
       query.refresh,
     );
+    this.setCacheHeaders(res, req.user.id);
+    return feed;
   }
 
   @OptionalAccessGuard()
@@ -42,19 +43,21 @@ export class FeedController {
     @Query() query: FeedQueryDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<FeedResDto> {
-    this.setCacheHeaders(res, req.user.id);
-    return this.feedService.getFeed(
+    const feed = await this.feedService.getFeed(
       req.user.id,
       'series',
       query.page,
       query.refresh,
     );
+    this.setCacheHeaders(res, req.user.id);
+    return feed;
   }
 
-  // Guest feed is identical for everyone, so it's CDN-cacheable; personalized
-  // (logged-in) responses must never be shared. CloudFront's cache key doesn't
-  // include Authorization, so the client keeps guest requests on a separate
-  // cache key by tagging them `audience=guest` (the key includes query strings).
+  // Set only after a result: an error must not inherit the guest header and
+  // get held by CloudFront for an hour.
+  // Guest feeds are identical for everyone, so they're CDN-cacheable;
+  // personalized responses must never be shared. CloudFront's cache key doesn't
+  // include Authorization, so the client tags guest requests `audience=guest`.
   private setCacheHeaders(res: Response, userId: number | null): void {
     if (userId === null) {
       res.setHeader('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`);

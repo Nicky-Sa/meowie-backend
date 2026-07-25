@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  FeedContext,
   FeedCandidate,
   FeedCandidateSource,
-} from '@/feed/engine/engine.types';
+  FeedContext,
+} from '@/feed/types/feed.types';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
 import { TmdbService } from '@/tmdb/tmdb.service';
@@ -20,57 +20,45 @@ import {
 import {
   CRITICS_CHOICE_MIN_RATING,
   DISCOVER_PAGES_PER_BUILD,
-  LONG_MIN_RUNTIME,
   MAX_SIMILAR_SOURCES,
-  MIN_MOVIE_RUNTIME,
   POPULAR_VOTE_COUNT_FLOOR,
-  SHORT_MAX_RUNTIME,
   VOTE_COUNT_FLOOR,
   VOTE_COUNT_FOR_FULL_CONFIDENCE,
-} from '@/feed/feed.constants';
-import { tvGenreIdsFor } from '@/feed/movie-to-tv-genres.constant';
-import { likedTitlesFor } from '@/feed/profile/profile.types';
+} from '@/feed/constants/feed.constant';
+import { tvGenreIdsFor } from '@/feed/constants/movie-to-tv-genres.constant';
+import { movieRuntimeParams } from '@/feed/utils/movie-runtime';
 import {
   CLASSIC_MAX_YEAR,
-  COMMITMENT,
+  CommitmentAnswer,
   ERA,
-  ESCAPIST_GENRE_IDS,
-  GROUNDED_GENRE_IDS,
+  FANTASY_GENRE_IDS,
+  REALISTIC_GENRE_IDS,
   MODERN_MIN_YEAR,
   REALITY,
-  TASTE_AUTHORITY,
+  AUTHORITY,
 } from '@/taste/constants/journey.constant';
 
 type DiscoveredDetail =
   | TMDB_DiscoveredMovieDetail
   | TMDB_DiscoveredSeriesDetail;
 
-type AvoidParams = {
-  without_genres?: string;
-  without_keywords?: string;
-};
+type DiscoverParams = TMDB_DiscoverMovieQuery & TMDB_DiscoverSeriesQuery;
 
-/**
- * One discover call shape: which genres to ask TMDB for, plus an optional
- * sort (random by default) and extra filters (date window, rating floor).
- * Params are typed for either media type; a query only ever carries the
- * fields of the media type it runs for.
- */
+/** One discover call: which genres to ask for, how to sort, what else to add. */
 type TasteQuery = {
   genreIds: number[];
   sort?: SortOption;
-  extraParams?: TMDB_DiscoverMovieQuery & TMDB_DiscoverSeriesQuery;
+  extraParams?: DiscoverParams;
 };
 
 /**
- * The single candidate-generation stage: takes a context (profile + paging)
- * and turns it into catalog items via TMDB. Three sources always run
- * together — taste discovery, lookalikes of liked titles, and popular titles —
- * and the engine mixes them by share, so no single source owns the feed.
+ * Fetches feed candidates from TMDB. Three sources always run together —
+ * taste discovery, titles similar to the ones they like, and popular titles — and the
+ * batch builder mixes them by share, so no single source owns the feed.
  */
 @Injectable()
-export class CandidateGenerator {
-  private readonly logger = new Logger(CandidateGenerator.name);
+export class TitleFinderService {
+  private readonly logger = new Logger(TitleFinderService.name);
 
   constructor(
     private readonly movieService: MovieService,
@@ -78,15 +66,15 @@ export class CandidateGenerator {
     private readonly tmdbService: TmdbService,
   ) {}
 
-  async generate(context: FeedContext): Promise<FeedCandidate[]> {
-    const [discovered, recommended, popular] = await Promise.all([
+  async find(context: FeedContext): Promise<FeedCandidate[]> {
+    const [discovered, similar, popular] = await Promise.all([
       this.discoverByTaste(context),
-      this.recommendFromLikedTitles(context),
-      this.fetchPopular(context),
+      this.findSimilar(context),
+      this.findPopular(context),
     ]);
 
-    return this.withoutOverlongSeries(
-      [...discovered, ...recommended, ...popular],
+    return this.withoutTooLongSeries(
+      [...discovered, ...similar, ...popular],
       context,
     );
   }
@@ -96,7 +84,7 @@ export class CandidateGenerator {
    * series is checked here — one cached lookup per candidate, and only when the
    * user picked that chip.
    */
-  private async withoutOverlongSeries(
+  private async withoutTooLongSeries(
     candidates: FeedCandidate[],
     context: FeedContext,
   ): Promise<FeedCandidate[]> {
@@ -135,13 +123,11 @@ export class CandidateGenerator {
         const counter = context.nextTmdbPageToFetch - 1 + offset;
         const query = queries[counter % queries.length];
         const page = Math.floor(counter / queries.length) + 1;
-        return this.discover(query, page, context);
+        return this.discoverByQuery(query, page, context);
       }),
     );
 
-    return batches
-      .flat()
-      .map((item) => this.toCandidate(item, context.mediaType, 'taste'));
+    return batches.flat().map((item) => this.toCandidate(item, 'taste'));
   }
 
   /**
@@ -150,12 +136,11 @@ export class CandidateGenerator {
    * dimensions add no query.
    */
   private tasteQueries(context: FeedContext): TasteQuery[] {
-    const { mediaType, profile, taste } = context;
+    const { mediaType, taste } = context;
     // Taste genres are movie genre ids; TV discovery needs its own genre
     // list (chips with no TV match don't limit series at all).
-    const tasteGenreIds = profile.genreIds.map((genre) => genre.id);
     const genreIds =
-      mediaType === 'movie' ? tasteGenreIds : tvGenreIdsFor(tasteGenreIds);
+      mediaType === 'movie' ? taste.genreIds : tvGenreIdsFor(taste.genreIds);
     const dateField =
       mediaType === 'movie' ? 'primary_release_date' : 'first_air_date';
 
@@ -175,18 +160,18 @@ export class CandidateGenerator {
     }
 
     // The reality lean searches its own genre families, deliberately beyond
-    // the picked taste genres — the mix and the scorers keep it in balance.
+    // the picked taste genres — the mix and the scores keep it in balance.
     if (taste.reality === REALITY.REALISTIC) {
-      queries.push({ genreIds: GROUNDED_GENRE_IDS });
+      queries.push({ genreIds: REALISTIC_GENRE_IDS });
     }
     if (taste.reality === REALITY.FANTASY) {
-      queries.push({ genreIds: ESCAPIST_GENRE_IDS });
+      queries.push({ genreIds: FANTASY_GENRE_IDS });
     }
 
-    if (taste.tasteAuthority === TASTE_AUTHORITY.POPULAR) {
+    if (taste.authority === AUTHORITY.POPULAR) {
       queries.push({ genreIds, sort: SortOption.POPULARITY });
     }
-    if (taste.tasteAuthority === TASTE_AUTHORITY.CRITICS_CHOICE) {
+    if (taste.authority === AUTHORITY.CRITICS_CHOICE) {
       queries.push({
         genreIds,
         extraParams: {
@@ -199,42 +184,83 @@ export class CandidateGenerator {
     return queries;
   }
 
-  private async discover(
+  private discoverByQuery(
     tasteQuery: TasteQuery,
     page: number,
     context: FeedContext,
   ): Promise<DiscoveredDetail[]> {
-    const query = {
-      sort: tasteQuery.sort ?? SortOption.RANDOM,
-      genres: tasteQuery.genreIds.length
-        ? tasteQuery.genreIds.join(',')
-        : undefined,
+    return this.discoverPage(context, {
       page,
-    } as QueryParamsDto;
-
-    // extraParams last: a query's own floor beats the shared one. Floors the
-    // sort itself brings (POPULARITY adds rating and vote minimums further
-    // down) still win over both.
-    if (context.mediaType === 'movie') {
-      const res = await this.movieService.getDiscoveredMovies(query, {
-        ...this.avoidParams(context),
-        ...this.movieRuntimeParams(context),
+      sort: tasteQuery.sort ?? SortOption.RANDOM,
+      genreIds: tasteQuery.genreIds,
+      commitment: context.taste.commitment,
+      // extraParams last: a query's own floor beats the shared one. Floors the
+      // sort itself brings (POPULARITY adds rating and vote minimums further
+      // down) still win over both.
+      extraParams: {
         'vote_count.gte': VOTE_COUNT_FLOOR,
         ...tasteQuery.extraParams,
-      });
-      return res.results;
-    }
-
-    const res = await this.seriesService.getDiscoveredSeries(query, {
-      ...this.avoidParams(context),
-      'vote_count.gte': VOTE_COUNT_FLOOR,
-      ...tasteQuery.extraParams,
+      },
     });
+  }
+
+  /** The always-on popular source; the mix gives it its own feed share. */
+  private async findPopular(context: FeedContext): Promise<FeedCandidate[]> {
+    // Discover paging advances in steps of DISCOVER_PAGES_PER_BUILD; popular
+    // fetches one page per batch, so it walks pages 1, 2, 3… without gaps.
+    const page = Math.ceil(
+      context.nextTmdbPageToFetch / DISCOVER_PAGES_PER_BUILD,
+    );
+
+    const results = await this.discoverPage(context, {
+      page,
+      sort: SortOption.POPULARITY,
+      // The avoid exclusions hold for popular titles too. The commitment lean
+      // doesn't — that's a preference, not a rule.
+      commitment: null,
+      extraParams: { 'vote_count.gte': POPULAR_VOTE_COUNT_FLOOR },
+    });
+
+    return results.map((item) => this.toCandidate(item, 'popular'));
+  }
+
+  private async discoverPage(
+    context: FeedContext,
+    options: {
+      page: number;
+      sort: SortOption;
+      commitment: CommitmentAnswer | null;
+      genreIds?: number[];
+      extraParams: DiscoverParams;
+    },
+  ): Promise<DiscoveredDetail[]> {
+    const query = {
+      sort: options.sort,
+      genres: options.genreIds?.length ? options.genreIds.join(',') : undefined,
+      page: options.page,
+    } as QueryParamsDto;
+
+    // Series carry no length data at discover time, so the window is movies only.
+    const runtime =
+      context.mediaType === 'movie'
+        ? movieRuntimeParams(context.avoid.movieMaxRuntime, options.commitment)
+        : {};
+
+    const params = {
+      ...this.avoidParams(context),
+      ...runtime,
+      ...options.extraParams,
+    };
+
+    const res =
+      context.mediaType === 'movie'
+        ? await this.movieService.getDiscoveredMovies(query, params)
+        : await this.seriesService.getDiscoveredSeries(query, params);
     return res.results;
   }
 
   /** Discover-time exclusions from the avoid chips. */
-  private avoidParams(context: FeedContext): AvoidParams {
+  private avoidParams(context: FeedContext): DiscoverParams {
     const { blockedGenreIds, blockedKeywordIds } = context.avoid;
     return {
       ...(blockedGenreIds.size && {
@@ -246,48 +272,15 @@ export class CandidateGenerator {
     };
   }
 
-  /**
-   * Movie runtime window from the commitment answer and the "Very long
-   * commitment" avoid cap. The cap wins over a 'long' preference — an avoid is
-   * a harder signal than a lean. Series carry no length data at discover time.
-   */
-  private movieRuntimeParams(context: FeedContext): Record<string, number> {
-    const cap = context.avoid.movieMaxRuntime;
-    const { commitment } = context.taste;
+  private async findSimilar(context: FeedContext): Promise<FeedCandidate[]> {
+    if (!context.includeSimilar) return [];
 
-    let min = MIN_MOVIE_RUNTIME;
-    let max: number | null = null;
-
-    if (commitment === COMMITMENT.SHORT) max = SHORT_MAX_RUNTIME;
-    if (commitment === COMMITMENT.LONG) min = LONG_MIN_RUNTIME;
-    if (cap !== null) {
-      max = Math.min(max ?? cap, cap);
-      min = Math.min(min, cap);
-    }
-
-    return {
-      'with_runtime.gte': min,
-      ...(max !== null && { 'with_runtime.lte': max }),
-    };
-  }
-
-  private async recommendFromLikedTitles(
-    context: FeedContext,
-  ): Promise<FeedCandidate[]> {
-    // Recommendations don't paginate alongside discover pages, so pull them once
-    // on the first build batch — they cluster the lookalikes up top.
-    if (context.nextTmdbPageToFetch !== 1) {
-      return [];
-    }
-
-    const { mediaType, profile } = context;
-    const sourceIds = likedTitlesFor(profile, mediaType)
-      .sort((a, b) => b.weight - a.weight)
+    const sourceIds = context.likedTitles
       .slice(0, MAX_SIMILAR_SOURCES)
-      .map((source) => source.id);
+      .map((title) => title.id);
 
     const lists = await Promise.all(
-      sourceIds.map((id) => this.recommendationsFor(mediaType, id)),
+      sourceIds.map((id) => this.recommendationsFor(context.mediaType, id)),
     );
     return this.withoutAvoidedKeywords(lists.flat(), context);
   }
@@ -308,13 +301,13 @@ export class CandidateGenerator {
       candidates.map(async (candidate) => {
         try {
           const keywordIds = await this.tmdbService.getKeywordIds(
-            candidate.mediaType,
+            context.mediaType,
             candidate.id,
           );
           return keywordIds.some((id) => blocked.has(id)) ? null : candidate;
         } catch {
           this.logger.warn(
-            `Failed to read keywords for ${candidate.mediaType}/${candidate.id}; dropping it`,
+            `Failed to read keywords for ${context.mediaType}/${candidate.id}; dropping it`,
           );
           return null;
         }
@@ -332,9 +325,7 @@ export class CandidateGenerator {
       const res = await this.tmdbService.getRecommendations<
         TMDB_Recommendations<DiscoveredDetail>
       >(mediaType, id, 1);
-      return res.results.map((item) =>
-        this.toCandidate(item, mediaType, 'similar'),
-      );
+      return res.results.map((item) => this.toCandidate(item, 'similar'));
     } catch {
       this.logger.warn(
         `Failed to fetch recommendations for ${mediaType}/${id}; skipping`,
@@ -343,51 +334,12 @@ export class CandidateGenerator {
     }
   }
 
-  /** The always-on popular source; the engine gives it its own feed share. */
-  private async fetchPopular(context: FeedContext): Promise<FeedCandidate[]> {
-    const { mediaType } = context;
-    // Discover paging advances in steps of DISCOVER_PAGES_PER_BUILD; popular
-    // fetches one page per batch, so it walks pages 1, 2, 3… without gaps.
-    const page = Math.ceil(
-      context.nextTmdbPageToFetch / DISCOVER_PAGES_PER_BUILD,
-    );
-    const query = {
-      sort: SortOption.POPULARITY,
-      page,
-    } as QueryParamsDto;
-
-    // The avoid exclusions apply here too — "never show me X" holds even for
-    // popular titles. The commitment lean doesn't.
-    const cap = context.avoid.movieMaxRuntime;
-
-    const results: DiscoveredDetail[] =
-      mediaType === 'movie'
-        ? (
-            await this.movieService.getDiscoveredMovies(query, {
-              ...this.avoidParams(context),
-              'vote_count.gte': POPULAR_VOTE_COUNT_FLOOR,
-              'with_runtime.gte': MIN_MOVIE_RUNTIME,
-              ...(cap !== null && { 'with_runtime.lte': cap }),
-            })
-          ).results
-        : (
-            await this.seriesService.getDiscoveredSeries(query, {
-              ...this.avoidParams(context),
-              'vote_count.gte': POPULAR_VOTE_COUNT_FLOOR,
-            })
-          ).results;
-
-    return results.map((item) => this.toCandidate(item, mediaType, 'popular'));
-  }
-
   private toCandidate(
     item: DiscoveredDetail,
-    mediaType: MediaType,
     source: FeedCandidateSource,
   ): FeedCandidate {
     return {
       id: item.id,
-      mediaType,
       genreIds: item.genre_ids ?? [],
       voteAverage: item.vote_average ?? 0,
       voteCount: item.vote_count ?? 0,

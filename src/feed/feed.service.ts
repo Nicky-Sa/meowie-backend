@@ -1,51 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '@/cache/cache.service';
 import { TasteService } from '@/taste/taste.service';
+import { LibraryService } from '@/library/library.service';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
-import { ProfileBuilder } from '@/feed/profile/profile.builder';
-import { EngineService } from '@/feed/engine/engine.service';
-import { FeedContext } from '@/feed/engine/engine.types';
-import { FeedProfile } from '@/feed/profile/profile.types';
+import { BatchBuilderService } from '@/feed/batch-builder.service';
+import { FeedContext, FeedInputs } from '@/feed/types/feed.types';
 import { MediaType } from '@/types/media-type';
 import { SortOption } from '@/common/types/media-query';
 import { FeedResDto } from '@/feed/dto/feed.dto';
-import { TasteForFeed } from '@/taste/types/taste.type';
-import { buildAvoidRules, AvoidRules } from '@/feed/avoid.constant';
+import { buildAvoidRules } from '@/feed/constants/avoid.constant';
+import { knownTitlesFor } from '@/feed/utils/known-titles';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import {
   DISCOVER_PAGES_PER_BUILD,
   FEED_PAGE_SIZE,
+  FeedCacheKeys,
+  feedCacheKeys,
+  MAX_FEED_PAGE,
   MAX_POOL_SIZE,
-  POOL_TTL,
-  SERVED_TTL,
+  SHOWN_TTL,
   STATE_TTL,
-} from '@/feed/feed.constants';
+} from '@/feed/constants/feed.constant';
 
-/** Per-request personalization inputs, shared by every batch the engine builds. */
-type FeedInputs = {
-  userId: number;
-  mediaType: MediaType;
-  profile: FeedProfile;
-  taste: TasteForFeed;
-  avoid: AvoidRules;
-  excludeIds: Set<number>;
-};
-
-/** The cached, evolving feed state for one user+mediaType. */
-type FeedState = {
+/** What sits in Redis under the state key. */
+type SavedFeedState = {
   pool: number[];
   nextTmdbPageToFetch: number;
   shuffleSeed: number;
-  served: Set<number>;
 };
 
-type FeedCacheKeys = {
-  pool: string;
-  nextTmdbPageToFetch: string;
-  shuffleSeed: string;
-  served: string;
+/** The evolving feed state for one user + media type. */
+type FeedState = SavedFeedState & {
+  alreadyShown: Set<number>;
 };
 
 @Injectable()
@@ -53,10 +41,10 @@ export class FeedService {
   constructor(
     private readonly cacheService: CacheService,
     private readonly tasteService: TasteService,
+    private readonly libraryService: LibraryService,
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
-    private readonly profileBuilder: ProfileBuilder,
-    private readonly engineService: EngineService,
+    private readonly batchBuilderService: BatchBuilderService,
   ) {}
 
   /**
@@ -81,57 +69,62 @@ export class FeedService {
       return this.guestFeed(mediaType, page);
     }
 
-    const keys = this.cacheKeys(userId, mediaType);
+    const keys = feedCacheKeys(userId, mediaType);
     const state = await this.loadState(keys);
 
+    // A refresh drops the pool and re-rolls the shuffle. The titles it drops
+    // are skipped for this build only, so it reaches for new ones first
+    // without hiding them for good.
+    const droppedOnRefresh = new Set(refresh ? state.pool : []);
     if (refresh) {
-      // Drop the pool and re-roll the shuffle; keep paging + served so a refresh
-      // reaches for genuinely new titles first.
       state.pool = [];
       state.shuffleSeed = this.randomShuffleSeed();
     }
 
-    const needed = page * FEED_PAGE_SIZE;
-    await this.buildPool(inputs, state, needed);
+    // One page further than asked, so "is there another page" is answered by a
+    // pool that was actually told to hold one.
+    const needed = Math.min((page + 1) * FEED_PAGE_SIZE, MAX_POOL_SIZE);
+    await this.buildPool(inputs, state, needed, droppedOnRefresh);
 
     // Nothing personalized to show at all → public feed (never return empty).
     if (state.pool.length === 0) {
+      await this.saveState(keys, state);
       return this.guestFeed(mediaType, page);
     }
 
+    const feedPage = this.toPage(state.pool, page);
+    feedPage.results.forEach((id) => state.alreadyShown.add(id));
     await this.saveState(keys, state);
-    return this.toPage(state.pool, page, needed);
+    return feedPage;
   }
 
   /**
-   * Collects everything the engine personalizes with for a user, or `null`
-   * when there's nothing to work with (no taste and an empty library for this
-   * media type) — the caller falls back to the public feed.
+   * Everything the feed personalizes with for a user, or `null` when there's
+   * nothing to work with (no taste and an empty library for this media type) —
+   * the caller falls back to the public feed.
    */
   private async buildInputs(
     userId: number,
     mediaType: MediaType,
   ): Promise<FeedInputs | null> {
-    const [profile, taste] = await Promise.all([
-      this.profileBuilder.build(userId),
+    const [taste, libraryItems] = await Promise.all([
       this.tasteService.getTasteForFeed(userId),
+      this.libraryService.getItemsForUser(userId, mediaType),
     ]);
 
-    const knownIds =
-      mediaType === 'movie' ? profile.knownMovieIds : profile.knownSeriesIds;
-
-    const canPersonalize = profile.genreIds.length > 0 || knownIds.length > 0;
-    if (!canPersonalize) {
+    const knownTitles = knownTitlesFor(taste, libraryItems, mediaType);
+    if (taste.genreIds.length === 0 && knownTitles.length === 0) {
       return null;
     }
 
     return {
-      userId,
       mediaType,
-      profile,
       taste,
       avoid: buildAvoidRules(taste.avoid),
-      excludeIds: new Set(knownIds.map((item) => item.id)),
+      excludeIds: new Set(knownTitles.map((title) => title.id)),
+      likedTitles: knownTitles
+        .filter((title) => title.weight > 0)
+        .sort((first, second) => second.weight - first.weight),
     };
   }
 
@@ -140,80 +133,84 @@ export class FeedService {
     inputs: FeedInputs,
     state: FeedState,
     needed: number,
+    droppedOnRefresh: Set<number>,
   ): Promise<void> {
-    await this.extendPool(inputs, state, needed);
+    await this.extendPool(inputs, state, needed, droppedOnRefresh);
 
     // Filtering used up the whole catalog → start again from page 1. The
     // shuffle seed reorders the same titles, so a refresh still looks different.
     if (state.pool.length === 0) {
-      state.served.clear();
+      state.alreadyShown.clear();
       state.nextTmdbPageToFetch = 1;
-      await this.extendPool(inputs, state, needed);
+      await this.extendPool(inputs, state, needed, droppedOnRefresh);
     }
   }
 
   /**
    * Appends fresh ranked ids to the pool until it holds at least `needed` (or a
-   * source runs dry), advancing `nextTmdbPageToFetch` each round. Skips ids
-   * already pooled. Mutates `state`.
+   * source runs dry), advancing `nextTmdbPageToFetch` each round. Mutates `state`.
    */
   private async extendPool(
     inputs: FeedInputs,
     state: FeedState,
     needed: number,
+    droppedOnRefresh: Set<number>,
   ): Promise<void> {
+    const hiddenIds = new Set([...state.alreadyShown, ...droppedOnRefresh]);
+
     while (state.pool.length < needed && state.pool.length < MAX_POOL_SIZE) {
       const context: FeedContext = {
         ...inputs,
-        served: state.served,
+        hiddenIds,
+        // Similar titles don't paginate, so they only come with the first round —
+        // which is also the round right after a refresh.
+        includeSimilar: state.pool.length === 0,
         shuffleSeed: state.shuffleSeed,
         nextTmdbPageToFetch: state.nextTmdbPageToFetch,
       };
 
-      const fresh = await this.engineService.buildBatch(context);
+      const fresh = await this.batchBuilderService.build(context);
       state.nextTmdbPageToFetch += DISCOVER_PAGES_PER_BUILD;
 
-      if (fresh.length === 0) break; // sources exhausted
+      if (fresh.length === 0) break;
 
-      // The engine filters against `served`/`excludeIds`, but a fallback can
+      // The engine filters against `hiddenIds`/`excludeIds`, but a fallback can
       // resurface a candidate across consecutive batches — guard the pool too.
       const poolSet = new Set(state.pool);
       const trulyFresh = fresh.filter((id) => !poolSet.has(id));
 
       if (trulyFresh.length === 0) break;
 
-      state.pool.push(...trulyFresh);
-      trulyFresh.forEach((id) => state.served.add(id));
+      // Trimmed, not just stopped at: a batch can overshoot the cap, and a pool
+      // past it would promise a page the request DTO refuses to serve.
+      state.pool = [...state.pool, ...trulyFresh].slice(0, MAX_POOL_SIZE);
     }
   }
 
   /** Slices the ranked pool into the requested page. */
-  private toPage(pool: number[], page: number, needed: number): FeedResDto {
+  private toPage(pool: number[], page: number): FeedResDto {
     const start = (page - 1) * FEED_PAGE_SIZE;
     const results = pool.slice(start, start + FEED_PAGE_SIZE);
-    const exhausted = pool.length < needed;
 
     return {
       page,
       results,
-      total_pages: exhausted ? page : page + 1,
+      total_pages: pool.length > start + FEED_PAGE_SIZE ? page + 1 : page,
       total_results: pool.length,
     };
   }
 
   private async loadState(keys: FeedCacheKeys): Promise<FeedState> {
-    const [pool, nextTmdbPageToFetch, shuffleSeed, served] = await Promise.all([
-      this.cacheService.get<number[]>(keys.pool),
-      this.cacheService.get<number>(keys.nextTmdbPageToFetch),
-      this.cacheService.get<number>(keys.shuffleSeed),
-      this.cacheService.get<number[]>(keys.served),
+    const [saved, alreadyShown] = await Promise.all([
+      this.cacheService.get<SavedFeedState>(keys.state),
+      this.cacheService.get<number[]>(keys.alreadyShown),
     ]);
 
     return {
-      pool: pool ?? [],
-      nextTmdbPageToFetch: nextTmdbPageToFetch ?? 1,
-      shuffleSeed: shuffleSeed ?? this.randomShuffleSeed(),
-      served: new Set(served ?? []),
+      pool: saved?.pool ?? [],
+      nextTmdbPageToFetch: saved?.nextTmdbPageToFetch ?? 1,
+      shuffleSeed: saved?.shuffleSeed ?? this.randomShuffleSeed(),
+      alreadyShown: new Set(alreadyShown ?? []),
     };
   }
 
@@ -221,15 +218,15 @@ export class FeedService {
     keys: FeedCacheKeys,
     state: FeedState,
   ): Promise<void> {
+    const { pool, nextTmdbPageToFetch, shuffleSeed, alreadyShown } = state;
+
     await Promise.all([
-      this.cacheService.set(keys.pool, state.pool, POOL_TTL),
       this.cacheService.set(
-        keys.nextTmdbPageToFetch,
-        state.nextTmdbPageToFetch,
+        keys.state,
+        { pool, nextTmdbPageToFetch, shuffleSeed },
         STATE_TTL,
       ),
-      this.cacheService.set(keys.shuffleSeed, state.shuffleSeed, STATE_TTL),
-      this.cacheService.set(keys.served, [...state.served], SERVED_TTL),
+      this.cacheService.set(keys.alreadyShown, [...alreadyShown], SHOWN_TTL),
     ]);
   }
 
@@ -243,33 +240,19 @@ export class FeedService {
     mediaType: MediaType,
     page: number,
   ): Promise<FeedResDto> {
+    const query = { page, sort: SortOption.POPULARITY };
     const res =
       mediaType === 'movie'
-        ? await this.movieService.getInterestingMovieIds({
-            page,
-            sort: SortOption.POPULARITY,
-          })
-        : await this.seriesService.getInterestingSeriesIds({
-            page,
-            sort: SortOption.POPULARITY,
-          });
+        ? await this.movieService.getInterestingMovieIds(query)
+        : await this.seriesService.getInterestingSeriesIds(query);
 
     return {
       page: res.page,
       results: res.results,
-      total_pages: res.total_pages,
+      // Held to the same last page as the personalized feed, so a client
+      // never asks for a page the personalized side would reject.
+      total_pages: Math.min(res.total_pages, MAX_FEED_PAGE),
       total_results: res.total_results,
-    };
-  }
-
-  /** Redis keys holding this user's feed state: the pool, paging, shuffle, and served set. */
-  private cacheKeys(userId: number, mediaType: MediaType): FeedCacheKeys {
-    const base = `feed:${userId}:${mediaType}`;
-    return {
-      pool: `${base}:pool`,
-      nextTmdbPageToFetch: `${base}:next-discover-page`, // Intentionally keeping the redis key string the same to not invalidate existing caches
-      shuffleSeed: `${base}:shuffle-seed`,
-      served: `${base}:served`,
     };
   }
 

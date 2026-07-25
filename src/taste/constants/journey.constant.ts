@@ -1,11 +1,10 @@
 import { GenreId } from '@/taste/constants/pools.constant';
 import { Option } from '@/types/option';
 
-export type TasteAxis = 'era' | 'reality' | 'tasteAuthority' | 'commitment';
+export type TasteAxis = 'era' | 'reality' | 'authority' | 'commitment';
 
-// Single source of truth for the answer values: change a value in one of
-// these objects and every consumer (questions, DTO validation, feed scorers,
-// personality cells) follows at compile time.
+// The one place the answer values are written. Everything else reads its
+// types from here, so changing a value is caught at compile time.
 export const BOTH = 'both' as const;
 
 export const ERA = {
@@ -20,7 +19,7 @@ export const REALITY = {
   BOTH,
 } as const;
 
-export const TASTE_AUTHORITY = {
+export const AUTHORITY = {
   POPULAR: 'popular',
   CRITICS_CHOICE: 'critics-choice',
   BOTH,
@@ -35,11 +34,7 @@ export const COMMITMENT = {
 export const ANSWER_VALUES = {
   era: [ERA.CLASSIC, ERA.NEW_RELEASE, ERA.BOTH],
   reality: [REALITY.REALISTIC, REALITY.FANTASY, REALITY.BOTH],
-  tasteAuthority: [
-    TASTE_AUTHORITY.POPULAR,
-    TASTE_AUTHORITY.CRITICS_CHOICE,
-    TASTE_AUTHORITY.BOTH,
-  ],
+  authority: [AUTHORITY.POPULAR, AUTHORITY.CRITICS_CHOICE, AUTHORITY.BOTH],
   commitment: [COMMITMENT.SHORT, COMMITMENT.LONG, COMMITMENT.BOTH],
 } as const;
 
@@ -48,7 +43,7 @@ export type AnswerFor<TAxis extends TasteAxis> =
 
 export type EraAnswer = AnswerFor<'era'>;
 export type RealityAnswer = AnswerFor<'reality'>;
-export type AuthorityAnswer = AnswerFor<'tasteAuthority'>;
+export type AuthorityAnswer = AnswerFor<'authority'>;
 export type CommitmentAnswer = AnswerFor<'commitment'>;
 
 export type TasteQuestion<TAxis extends TasteAxis = TasteAxis> = {
@@ -84,7 +79,7 @@ export const GENRE_IDS: GenreId[] = [
 export const TASTE_QUESTIONS: [
   TasteQuestion<'era'>,
   TasteQuestion<'reality'>,
-  TasteQuestion<'tasteAuthority'>,
+  TasteQuestion<'authority'>,
   TasteQuestion<'commitment'>,
 ] = [
   {
@@ -128,18 +123,18 @@ export const TASTE_QUESTIONS: [
     },
   },
   {
-    id: 'tasteAuthority',
+    id: 'authority',
     axis: 'Taste',
     prompt: 'What everyone loves, or what the critics pick?',
     sideA: {
       label: 'Most Popular',
       description: "What everyone's watching",
-      id: TASTE_AUTHORITY.POPULAR,
+      id: AUTHORITY.POPULAR,
     },
     sideB: {
       label: "Critics' Choice",
       description: 'Highly rated, award winning',
-      id: TASTE_AUTHORITY.CRITICS_CHOICE,
+      id: AUTHORITY.CRITICS_CHOICE,
     },
     both: {
       label: 'No preference',
@@ -169,6 +164,8 @@ export const TASTE_QUESTIONS: [
   },
 ];
 
+// Stored rows hold the id, never the label, so a label can be reworded
+// without orphaning what users already picked.
 export const AVOID_CHIPS = [
   { id: 'horror', label: 'Horror' },
   { id: 'gore', label: 'Gore' },
@@ -178,22 +175,25 @@ export const AVOID_CHIPS = [
   { id: 'war', label: 'War' },
   { id: 'kids-content', label: 'Kids content' },
   { id: 'soap-opera', label: 'Soap opera' },
-] as const;
+] as const satisfies readonly AvoidChip[];
 
-// Stored rows hold the id, never the label, so a label can be reworded
-// without orphaning what users already picked.
 export type AvoidId = (typeof AVOID_CHIPS)[number]['id'];
-export type AvoidChip = Option<AvoidId>;
+export type AvoidChip = Option<string>;
 
 export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
+
+// Fewer picks than this don't say enough to build a taste on. The upper limit
+// only stops a client sending an absurd list; the wizard shows far fewer.
+export const MIN_PICKED_MOVIES = 4;
+export const MAX_PICKED_TITLES = 50;
 
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;
 export const MODERN_MIN_YEAR = 2015;
 
-// Genre families behind the grounded/escapist answer (movie + TV genre ids).
-export const GROUNDED_GENRE_IDS = [99, 36, 10752, 10768, 80, 18];
-export const ESCAPIST_GENRE_IDS = [878, 14, 10765, 16];
+// Genre families behind the realistic/fantasy answer (movie + TV genre ids).
+export const REALISTIC_GENRE_IDS = [99, 36, 10752, 10768, 80, 18];
+export const FANTASY_GENRE_IDS = [878, 14, 10765, 16];
 
 export const DEFAULT_EXPLORE_LEVEL = 2; // "Balanced"
 
@@ -205,11 +205,8 @@ export const EXPLORE_LEVELS: string[] = [
   'Surprise me',
 ];
 
-/**
- * Hand-tuned fallback genre rarity weights, roughly inverse to genre
- * frequency. The live values come from GenreRarityService, which counts the
- * TMDB catalog; this table only serves when TMDB can't be reached.
- */
+// Roughly inverse to how common each genre is, so a rare pick beats a common
+// one when both are picked equally often.
 export const RARITY_WEIGHTS: Record<GenreId, number> = {
   18: 0.5, // Drama
   35: 0.6, // Comedy

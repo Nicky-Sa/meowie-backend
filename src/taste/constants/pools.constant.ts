@@ -1,17 +1,11 @@
-/**
- * Curated starter pools for the taste journey.
- *
- * Hand-maintained seed set (posters from TMDB). The spec calls for these to be
- * replaced by a live TMDB fetch in production; this module is the single seam
- * where that swap happens.
- */
+// Hand-picked starter titles for the taste wizard. Swap this file when the
+// live TMDB pool lands.
 
 export type GenreId = number;
 
 export type Title = {
   title: string;
   year: number;
-  // TMDB genre ids. The trailing comment on each title spells them out.
   genreIds: GenreId[];
   hiddenGem: boolean;
   tmdbId: number;

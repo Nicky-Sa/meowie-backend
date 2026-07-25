@@ -1,5 +1,7 @@
 import {
+  ArrayMaxSize,
   ArrayMinSize,
+  ArrayUnique,
   IsArray,
   IsBoolean,
   IsIn,
@@ -12,25 +14,33 @@ import {
   ANSWER_VALUES,
   AVOID_IDS,
   AuthorityAnswer,
+  AvoidId,
   CommitmentAnswer,
   EraAnswer,
   EXPLORE_LEVELS,
   GENRE_IDS,
+  MAX_PICKED_TITLES,
+  MIN_PICKED_MOVIES,
   RealityAnswer,
 } from '@/taste/constants/journey.constant';
 import { GenreId } from '@/taste/constants/pools.constant';
-import { Personality } from '@/taste/personality';
+import { Personality } from '@/taste/constants/personality.constant';
 
 export class SaveTasteReqDto {
-  // TMDB ids of the picked titles. Not validated against the seed pools so a
-  // live TMDB pool can replace them without touching this DTO.
+  // TMDB ids of the picked titles. Not checked against the seed pools so a
+  // live TMDB pool can replace them without touching this DTO — only the count
+  // is limited.
   @IsArray()
   @IsInt({ each: true })
-  @ArrayMinSize(4)
+  @ArrayMinSize(MIN_PICKED_MOVIES)
+  @ArrayMaxSize(MAX_PICKED_TITLES)
+  @ArrayUnique()
   movieIds: number[];
 
   @IsArray()
   @IsInt({ each: true })
+  @ArrayMaxSize(MAX_PICKED_TITLES)
+  @ArrayUnique()
   seriesIds: number[];
 
   @IsBoolean()
@@ -42,6 +52,8 @@ export class SaveTasteReqDto {
     each: true,
     message: 'genreIds contains an unknown genre',
   })
+  @ArrayMaxSize(GENRE_IDS.length)
+  @ArrayUnique()
   genreIds: GenreId[];
 
   @IsString()
@@ -53,8 +65,8 @@ export class SaveTasteReqDto {
   reality: RealityAnswer;
 
   @IsString()
-  @IsIn([...ANSWER_VALUES.tasteAuthority])
-  tasteAuthority: AuthorityAnswer;
+  @IsIn([...ANSWER_VALUES.authority])
+  authority: AuthorityAnswer;
 
   @IsString()
   @IsIn([...ANSWER_VALUES.commitment])
@@ -63,7 +75,9 @@ export class SaveTasteReqDto {
   @IsArray()
   @IsString({ each: true })
   @IsIn(AVOID_IDS, { each: true, message: 'avoid contains an unknown chip' })
-  avoid: string[];
+  @ArrayMaxSize(AVOID_IDS.length)
+  @ArrayUnique()
+  avoid: AvoidId[];
 
   @IsInt()
   @Min(0)
@@ -78,9 +92,9 @@ export type TasteResDto = {
   genreIds: GenreId[];
   era: EraAnswer;
   reality: RealityAnswer;
-  tasteAuthority: AuthorityAnswer;
+  authority: AuthorityAnswer;
   commitment: CommitmentAnswer;
-  avoid: string[];
+  avoid: AvoidId[];
   exploreLevel: number;
   personality: Personality;
 };

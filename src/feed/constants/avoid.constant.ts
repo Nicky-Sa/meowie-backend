@@ -36,6 +36,8 @@ export type AvoidRules = {
 
 const logger = new Logger('AvoidRules');
 
+// Takes plain strings, not AvoidId: a stored row can still hold a chip that
+// was retired since it was saved.
 export const buildAvoidRules = (avoid: string[]): AvoidRules => {
   const blockedGenreIds = new Set<number>();
   const blockedKeywordIds: number[] = [];
@@ -50,18 +52,8 @@ export const buildAvoidRules = (avoid: string[]): AvoidRules => {
     }
     rule.genreIds?.forEach((id) => blockedGenreIds.add(id));
     blockedKeywordIds.push(...(rule.keywordIds ?? []));
-    if (rule.movieMaxRuntime !== undefined) {
-      movieMaxRuntime = Math.min(
-        movieMaxRuntime ?? Infinity,
-        rule.movieMaxRuntime,
-      );
-    }
-    if (rule.seriesMaxEpisodes !== undefined) {
-      seriesMaxEpisodes = Math.min(
-        seriesMaxEpisodes ?? Infinity,
-        rule.seriesMaxEpisodes,
-      );
-    }
+    movieMaxRuntime = rule.movieMaxRuntime ?? movieMaxRuntime;
+    seriesMaxEpisodes = rule.seriesMaxEpisodes ?? seriesMaxEpisodes;
   }
 
   return {

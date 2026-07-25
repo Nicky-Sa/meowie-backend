@@ -1,21 +1,17 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
-  FeedContext,
   FeedCandidate,
   FeedCandidateSource,
-} from '@/feed/engine/engine.types';
-import { BaseFilter } from '@/feed/engine/filters/base.filter';
-import { BaseScorer } from '@/feed/engine/scorers/base.scorer';
-import { CandidateGenerator } from '@/feed/engine/candidate-generator';
-import { likedTitlesFor } from '@/feed/profile/profile.types';
+  FeedContext,
+} from '@/feed/types/feed.types';
+import { TitleFinderService } from '@/feed/title-finder.service';
+import { scoreCandidate } from '@/feed/utils/scoring';
+import { addTvGenreIds } from '@/feed/constants/movie-to-tv-genres.constant';
 import {
   RankingWeights,
   rankingWeightsFor,
   sourceSharesFor,
-} from '@/feed/feed.constants';
-
-export const FEED_FILTERS = 'FEED_FILTERS';
-export const FEED_SCORERS = 'FEED_SCORERS';
+} from '@/feed/constants/feed.constant';
 
 /** One source's ranked ids plus its progress through the mixing loop. */
 type SourceQueue = {
@@ -25,28 +21,28 @@ type SourceQueue = {
   taken: number;
 };
 
+/** Turns one round of TMDB candidates into a ranked, mixed list of ids. */
 @Injectable()
-export class EngineService {
-  constructor(
-    private readonly candidateGenerator: CandidateGenerator,
-    @Inject(FEED_FILTERS) private readonly filters: BaseFilter[],
-    @Inject(FEED_SCORERS) private readonly scorers: BaseScorer[],
-  ) {}
+export class BatchBuilderService {
+  constructor(private readonly titleFinderService: TitleFinderService) {}
 
-  async buildBatch(context: FeedContext): Promise<number[]> {
-    const candidates = await this.candidateGenerator.generate(context);
-    const kept = this.applyFilters(candidates, context);
-    const rankedBySource = this.rankBySource(kept, context);
-    return this.mixSources(rankedBySource, context);
+  async build(context: FeedContext): Promise<number[]> {
+    const candidates = await this.titleFinderService.find(context);
+    const kept = candidates.filter((candidate) =>
+      this.isAllowed(candidate, context),
+    );
+    return this.mixSources(this.rankBySource(kept, context), context);
   }
 
-  /** Keeps only candidates that pass every filter */
-  private applyFilters(
-    candidates: FeedCandidate[],
-    context: FeedContext,
-  ): FeedCandidate[] {
-    return candidates.filter((candidate) =>
-      this.filters.every((filter) => filter.filter(candidate, context)),
+  // Both discover sources drop avoided genres at fetch time; the similar
+  // source can't, so it's caught here.
+  private isAllowed(candidate: FeedCandidate, context: FeedContext): boolean {
+    return (
+      !context.hiddenIds.has(candidate.id) &&
+      !context.excludeIds.has(candidate.id) &&
+      !candidate.genreIds.some((genreId) =>
+        context.avoid.blockedGenreIds.has(genreId),
+      )
     );
   }
 
@@ -59,6 +55,7 @@ export class EngineService {
     context: FeedContext,
   ): Map<FeedCandidateSource, number[]> {
     const weights = rankingWeightsFor(context.taste.exploreLevel);
+    const tasteGenres = addTvGenreIds(context.taste.genreIds);
 
     const groups = new Map<FeedCandidateSource, FeedCandidate[]>();
     for (const candidate of candidates) {
@@ -69,7 +66,7 @@ export class EngineService {
 
     const ranked = new Map<FeedCandidateSource, number[]>();
     for (const [source, group] of groups) {
-      ranked.set(source, this.rank(group, context, weights));
+      ranked.set(source, this.rank(group, context, weights, tasteGenres));
     }
     return ranked;
   }
@@ -82,10 +79,11 @@ export class EngineService {
     candidates: FeedCandidate[],
     context: FeedContext,
     weights: RankingWeights,
+    tasteGenres: Set<number>,
   ): number[] {
     const bestScoreById = new Map<number, number>();
     for (const candidate of candidates) {
-      const score = this.score(candidate, context, weights);
+      const score = scoreCandidate(candidate, context, weights, tasteGenres);
       const best = bestScoreById.get(candidate.id);
       if (best === undefined || score > best) {
         bestScoreById.set(candidate.id, score);
@@ -97,34 +95,20 @@ export class EngineService {
       .map(([id]) => id);
   }
 
-  private score(
-    candidate: FeedCandidate,
-    context: FeedContext,
-    weights: RankingWeights,
-  ): number {
-    return this.scorers.reduce(
-      (total, scorer) =>
-        total + scorer.score(candidate, context) * weights[scorer.key],
-      0,
-    );
-  }
-
   /**
    * Merges the per-source rankings into one list where any stretch keeps
-   * roughly the target source shares — a page always mixes taste discovery,
-   * library lookalikes and popular titles instead of one source taking every
-   * slot. A title found by several sources counts once, for whichever source
-   * reaches it first. Once a source runs dry the others fill its slots.
+   * roughly the target source shares, so a page always mixes taste discovery,
+   * similar titles and popular titles. A title found by several sources counts
+   * once. Once a source runs dry the others fill its slots.
    */
   private mixSources(
     rankedBySource: Map<FeedCandidateSource, number[]>,
     context: FeedContext,
   ): number[] {
-    const likedCount = likedTitlesFor(
-      context.profile,
-      context.mediaType,
-    ).length;
-    const shares = sourceSharesFor(context.taste.exploreLevel, likedCount);
+    const shares = sourceSharesFor(
+      context.taste.exploreLevel,
+      context.likedTitles.length,
+    );
 
     const queues: SourceQueue[] = [...rankedBySource.entries()].map(
       ([source, ids]) => ({
@@ -144,8 +128,8 @@ export class EngineService {
 
       // The next slot goes to the source lagging furthest behind its share.
       const nextQueue = openQueues.reduce((leading, queue) =>
-        this.shareDeficit(queue, mixed.length) >
-        this.shareDeficit(leading, mixed.length)
+        this.howFarBehind(queue, mixed.length) >
+        this.howFarBehind(leading, mixed.length)
           ? queue
           : leading,
       );
@@ -161,7 +145,7 @@ export class EngineService {
     return mixed;
   }
 
-  private shareDeficit(queue: SourceQueue, mixedCount: number): number {
+  private howFarBehind(queue: SourceQueue, mixedCount: number): number {
     return queue.share * (mixedCount + 1) - queue.taken;
   }
 

@@ -3,7 +3,8 @@ import { TasteService } from '@/taste/taste.service';
 import { AuthenticatedRequest } from '@/auth/types/authenticated-request.type';
 import { AccessGuard } from '@/auth/guards/access.guard';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
-import { TasteJourneyResDto, toJourneyTitle } from '@/taste/dto/journey.dto';
+import { TasteJourneyResDto } from '@/taste/dto/journey.dto';
+import { toJourneyTitle } from '@/taste/utils/journey-title';
 import { MOVIES, SERIES } from '@/taste/constants/pools.constant';
 import {
   AVOID_CHIPS,
@@ -16,7 +17,6 @@ import {
 export class TasteController {
   constructor(private readonly tasteService: TasteService) {}
 
-  // Wizard bootstrap: everything each step needs, fetched once on entry.
   @Get('journey')
   getJourney(): TasteJourneyResDto {
     return {
@@ -24,14 +24,14 @@ export class TasteController {
       series: SERIES.map(toJourneyTitle),
       genreIds: GENRE_IDS,
       questions: TASTE_QUESTIONS,
-      avoidChips: [...AVOID_CHIPS],
+      avoidChips: AVOID_CHIPS,
       exploreLevels: EXPLORE_LEVELS,
     };
   }
 
   @AccessGuard()
   @Put()
-  async save(
+  async saveTaste(
     @Req() req: AuthenticatedRequest,
     @Body() dto: SaveTasteReqDto,
   ): Promise<TasteResDto> {
@@ -40,7 +40,9 @@ export class TasteController {
 
   @AccessGuard()
   @Get()
-  async get(@Req() req: AuthenticatedRequest): Promise<TasteResDto | null> {
+  async getMyTaste(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<TasteResDto | null> {
     return this.tasteService.findByUserId(req.user.id);
   }
 }
