@@ -95,12 +95,9 @@ export class SaveTasteReqDto {
   exploreLevel: number;
 }
 
+// The cat is the only thing a client reads back. The answers themselves are
+// never sent out again: the journey always starts blank, and the feed reads
+// them on the server.
 export type TasteResDto = {
-  movieRatings: TitleRatings;
-  seriesRatings: TitleRatings;
-  era: EraAnswer;
-  authority: AuthorityAnswer;
-  avoid: AvoidId[];
-  exploreLevel: number;
   personality: Personality;
 };

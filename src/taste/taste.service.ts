@@ -40,7 +40,7 @@ export class TasteService {
     ];
     await Promise.all(staleKeys.map((key) => this.cacheService.del(key)));
 
-    return this.toResDto(dto);
+    return { personality: personalityFor(dto) };
   }
 
   async hasFilledIn(userId: number): Promise<boolean> {
@@ -54,7 +54,7 @@ export class TasteService {
       return null;
     }
 
-    return this.toResDto(taste);
+    return { personality: personalityFor(taste) };
   }
 
   /**
@@ -72,20 +72,6 @@ export class TasteService {
       exploreLevel: taste?.exploreLevel ?? DEFAULT_EXPLORE_LEVEL,
       era: taste?.era ?? BOTH,
       authority: taste?.authority ?? BOTH,
-    };
-  }
-
-  // Listed field by field on purpose: a stored row also carries its id, its
-  // owner and its timestamps, and none of those belong in the response.
-  private toResDto(taste: SaveTasteReqDto): TasteResDto {
-    return {
-      movieRatings: taste.movieRatings,
-      seriesRatings: taste.seriesRatings,
-      era: taste.era,
-      authority: taste.authority,
-      avoid: taste.avoid,
-      exploreLevel: taste.exploreLevel,
-      personality: personalityFor(taste),
     };
   }
 }
