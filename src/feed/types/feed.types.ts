@@ -14,8 +14,8 @@ export type FeedCandidate = {
   source: FeedCandidateSource;
 };
 
-/** A title the user likes — saved, well rated, or picked in the wizard. */
-export type LikedTitle = {
+// The weight says how much they like it; below zero means they don't.
+export type KnownTitle = {
   id: number;
   weight: number;
 };
@@ -24,7 +24,10 @@ export type LikedTitle = {
 export type FeedInputs = {
   mediaType: MediaType;
   taste: TasteForFeed;
-  likedTitles: LikedTitle[];
+  likedTitles: KnownTitle[];
+  // Titles TMDB recommends off the ones the user disliked. They lose score
+  // rather than being blocked — a title can sit close to both sides.
+  closeToDisliked: Set<number>;
   avoid: AvoidRules;
   excludeIds: Set<number>;
 };
@@ -32,7 +35,6 @@ export type FeedInputs = {
 /** One build round: who it is for, plus where it got to. */
 export type FeedContext = FeedInputs & {
   hiddenIds: Set<number>;
-  includeSimilar: boolean;
   shuffleSeed: number;
   nextTmdbPageToFetch: number;
 };

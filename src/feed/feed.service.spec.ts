@@ -6,6 +6,7 @@ import { LibraryService } from '@/library/library.service';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
 import { BatchBuilderService } from '@/feed/batch-builder.service';
+import { TitleFinderService } from '@/feed/title-finder.service';
 import { FeedContext } from '@/feed/types/feed.types';
 import { feedCacheKeys, MAX_FEED_PAGE } from '@/feed/constants/feed.constant';
 
@@ -30,12 +31,15 @@ class FakeCache {
   }
 }
 
+// One liked title is what makes a user personalizable at all now, so the fake
+// taste carries one.
+const LIKED_TMDB_ID = 9999;
+
 const taste = {
   getTasteForFeed: () =>
     Promise.resolve({
-      genreIds: [18],
-      movieIds: [],
-      seriesIds: [],
+      movieRatings: { [LIKED_TMDB_ID]: 'like' },
+      seriesRatings: {},
       avoid: [],
       exploreLevel: 2,
       era: 'both',
@@ -93,6 +97,10 @@ const builderForCatalog = (catalog: number[]) => {
   return { batchBuilder };
 };
 
+const titleFinder = {
+  findCloseToDisliked: () => Promise.resolve([]),
+} as unknown as TitleFinderService;
+
 const serviceWith = (batchBuilder: BatchBuilderService, cache: FakeCache) =>
   new FeedService(
     cache as unknown as CacheService,
@@ -101,6 +109,7 @@ const serviceWith = (batchBuilder: BatchBuilderService, cache: FakeCache) =>
     movieService,
     seriesService,
     batchBuilder,
+    titleFinder,
   );
 
 describe('FeedService paging', () => {
@@ -224,21 +233,6 @@ describe('FeedService remembers what it showed', () => {
     expect(refreshed.results).not.toEqual(guestResponse.results);
     refreshed.results.forEach((id) => expect(catalog).toContain(id));
   });
-
-  it('asks for similar titles again after a refresh', async () => {
-    const { batchBuilder, seen } = builderReturning(
-      ids(1, 40),
-      ids(41, 40),
-      [],
-    );
-    const service = serviceWith(batchBuilder, cache);
-
-    await service.getFeed(USER_ID, 'movie', 1, false);
-    await service.getFeed(USER_ID, 'movie', 1, true);
-
-    expect(seen[0].includeSimilar).toBe(true);
-    expect(seen[1].includeSimilar).toBe(true);
-  });
 });
 
 describe('FeedService public feed', () => {
@@ -258,6 +252,7 @@ describe('FeedService public feed', () => {
       pagedMovieService,
       seriesService,
       builderReturning([]).batchBuilder,
+      titleFinder,
     );
 
   beforeEach(() => {

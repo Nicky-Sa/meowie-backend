@@ -18,31 +18,42 @@ on. When the pool runs short it's topped up from TMDB.
 
 ## Who gets what
 
-| Situation                                 | What they get                                   |
-| ----------------------------------------- | ----------------------------------------------- |
-| Not logged in                             | Popular titles, cached for everyone, 1 hour     |
-| Logged in, no taste **and** empty library | Same popular titles                             |
-| Logged in, has taste or library           | Their own ranked pool                           |
-| Pool ends up empty after filtering        | Falls back to popular — the feed is never empty |
+| Situation                                        | What they get                                   |
+| ------------------------------------------------ | ----------------------------------------------- |
+| Not logged in                                    | Popular titles, cached for everyone, 1 hour     |
+| Logged in, knows no title at all                 | Same popular titles                             |
+| Logged in, rated titles in taste or has a library | Their own ranked pool                           |
+| Pool ends up empty after filtering               | Falls back to popular — the feed is never empty |
+
+"Knows a title" means they liked or disliked it in the taste deck, or it sits in
+their library. Genres used to keep this alive on their own; they don't exist any
+more, so a user who liked nothing and saved nothing has nothing to build on.
 
 ## Three sources, mixed
 
 Every batch pulls from three places at once, and they're mixed by share so no
 single one owns the feed:
 
-- **taste** — TMDB discover, one query per strong taste signal (genres, era,
-  reality lean, crowd/critics lean), walking deeper TMDB pages as the user
-  scrolls.
-- **similar** — TMDB recommendations for the titles the user likes most. These
-  don't paginate, so they only come with the first batch of a pool. A refresh
-  starts a new pool, so they come back then.
+- **similar** — the main source. TMDB recommendations for the titles the user
+  likes most, from the taste deck and their library. It pages along with the
+  discover counter, so later batches bring new titles rather than the same first
+  page. Its share grows with how many titles they liked.
+- **taste** — TMDB discover, one query per answered question (era, reality lean,
+  crowd/critics lean, length window), walking deeper TMDB pages as the user
+  scrolls. It no longer narrows by genre, so it is the broad filler rather than
+  the aim.
 - **popular** — always on, so a narrow taste never turns into a narrow feed.
 
-## What gets hidden
+## What gets hidden, and what gets pushed down
 
 - Anything already **shown** to this user stays hidden for 7 days. Only ids
   actually returned to the app count — not everything that landed in the pool.
-- Anything in the user's **library** or picked in the wizard: they know it.
+- Anything in the user's **library**, or liked or disliked in the taste deck:
+  they know it. A title they marked "haven't seen it" is **not** hidden — that
+  answer says nothing, and they may still want to watch it.
+- Titles TMDB recommends off the ones they **disliked** lose score. They are not
+  blocked, because a title can sit close to both a liked and a disliked one.
+  Read once per set of disliked ids and cached for a day.
 - A **refresh** drops the pool and re-rolls the shuffle. The titles it dropped
   are skipped while that build runs, so the user gets new titles first, but
   they're not hidden for good.
@@ -84,8 +95,11 @@ films rather than an empty window.
 
 ## Things that surprise people
 
-- The **similar** source only runs on the first batch of a pool, so they cluster
-  near the top and thin out as the user scrolls.
+- A user who rated 5 films in the taste deck gives the feed 5 title ids at most,
+  and recommendations off 5 titles are narrower than a genre sweep used to be.
+  Expect the first feeds to feel tight and repetitive, leaning on popular titles
+  until their library grows. The levers are the popular share and the explore
+  level.
 - The pool has a hard maximum, and that maximum is the end of the feed until the
   cache expires. Both the personalized and the guest feed stop at the same page,
   so the app's "is there another page" check behaves the same either way.

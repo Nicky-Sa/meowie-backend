@@ -1,20 +1,16 @@
-import { GenreId } from '@/taste/constants/pools.constant';
 import {
   AuthorityAnswer,
   AvoidId,
   CommitmentAnswer,
   EraAnswer,
   RealityAnswer,
+  TitleRatings,
 } from '@/taste/constants/journey.constant';
 
-/**
- * Stored taste reduced to what the feed personalizes on. A user who never
- * finished the wizard reads as empty lists and 'both' answers.
- */
+// A user who never finished the wizard reads as no ratings and 'both' answers.
 export type TasteForFeed = {
-  genreIds: GenreId[];
-  movieIds: number[];
-  seriesIds: number[];
+  movieRatings: TitleRatings;
+  seriesRatings: TitleRatings;
   avoid: AvoidId[];
   exploreLevel: number;
   era: EraAnswer;

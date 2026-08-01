@@ -1,5 +1,5 @@
-// Hand-picked starter titles for the taste wizard. Swap this file when the
-// live TMDB pool lands.
+// The hand-picked titles the taste wizard runs on. Every title needs a poster:
+// the app has no artwork of its own to fall back on.
 
 export type GenreId = number;
 
@@ -9,15 +9,15 @@ export type Title = {
   mainGenreId: GenreId;
   genreIds: GenreId[];
   tmdbId: number;
-  poster: string | null;
+  poster: string;
 };
 
 // Two titles per genre, and the app locks only a picked title's main genre, so
 // four picks can never lock more than four genres.
 //
-// Order matters: the grid opens twelve posters at a time, so the list runs one
+// Order matters: the deck is shuffled one round at a time, so the list runs one
 // title per genre (broadest genre first) before it repeats. Keep it that way —
-// grouping a genre's two titles together would show six genres on page one.
+// grouping a genre's two titles together would drop genres out of round one.
 
 export const MOVIES: Title[] = [
   {

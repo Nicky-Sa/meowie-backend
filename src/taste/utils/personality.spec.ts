@@ -6,6 +6,7 @@ import {
   ERA,
   REALITY,
   AUTHORITY,
+  TitleRatings,
 } from '@/taste/constants/journey.constant';
 import {
   Personality,
@@ -22,10 +23,12 @@ const idFromPool = (pool: Title[], title: string): number => {
 const movieId = (title: string): number => idFromPool(MOVIES, title);
 const seriesId = (title: string): number => idFromPool(SERIES, title);
 
+const likedMovies = (...titles: string[]): TitleRatings =>
+  Object.fromEntries(titles.map((title) => [movieId(title), 'like']));
+
 const inputWith = (overrides: Partial<PersonalityInput>): PersonalityInput => ({
-  movieIds: [],
-  seriesIds: [],
-  genreIds: [],
+  movieRatings: {},
+  seriesRatings: {},
   era: ERA.NEW_RELEASE,
   reality: REALITY.REALISTIC,
   authority: AUTHORITY.POPULAR,
@@ -38,23 +41,24 @@ const personality = (overrides: Partial<PersonalityInput>) =>
 describe('the top genre leads', () => {
   it('gives the same cat whatever the answers are, when the genre has one', () => {
     // Crime has a single cat, so no set of answers can steer away from it.
-    const movieIds = [movieId('The Godfather'), movieId('Pulp Fiction')];
+    const movieRatings = likedMovies('The Godfather', 'Pulp Fiction');
 
     expect(
       personality({
         era: ERA.NEW_RELEASE,
         reality: REALITY.FANTASY,
         authority: AUTHORITY.CRITICS_CHOICE,
-        movieIds,
+        movieRatings,
       }).name,
     ).toBe('Tony Meowtana');
   });
 
   it('lets the answers choose between a genre with several cats', () => {
-    const movieIds = [movieId('The Lord of the Rings')]; // Fantasy
+    const movieRatings = likedMovies('The Lord of the Rings'); // Fantasy
 
     const cat = (overrides: Partial<PersonalityInput>) =>
-      personality({ reality: REALITY.FANTASY, movieIds, ...overrides }).name;
+      personality({ reality: REALITY.FANTASY, movieRatings, ...overrides })
+        .name;
 
     expect(cat({ era: ERA.CLASSIC, authority: AUTHORITY.CRITICS_CHOICE })).toBe(
       'Edward Scissorpaws',
@@ -67,41 +71,72 @@ describe('the top genre leads', () => {
     ).toBe('Furrodo Bagpaws');
   });
 
-  it('counts a genre once per pick that locked it, plus once as a chip', () => {
-    // Two crime picks outrank one music chip, though Music is the rarer genre.
+  it('counts one vote per liked title, so two beat one rarer', () => {
+    // Two crime likes outrank one music like, though Music is the rarer genre.
     const result = personality({
-      movieIds: [movieId('The Godfather'), movieId('Pulp Fiction')],
-      genreIds: [80, 10402],
+      movieRatings: likedMovies(
+        'The Godfather',
+        'Pulp Fiction',
+        'Bohemian Rhapsody',
+      ),
     });
 
     expect(result.name).toBe('Tony Meowtana');
   });
 });
 
+describe('only likes vote', () => {
+  it('ignores a disliked title', () => {
+    const result = personality({
+      movieRatings: {
+        ...likedMovies('The Godfather'),
+        [movieId('Bohemian Rhapsody')]: 'dislike',
+        [movieId('Whiplash')]: 'dislike',
+      },
+    });
+
+    // Music would win on count if dislikes voted; Crime wins because they don't.
+    expect(result.name).toBe('Tony Meowtana');
+  });
+
+  it("ignores a title marked haven't seen", () => {
+    const notSeen = personality({
+      movieRatings: {
+        ...likedMovies('The Godfather'),
+        [movieId('Bohemian Rhapsody')]: 'not-seen',
+      },
+    });
+
+    expect(notSeen).toEqual(
+      personality({ movieRatings: likedMovies('The Godfather') }),
+    );
+  });
+});
+
 describe("a 'no preference' answer steps aside", () => {
   it('leaves the choice to the two answers given', () => {
-    const movieIds = [movieId('The Lord of the Rings')]; // Fantasy
+    const movieRatings = likedMovies('The Lord of the Rings'); // Fantasy
 
     expect(
       personality({
         era: ERA.CLASSIC,
         reality: REALITY.FANTASY,
         authority: BOTH,
-        movieIds,
+        movieRatings,
       }).name,
     ).toBe('Edward Scissorpaws');
   });
 
   it('breaks a tie between two cats on the popular-modern side', () => {
     // Fantasy has a critics' cat on both sides of era, and era went unanswered.
-    const movieIds = [movieId('The Lord of the Rings')];
+    const movieRatings = likedMovies('The Lord of the Rings');
 
     expect(
       personality({
         era: BOTH,
         reality: REALITY.FANTASY,
         authority: AUTHORITY.CRITICS_CHOICE,
-        movieIds,
+        movieRatings,
       }).name,
     ).toBe('Furrodo Bagpaws');
   });
@@ -131,24 +166,23 @@ describe('the everything cat', () => {
   });
 
   it("stays away while one answer is not 'both'", () => {
-    const movieIds = [movieId('The Godfather'), movieId('Pulp Fiction')];
+    const movieRatings = likedMovies('The Godfather', 'Pulp Fiction');
 
-    expect(personality({ era: BOTH, reality: BOTH, movieIds })).toEqual(
+    expect(personality({ era: BOTH, reality: BOTH, movieRatings })).toEqual(
       personality({
         era: ERA.NEW_RELEASE,
         reality: REALITY.REALISTIC,
-        movieIds,
+        movieRatings,
       }),
     );
   });
 
-  it("still wins on three 'both' answers with picks in hand", () => {
+  it("still wins on three 'both' answers with likes in hand", () => {
     const result = personality({
       era: BOTH,
       reality: BOTH,
       authority: BOTH,
-      movieIds: [movieId('The Godfather')],
-      genreIds: [80],
+      movieRatings: likedMovies('The Godfather'),
     });
 
     expect(result).toEqual(EVERYTHING_CAT);
@@ -156,15 +190,14 @@ describe('the everything cat', () => {
 });
 
 describe('picking the cat', () => {
-  it('picks the cat from the chips alone when nothing was picked', () => {
+  it("uses the group's own cat when nothing was liked", () => {
     const result = personality({
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
       authority: AUTHORITY.POPULAR,
-      genreIds: [18],
     });
 
-    expect(result.name).toBe('Furrest Gump');
+    expect(result.name).toBe('Rocky Pawboa');
   });
 
   it("falls back to a group's own cat for a genre no cat covers", () => {
@@ -173,19 +206,19 @@ describe('picking the cat', () => {
       era: ERA.CLASSIC,
       reality: REALITY.REALISTIC,
       authority: AUTHORITY.POPULAR,
-      movieIds: [movieId('The Grand Budapest Hotel')],
+      movieRatings: likedMovies('The Grand Budapest Hotel'),
     });
 
     expect(result.name).toBe('Rocky Pawboa');
   });
 
-  it('works on series picks too', () => {
+  it('works on series likes too', () => {
     // Dark locks Mystery, which only the new-release critics group has a cat for.
     const result = personality({
       era: ERA.NEW_RELEASE,
       reality: REALITY.REALISTIC,
       authority: AUTHORITY.CRITICS_CHOICE,
-      seriesIds: [seriesId('Dark')],
+      seriesRatings: { [seriesId('Dark')]: 'like' },
     });
 
     expect(result.name).toBe('Rust Clawle');

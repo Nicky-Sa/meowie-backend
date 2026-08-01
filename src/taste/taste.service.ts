@@ -69,9 +69,8 @@ export class TasteService {
     const taste = await this.tasteRepository.findOneBy({ userId });
 
     return {
-      genreIds: taste?.genreIds ?? [],
-      movieIds: taste?.movieIds ?? [],
-      seriesIds: taste?.seriesIds ?? [],
+      movieRatings: taste?.movieRatings ?? {},
+      seriesRatings: taste?.seriesRatings ?? {},
       avoid: taste?.avoid ?? [],
       exploreLevel: taste?.exploreLevel ?? DEFAULT_EXPLORE_LEVEL,
       era: taste?.era ?? BOTH,
@@ -85,10 +84,8 @@ export class TasteService {
   // owner and its timestamps, and none of those belong in the response.
   private toResDto(taste: SaveTasteReqDto): TasteResDto {
     return {
-      movieIds: taste.movieIds,
-      seriesIds: taste.seriesIds,
-      seriesSkipped: taste.seriesSkipped,
-      genreIds: taste.genreIds,
+      movieRatings: taste.movieRatings,
+      seriesRatings: taste.seriesRatings,
       era: taste.era,
       reality: taste.reality,
       authority: taste.authority,

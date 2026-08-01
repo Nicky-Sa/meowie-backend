@@ -5,6 +5,7 @@ import { LibraryService } from '@/library/library.service';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
 import { BatchBuilderService } from '@/feed/batch-builder.service';
+import { TitleFinderService } from '@/feed/title-finder.service';
 import { FeedContext, FeedInputs } from '@/feed/types/feed.types';
 import { MediaType } from '@/types/media-type';
 import { SortOption } from '@/common/types/media-query';
@@ -18,6 +19,7 @@ import {
   FEED_PAGE_SIZE,
   FeedCacheKeys,
   feedCacheKeys,
+  MAX_DISLIKED_SOURCES,
   MAX_FEED_PAGE,
   MAX_POOL_SIZE,
   SHOWN_TTL,
@@ -45,6 +47,7 @@ export class FeedService {
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
     private readonly batchBuilderService: BatchBuilderService,
+    private readonly titleFinderService: TitleFinderService,
   ) {}
 
   /**
@@ -113,9 +116,16 @@ export class FeedService {
     ]);
 
     const knownTitles = knownTitlesFor(taste, libraryItems, mediaType);
-    if (taste.genreIds.length === 0 && knownTitles.length === 0) {
+    if (knownTitles.length === 0) {
       return null;
     }
+
+    // Strongest dislikes first, so the few TMDB calls go to the clearest ones.
+    const dislikedIds = knownTitles
+      .filter((title) => title.weight < 0)
+      .sort((first, second) => first.weight - second.weight)
+      .slice(0, MAX_DISLIKED_SOURCES)
+      .map((title) => title.id);
 
     return {
       mediaType,
@@ -125,6 +135,14 @@ export class FeedService {
       likedTitles: knownTitles
         .filter((title) => title.weight > 0)
         .sort((first, second) => second.weight - first.weight),
+      closeToDisliked: new Set(
+        dislikedIds.length === 0
+          ? []
+          : await this.titleFinderService.findCloseToDisliked(
+              mediaType,
+              dislikedIds,
+            ),
+      ),
     };
   }
 
@@ -178,9 +196,6 @@ export class FeedService {
       const context: FeedContext = {
         ...inputs,
         hiddenIds,
-        // Similar titles don't paginate, so they only come with the first round —
-        // which is also the round right after a refresh.
-        includeSimilar: state.pool.length === 0,
         shuffleSeed: state.shuffleSeed,
         nextTmdbPageToFetch: state.nextTmdbPageToFetch,
       };

@@ -5,11 +5,11 @@ import { AccessGuard } from '@/auth/guards/access.guard';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
 import { TasteJourneyResDto } from '@/taste/dto/journey.dto';
 import { toJourneyTitle } from '@/taste/utils/journey-title';
+import { shuffledPool } from '@/taste/utils/shuffle-pool';
 import { MOVIES, SERIES } from '@/taste/constants/pools.constant';
 import {
   AVOID_CHIPS,
   EXPLORE_LEVELS,
-  GENRE_IDS,
   TASTE_QUESTIONS,
 } from '@/taste/constants/journey.constant';
 
@@ -20,9 +20,8 @@ export class TasteController {
   @Get('journey')
   getJourney(): TasteJourneyResDto {
     return {
-      movies: MOVIES.map(toJourneyTitle),
-      series: SERIES.map(toJourneyTitle),
-      genreIds: GENRE_IDS,
+      movies: shuffledPool(MOVIES).map(toJourneyTitle),
+      series: shuffledPool(SERIES).map(toJourneyTitle),
       questions: TASTE_QUESTIONS,
       avoidChips: AVOID_CHIPS,
       exploreLevels: EXPLORE_LEVELS,

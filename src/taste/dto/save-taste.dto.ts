@@ -1,14 +1,15 @@
 import {
   ArrayMaxSize,
-  ArrayMinSize,
-  ArrayUnique,
   IsArray,
-  IsBoolean,
   IsIn,
   IsInt,
   IsString,
   Max,
   Min,
+  Validate,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import {
   ANSWER_VALUES,
@@ -16,45 +17,63 @@ import {
   AuthorityAnswer,
   AvoidId,
   CommitmentAnswer,
+  countOpinions,
   EraAnswer,
   EXPLORE_LEVELS,
-  GENRE_IDS,
-  MAX_PICKED_TITLES,
-  MIN_PICKED_MOVIES,
+  MAX_RATED_TITLES,
+  MIN_RATED_MOVIES,
   RealityAnswer,
+  TITLE_ANSWERS,
+  TitleAnswer,
+  TitleRatings,
 } from '@/taste/constants/journey.constant';
-import { GenreId } from '@/taste/constants/pools.constant';
 import { Personality } from '@/taste/constants/personality.constant';
 
+const isTitleRatings = (value: unknown): value is TitleRatings =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.entries(value).every(
+    ([tmdbId, answer]) =>
+      Number.isInteger(Number(tmdbId)) &&
+      TITLE_ANSWERS.includes(answer as TitleAnswer),
+  );
+
+@ValidatorConstraint({ name: 'titleRatings' })
+class AreTitleRatings implements ValidatorConstraintInterface {
+  validate(ratings: unknown): boolean {
+    return (
+      isTitleRatings(ratings) && Object.keys(ratings).length <= MAX_RATED_TITLES
+    );
+  }
+
+  defaultMessage(args: ValidationArguments): string {
+    return `${args.property} must map TMDB ids to one of: ${TITLE_ANSWERS.join(', ')}`;
+  }
+}
+
+@ValidatorConstraint({ name: 'enoughOpinions' })
+class EnoughOpinions implements ValidatorConstraintInterface {
+  validate(ratings: unknown): boolean {
+    return (
+      isTitleRatings(ratings) && countOpinions(ratings) >= MIN_RATED_MOVIES
+    );
+  }
+
+  defaultMessage(args: ValidationArguments): string {
+    return `${args.property} needs at least ${MIN_RATED_MOVIES} titles marked liked or disliked`;
+  }
+}
+
 export class SaveTasteReqDto {
-  // TMDB ids of the picked titles. Not checked against the seed pools so a
-  // live TMDB pool can replace them without touching this DTO — only the count
-  // is limited.
-  @IsArray()
-  @IsInt({ each: true })
-  @ArrayMinSize(MIN_PICKED_MOVIES)
-  @ArrayMaxSize(MAX_PICKED_TITLES)
-  @ArrayUnique()
-  movieIds: number[];
+  // TMDB ids are not checked against the seed pools, so a live pool can replace
+  // them without touching this DTO — only the count is limited.
+  @Validate(AreTitleRatings)
+  @Validate(EnoughOpinions)
+  movieRatings: TitleRatings;
 
-  @IsArray()
-  @IsInt({ each: true })
-  @ArrayMaxSize(MAX_PICKED_TITLES)
-  @ArrayUnique()
-  seriesIds: number[];
-
-  @IsBoolean()
-  seriesSkipped: boolean;
-
-  @IsArray()
-  @IsInt({ each: true })
-  @IsIn(GENRE_IDS, {
-    each: true,
-    message: 'genreIds contains an unknown genre',
-  })
-  @ArrayMaxSize(GENRE_IDS.length)
-  @ArrayUnique()
-  genreIds: GenreId[];
+  @Validate(AreTitleRatings)
+  seriesRatings: TitleRatings;
 
   @IsString()
   @IsIn([...ANSWER_VALUES.era])
@@ -76,7 +95,6 @@ export class SaveTasteReqDto {
   @IsString({ each: true })
   @IsIn(AVOID_IDS, { each: true, message: 'avoid contains an unknown chip' })
   @ArrayMaxSize(AVOID_IDS.length)
-  @ArrayUnique()
   avoid: AvoidId[];
 
   @IsInt()
@@ -86,10 +104,8 @@ export class SaveTasteReqDto {
 }
 
 export type TasteResDto = {
-  movieIds: number[];
-  seriesIds: number[];
-  seriesSkipped: boolean;
-  genreIds: GenreId[];
+  movieRatings: TitleRatings;
+  seriesRatings: TitleRatings;
   era: EraAnswer;
   reality: RealityAnswer;
   authority: AuthorityAnswer;

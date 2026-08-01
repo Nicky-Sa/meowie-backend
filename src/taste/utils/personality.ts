@@ -19,16 +19,17 @@ import {
   BOTH,
   ERA,
   EraAnswer,
+  idsAnswered,
   RARITY_WEIGHTS,
   REALITY,
   RealityAnswer,
+  TitleRatings,
   AUTHORITY,
 } from '@/taste/constants/journey.constant';
 
 export type PersonalityInput = {
-  movieIds: number[];
-  seriesIds: number[];
-  genreIds: GenreId[];
+  movieRatings: TitleRatings;
+  seriesRatings: TitleRatings;
   era: EraAnswer;
   reality: RealityAnswer;
   authority: AuthorityAnswer;
@@ -42,20 +43,24 @@ const poolByTmdbId = (pool: Title[]): Map<number, Title> =>
 const movieByTmdbId = poolByTmdbId(MOVIES);
 const seriesByTmdbId = poolByTmdbId(SERIES);
 
-const pickedTitles = (movieIds: number[], seriesIds: number[]): Title[] =>
+const likedTitles = (input: PersonalityInput): Title[] =>
   [
-    ...movieIds.map((tmdbId) => movieByTmdbId.get(tmdbId)),
-    ...seriesIds.map((tmdbId) => seriesByTmdbId.get(tmdbId)),
+    ...idsAnswered(input.movieRatings, 'like').map((tmdbId) =>
+      movieByTmdbId.get(tmdbId),
+    ),
+    ...idsAnswered(input.seriesRatings, 'like').map((tmdbId) =>
+      seriesByTmdbId.get(tmdbId),
+    ),
   ].filter((title): title is Title => title !== undefined);
 
 /**
- * The genre the user leant on most. Saved genres already hold every genre their
- * picks locked, so a genre two titles brought in beats one they only tapped.
- * Ties go to the rarer genre, so a common one can't win by being everywhere.
+ * The genre the user leant on most. Every title they liked votes once, for its
+ * main genre. Ties go to the rarer genre, so a common one can't win by being
+ * everywhere.
  */
-const topGenre = (picks: Title[], genreIds: GenreId[]): GenreId | null => {
+const topGenre = (liked: Title[]): GenreId | null => {
   const counts = new Map<GenreId, number>();
-  for (const genre of [...picks.map((pick) => pick.mainGenreId), ...genreIds]) {
+  for (const genre of liked.map((title) => title.mainGenreId)) {
     counts.set(genre, (counts.get(genre) ?? 0) + 1);
   }
 
@@ -127,8 +132,7 @@ export const personalityFor = (input: PersonalityInput): Personality => {
   }
 
   const groups = groupsByAnswers(input);
-  const picks = pickedTitles(input.movieIds, input.seriesIds);
-  const top = topGenre(picks, input.genreIds);
+  const top = topGenre(likedTitles(input));
 
   const catForGenre =
     top === null

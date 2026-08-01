@@ -6,7 +6,6 @@ import {
 } from '@/feed/types/feed.types';
 import { TitleFinderService } from '@/feed/title-finder.service';
 import { scoreCandidate } from '@/feed/utils/scoring';
-import { addTvGenreIds } from '@/feed/constants/movie-to-tv-genres.constant';
 import {
   RankingWeights,
   rankingWeightsFor,
@@ -55,7 +54,6 @@ export class BatchBuilderService {
     context: FeedContext,
   ): Map<FeedCandidateSource, number[]> {
     const weights = rankingWeightsFor(context.taste.exploreLevel);
-    const tasteGenres = addTvGenreIds(context.taste.genreIds);
 
     const groups = new Map<FeedCandidateSource, FeedCandidate[]>();
     for (const candidate of candidates) {
@@ -66,7 +64,7 @@ export class BatchBuilderService {
 
     const ranked = new Map<FeedCandidateSource, number[]>();
     for (const [source, group] of groups) {
-      ranked.set(source, this.rank(group, context, weights, tasteGenres));
+      ranked.set(source, this.rank(group, context, weights));
     }
     return ranked;
   }
@@ -79,11 +77,10 @@ export class BatchBuilderService {
     candidates: FeedCandidate[],
     context: FeedContext,
     weights: RankingWeights,
-    tasteGenres: Set<number>,
   ): number[] {
     const bestScoreById = new Map<number, number>();
     for (const candidate of candidates) {
-      const score = scoreCandidate(candidate, context, weights, tasteGenres);
+      const score = scoreCandidate(candidate, context, weights);
       const best = bestScoreById.get(candidate.id);
       if (best === undefined || score > best) {
         bestScoreById.set(candidate.id, score);

@@ -25,7 +25,9 @@ import {
   VOTE_COUNT_FLOOR,
   VOTE_COUNT_FOR_FULL_CONFIDENCE,
 } from '@/feed/constants/feed.constant';
-import { tvGenreIdsFor } from '@/feed/constants/movie-to-tv-genres.constant';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { CacheService } from '@/cache/cache.service';
+import { Duration } from '@/common/app.constants';
 import { movieRuntimeParams } from '@/feed/utils/movie-runtime';
 import {
   CLASSIC_MAX_YEAR,
@@ -64,6 +66,8 @@ export class TitleFinderService {
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
     private readonly tmdbService: TmdbService,
+    // Read by @Cacheable, so it can't be private.
+    readonly cacheService: CacheService,
   ) {}
 
   async find(context: FeedContext): Promise<FeedCandidate[]> {
@@ -131,36 +135,33 @@ export class TitleFinderService {
   }
 
   /**
-   * One discover query per strong taste signal — candidates are fetched by
-   * every dimension of taste, not only by genre. 'both' and unanswered
-   * dimensions add no query.
+   * One discover query per answered question. Nothing here narrows by the
+   * user's own titles — that is the similar source's job — so a user who
+   * answered "no preference" everywhere gets one broad query and leans on the
+   * other two sources.
    */
   private tasteQueries(context: FeedContext): TasteQuery[] {
     const { mediaType, taste } = context;
-    // Taste genres are movie genre ids; TV discovery needs its own genre
-    // list (chips with no TV match don't limit series at all).
-    const genreIds =
-      mediaType === 'movie' ? taste.genreIds : tvGenreIdsFor(taste.genreIds);
     const dateField =
       mediaType === 'movie' ? 'primary_release_date' : 'first_air_date';
 
-    const queries: TasteQuery[] = [{ genreIds }];
+    const queries: TasteQuery[] = [{ genreIds: [] }];
 
     if (taste.era === ERA.CLASSIC) {
       queries.push({
-        genreIds,
+        genreIds: [],
         extraParams: { [`${dateField}.lte`]: `${CLASSIC_MAX_YEAR}-12-31` },
       });
     }
     if (taste.era === ERA.NEW_RELEASE) {
       queries.push({
-        genreIds,
+        genreIds: [],
         extraParams: { [`${dateField}.gte`]: `${MODERN_MIN_YEAR}-01-01` },
       });
     }
 
-    // The reality lean searches its own genre families, deliberately beyond
-    // the picked taste genres — the mix and the scores keep it in balance.
+    // The reality lean is the one answer that names genres, and they are the
+    // same ids for movies and series.
     if (taste.reality === REALITY.REALISTIC) {
       queries.push({ genreIds: REALISTIC_GENRE_IDS });
     }
@@ -169,11 +170,11 @@ export class TitleFinderService {
     }
 
     if (taste.authority === AUTHORITY.POPULAR) {
-      queries.push({ genreIds, sort: SortOption.POPULARITY });
+      queries.push({ genreIds: [], sort: SortOption.POPULARITY });
     }
     if (taste.authority === AUTHORITY.CRITICS_CHOICE) {
       queries.push({
-        genreIds,
+        genreIds: [],
         extraParams: {
           'vote_average.gte': CRITICS_CHOICE_MIN_RATING,
           'vote_count.gte': VOTE_COUNT_FOR_FULL_CONFIDENCE,
@@ -272,17 +273,40 @@ export class TitleFinderService {
     };
   }
 
+  // The page walks with the discover counter, so later rounds bring new titles
+  // rather than the same first page again.
   private async findSimilar(context: FeedContext): Promise<FeedCandidate[]> {
-    if (!context.includeSimilar) return [];
-
     const sourceIds = context.likedTitles
       .slice(0, MAX_SIMILAR_SOURCES)
       .map((title) => title.id);
 
+    const page = Math.ceil(
+      context.nextTmdbPageToFetch / DISCOVER_PAGES_PER_BUILD,
+    );
+
     const lists = await Promise.all(
-      sourceIds.map((id) => this.recommendationsFor(context.mediaType, id)),
+      sourceIds.map((id) =>
+        this.recommendationsFor(context.mediaType, id, page),
+      ),
     );
     return this.withoutAvoidedKeywords(lists.flat(), context);
+  }
+
+  // Cached on the ids themselves: the answer never changes between feed pages,
+  // and two users who disliked the same titles share it.
+  @Cacheable({
+    key: (mediaType: MediaType, dislikedIds: number[]) =>
+      `feed-close-to-disliked-${mediaType}-${dislikedIds.join('-')}`,
+    ttl: Duration.ONE_DAY,
+  })
+  async findCloseToDisliked(
+    mediaType: MediaType,
+    dislikedIds: number[],
+  ): Promise<number[]> {
+    const lists = await Promise.all(
+      dislikedIds.map((id) => this.recommendationsFor(mediaType, id, 1)),
+    );
+    return [...new Set(lists.flat().map((candidate) => candidate.id))];
   }
 
   /**
@@ -320,11 +344,12 @@ export class TitleFinderService {
   private async recommendationsFor(
     mediaType: MediaType,
     id: number,
+    page: number,
   ): Promise<FeedCandidate[]> {
     try {
       const res = await this.tmdbService.getRecommendations<
         TMDB_Recommendations<DiscoveredDetail>
-      >(mediaType, id, 1);
+      >(mediaType, id, page);
       return res.results.map((item) => this.toCandidate(item, 'similar'));
     } catch {
       this.logger.warn(

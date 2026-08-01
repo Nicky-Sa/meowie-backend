@@ -37,9 +37,8 @@ const contextWithLikedCount = (likedCount: number): FeedContext => ({
     weight: 1,
   })),
   taste: {
-    genreIds: [18],
-    movieIds: [],
-    seriesIds: [],
+    movieRatings: {},
+    seriesRatings: {},
     avoid: [],
     exploreLevel: 2,
     era: 'both',
@@ -54,8 +53,8 @@ const contextWithLikedCount = (likedCount: number): FeedContext => ({
     seriesMaxEpisodes: null,
   },
   excludeIds: new Set(),
+  closeToDisliked: new Set(),
   hiddenIds: new Set(),
-  includeSimilar: true,
   shuffleSeed: 1,
   nextTmdbPageToFetch: 1,
 });
@@ -74,6 +73,7 @@ describe('BatchBuilderService source mixing', () => {
   const tasteBatch = candidates(1, 40, 'taste');
   const similarBatch = candidates(101, 40, 'similar');
   const popularBatch = candidates(201, 20, 'popular');
+  const tasteIds = new Set(tasteBatch.map((item) => item.id));
   const similarIds = new Set(similarBatch.map((item) => item.id));
   const popularIds = new Set(popularBatch.map((item) => item.id));
 
@@ -92,7 +92,7 @@ describe('BatchBuilderService source mixing', () => {
     expect(countBySource(firstPage, similarIds)).toBeLessThanOrEqual(2);
   });
 
-  it('gives the similar source its full share once the library is big enough', async () => {
+  it('lets the similar source lead the page once enough titles are liked', async () => {
     const builder = builderFor([
       ...tasteBatch,
       ...similarBatch,
@@ -103,9 +103,12 @@ describe('BatchBuilderService source mixing', () => {
       20,
     );
 
-    const similarCount = countBySource(firstPage, similarIds);
-    expect(similarCount).toBeGreaterThanOrEqual(3);
-    expect(similarCount).toBeLessThanOrEqual(5);
+    expect(countBySource(firstPage, similarIds)).toBeGreaterThan(
+      countBySource(firstPage, tasteIds),
+    );
+    expect(countBySource(firstPage, similarIds)).toBeGreaterThan(
+      countBySource(firstPage, popularIds),
+    );
   });
 
   it('emits a title only once when several sources find it', async () => {
@@ -188,11 +191,11 @@ describe('rankingWeightsFor', () => {
     expect(rankingWeightsFor(-1)).toEqual(rankingWeightsFor(0));
   });
 
-  it('loosens genre matching and raises shuffle as exploring grows', () => {
+  it('softens the push away from dislikes and raises shuffle as exploring grows', () => {
     const tight = rankingWeightsFor(0);
     const loose = rankingWeightsFor(4);
 
-    expect(loose.genreMatch).toBeLessThan(tight.genreMatch);
+    expect(loose.closeToDisliked).toBeLessThan(tight.closeToDisliked);
     expect(loose.shuffle).toBeGreaterThan(tight.shuffle);
   });
 });

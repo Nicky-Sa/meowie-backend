@@ -55,27 +55,15 @@ export type TasteQuestion<TAxis extends TasteAxis = TasteAxis> = {
   both: Option<Extract<AnswerFor<TAxis>, typeof BOTH>>;
 };
 
-// Broadest genres first, the same order the poster pools run in.
-export const GENRE_IDS: GenreId[] = [
-  18, // Drama
-  35, // Comedy
-  28, // Action
-  53, // Thriller
-  878, // Science Fiction
-  80, // Crime
-  12, // Adventure
-  10749, // Romance
-  14, // Fantasy
-  16, // Animation
-  27, // Horror
-  9648, // Mystery
-  10751, // Family
-  10752, // War
-  36, // History
-  10402, // Music
-  99, // Documentary
-  37, // Western
-];
+// What the user can say about one poster. "not-seen" is kept so the deck can
+// show their answer again, but it says nothing about their taste.
+export const TITLE_ANSWERS = ['like', 'dislike', 'not-seen'] as const;
+
+export type TitleAnswer = (typeof TITLE_ANSWERS)[number];
+
+// TMDB id → what the user said about it. JSON object keys are strings, so the
+// ids come back as strings and are turned into numbers where they are read.
+export type TitleRatings = Record<number, TitleAnswer>;
 
 export const TASTE_QUESTIONS: [
   TasteQuestion<'era'>,
@@ -183,10 +171,22 @@ export type AvoidChip = Option<string>;
 
 export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
-// Fewer picks than this don't say enough to build a taste on. The upper limit
-// only stops a client sending an absurd list; the wizard shows far fewer.
-export const MIN_PICKED_MOVIES = 4;
-export const MAX_PICKED_TITLES = 50;
+// "Haven't seen it" doesn't count towards the minimum. The cap only stops a
+// client sending an absurd list; the deck holds far fewer.
+export const MIN_RATED_MOVIES = 5;
+export const MAX_RATED_TITLES = 50;
+
+export const idsAnswered = (
+  ratings: TitleRatings,
+  answer: TitleAnswer,
+): number[] =>
+  Object.entries(ratings)
+    .filter(([, given]) => given === answer)
+    .map(([tmdbId]) => Number(tmdbId));
+
+// "Haven't seen it" says nothing about their taste, so it doesn't count.
+export const countOpinions = (ratings: TitleRatings): number =>
+  Object.values(ratings).filter((answer) => answer !== 'not-seen').length;
 
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;

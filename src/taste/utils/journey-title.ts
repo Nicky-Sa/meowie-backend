@@ -5,7 +5,6 @@ import { Title } from '@/taste/constants/pools.constant';
 export const toJourneyTitle = ({
   title,
   year,
-  mainGenreId,
   tmdbId,
   poster,
-}: Title): JourneyTitle => ({ title, year, mainGenreId, tmdbId, poster });
+}: Title): JourneyTitle => ({ title, year, tmdbId, poster });

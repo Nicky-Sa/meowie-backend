@@ -8,13 +8,13 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
-import { GenreId } from '@/taste/constants/pools.constant';
 import {
   AuthorityAnswer,
   AvoidId,
   CommitmentAnswer,
   EraAnswer,
   RealityAnswer,
+  TitleRatings,
 } from '@/taste/constants/journey.constant';
 
 @Entity('taste')
@@ -26,17 +26,11 @@ export class Taste {
   @Column()
   userId: number;
 
-  @Column('int', { array: true })
-  movieIds: number[];
+  @Column('jsonb')
+  movieRatings: TitleRatings;
 
-  @Column('int', { array: true })
-  seriesIds: number[];
-
-  @Column()
-  seriesSkipped: boolean;
-
-  @Column('int', { array: true })
-  genreIds: GenreId[];
+  @Column('jsonb')
+  seriesRatings: TitleRatings;
 
   @Column({ type: 'varchar' })
   era: EraAnswer;

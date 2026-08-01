@@ -75,20 +75,15 @@ const shuffleScore = (id: number, shuffleSeed: number): number => {
   return (hashed % 100000) / 100000;
 };
 
-/**
- * `tasteGenres` is built once per batch — it carries the TV ids matching the
- * user's movie genre chips, so series candidates can be compared at all.
- */
 export const scoreCandidate = (
   candidate: FeedCandidate,
   context: FeedContext,
   weights: RankingWeights,
-  tasteGenres: Set<number>,
 ): number =>
-  weights.genreMatch * genreShare(candidate.genreIds, tasteGenres) +
   weights.quality * qualityScore(candidate) +
   weights.era * eraScore(candidate, context.taste.era) +
   weights.reality *
     genreShare(candidate.genreIds, realityGenres(context.taste.reality)) +
   weights.authority * authorityScore(candidate, context.taste.authority) +
-  weights.shuffle * shuffleScore(candidate.id, context.shuffleSeed);
+  weights.shuffle * shuffleScore(candidate.id, context.shuffleSeed) -
+  (context.closeToDisliked.has(candidate.id) ? weights.closeToDisliked : 0);
