@@ -3,7 +3,7 @@ import { Title } from '@/taste/constants/pools.constant';
 
 // Genres stay on the server. The app shows posters and never names a genre, so
 // only the cat card reads them.
-export type JourneyTitle = Omit<Title, 'genreIds' | 'mainGenreId'>;
+export type JourneyTitle = Omit<Title, 'mainGenreId'>;
 
 // Everything the app needs to run the taste wizard, fetched once on entry.
 export type TasteJourneyResDto = {
@@ -12,4 +12,5 @@ export type TasteJourneyResDto = {
   questions: readonly TasteQuestion[];
   avoidChips: readonly AvoidChip[];
   exploreLevels: readonly string[];
+  minMoviesToRate: number;
 };

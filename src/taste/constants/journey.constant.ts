@@ -112,7 +112,7 @@ export type AvoidChip = Option<string>;
 export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
 // "Haven't seen it" doesn't count towards the minimum.
-export const MIN_RATED_MOVIES = 5;
+export const MIN_MOVIES_TO_RATE = 5;
 
 export const idsAnswered = (
   ratings: TitleRatings,

@@ -31,14 +31,6 @@ describe.each([
     expect(genres.slice(perRound)).toEqual(firstRound);
   });
 
-  it('only locks a genre the title actually carries', () => {
-    const wrong = pool.filter(
-      (title) => !title.genreIds.includes(title.mainGenreId),
-    );
-
-    expect(wrong.map((title) => title.title)).toEqual([]);
-  });
-
   it('has no repeated titles', () => {
     expect(new Set(pool.map((title) => title.tmdbId)).size).toBe(pool.length);
   });

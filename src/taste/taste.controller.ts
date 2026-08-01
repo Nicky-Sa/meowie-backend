@@ -10,6 +10,7 @@ import { MOVIES, SERIES } from '@/taste/constants/pools.constant';
 import {
   AVOID_CHIPS,
   EXPLORE_LEVELS,
+  MIN_MOVIES_TO_RATE,
   TASTE_QUESTIONS,
 } from '@/taste/constants/journey.constant';
 
@@ -25,6 +26,7 @@ export class TasteController {
       questions: TASTE_QUESTIONS,
       avoidChips: AVOID_CHIPS,
       exploreLevels: EXPLORE_LEVELS,
+      minMoviesToRate: MIN_MOVIES_TO_RATE,
     };
   }
 

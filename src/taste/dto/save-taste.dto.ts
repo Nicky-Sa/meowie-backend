@@ -19,7 +19,7 @@ import {
   countOpinions,
   EraAnswer,
   EXPLORE_LEVELS,
-  MIN_RATED_MOVIES,
+  MIN_MOVIES_TO_RATE,
   TITLE_ANSWERS,
   TitleAnswer,
   TitleRatings,
@@ -56,12 +56,12 @@ class AreTitleRatings implements ValidatorConstraintInterface {
 class EnoughOpinions implements ValidatorConstraintInterface {
   validate(ratings: unknown): boolean {
     return (
-      isTitleRatings(ratings) && countOpinions(ratings) >= MIN_RATED_MOVIES
+      isTitleRatings(ratings) && countOpinions(ratings) >= MIN_MOVIES_TO_RATE
     );
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${args.property} needs at least ${MIN_RATED_MOVIES} titles marked liked or disliked`;
+    return `${args.property} needs at least ${MIN_MOVIES_TO_RATE} titles marked liked or disliked`;
   }
 }
 
