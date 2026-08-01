@@ -47,8 +47,6 @@ const contextWithLikedCount = (likedCount: number): FeedContext => ({
   avoid: {
     blockedGenreIds: new Set(),
     blockedKeywordIds: [],
-    movieMaxRuntime: null,
-    seriesMaxEpisodes: null,
   },
   excludeIds: new Set(),
   closeToDisliked: new Set(),

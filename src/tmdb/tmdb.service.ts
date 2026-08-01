@@ -80,7 +80,7 @@ export class TmdbService {
     return this.get<T>(`${tmdbMediaType}/${id}/recommendations`, { page });
   }
 
-  /** Total episodes across every season, for the "long watches" avoid rule. */
+  /** Total episodes across every season */
   @Cacheable({
     key: (id: number) => `tmdb-series-episode-count-${id}`,
     ttl: Duration.ONE_WEEK,

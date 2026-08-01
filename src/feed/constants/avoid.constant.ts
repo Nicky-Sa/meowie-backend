@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { AvoidId } from '@/taste/constants/journey.constant';
 
 /**
@@ -9,57 +8,33 @@ import { AvoidId } from '@/taste/constants/journey.constant';
 type AvoidRule = {
   genreIds?: number[];
   keywordIds?: number[];
-  movieMaxRuntime?: number;
-  seriesMaxEpisodes?: number;
 };
 
 const AVOID_RULES_BY_ID: Record<AvoidId, AvoidRule> = {
   // TMDB has no TV horror genre, so the keyword carries the series side.
   horror: { genreIds: [27], keywordIds: [315058] },
   gore: { keywordIds: [10292] },
-  // Episodes, not seasons: a season means nothing consistent (Midsomer
-  // Murders has 25 seasons and 144 episodes, Doraemon 27 and 1836).
-  'long-watches': { movieMaxRuntime: 150, seriesMaxEpisodes: 100 },
-  'reality-tv': { genreIds: [10764] },
   anime: { keywordIds: [210024] },
   war: { genreIds: [10752, 10768] },
-  'kids-content': { genreIds: [10762] },
-  'soap-opera': { genreIds: [10766] },
+  documentaries: { genreIds: [99] },
+  // Movies only: TMDB has no music or musical genre for series.
+  musicals: { genreIds: [10402] },
 };
 
 export type AvoidRules = {
   blockedGenreIds: Set<number>;
   blockedKeywordIds: number[];
-  movieMaxRuntime: number | null;
-  seriesMaxEpisodes: number | null;
 };
 
-const logger = new Logger('AvoidRules');
-
-// Takes plain strings, not AvoidId: a stored row can still hold a chip that
-// was retired since it was saved.
-export const buildAvoidRules = (avoid: string[]): AvoidRules => {
+export const buildAvoidRules = (avoid: AvoidId[]): AvoidRules => {
   const blockedGenreIds = new Set<number>();
   const blockedKeywordIds: number[] = [];
-  let movieMaxRuntime: number | null = null;
-  let seriesMaxEpisodes: number | null = null;
 
   for (const chipId of avoid) {
-    const rule = AVOID_RULES_BY_ID[chipId as AvoidId];
-    if (!rule) {
-      logger.warn(`Stored taste holds an unknown avoid chip: ${chipId}`);
-      continue;
-    }
+    const rule = AVOID_RULES_BY_ID[chipId];
     rule.genreIds?.forEach((id) => blockedGenreIds.add(id));
     blockedKeywordIds.push(...(rule.keywordIds ?? []));
-    movieMaxRuntime = rule.movieMaxRuntime ?? movieMaxRuntime;
-    seriesMaxEpisodes = rule.seriesMaxEpisodes ?? seriesMaxEpisodes;
   }
 
-  return {
-    blockedGenreIds,
-    blockedKeywordIds,
-    movieMaxRuntime,
-    seriesMaxEpisodes,
-  };
+  return { blockedGenreIds, blockedKeywordIds };
 };

@@ -100,12 +100,10 @@ export const TASTE_QUESTIONS: [
 export const AVOID_CHIPS = [
   { id: 'horror', label: 'Horror' },
   { id: 'gore', label: 'Gore' },
-  { id: 'long-watches', label: 'Long watches' },
-  { id: 'reality-tv', label: 'Reality TV' },
   { id: 'anime', label: 'Anime' },
   { id: 'war', label: 'War' },
-  { id: 'kids-content', label: 'Kids content' },
-  { id: 'soap-opera', label: 'Soap opera' },
+  { id: 'documentaries', label: 'Documentaries' },
+  { id: 'musicals', label: 'Musicals' },
 ] as const satisfies readonly AvoidChip[];
 
 export type AvoidId = (typeof AVOID_CHIPS)[number]['id'];

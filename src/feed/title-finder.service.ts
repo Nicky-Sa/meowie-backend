@@ -21,6 +21,7 @@ import {
   CRITICS_CHOICE_MIN_RATING,
   DISCOVER_PAGES_PER_BUILD,
   MAX_SIMILAR_SOURCES,
+  MIN_MOVIE_RUNTIME,
   POPULAR_VOTE_COUNT_FLOOR,
   VOTE_COUNT_FLOOR,
   VOTE_COUNT_FOR_FULL_CONFIDENCE,
@@ -28,7 +29,6 @@ import {
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { CacheService } from '@/cache/cache.service';
 import { Duration } from '@/common/app.constants';
-import { movieRuntimeParams } from '@/feed/utils/movie-runtime';
 import {
   CLASSIC_MAX_YEAR,
   ERA,
@@ -73,41 +73,7 @@ export class TitleFinderService {
       this.findPopular(context),
     ]);
 
-    return this.withoutTooLongSeries(
-      [...discovered, ...similar, ...popular],
-      context,
-    );
-  }
-
-  /**
-   * TMDB discover can't filter on episode count, so the "long watches" cap for
-   * series is checked here — one cached lookup per candidate, and only when the
-   * user picked that chip.
-   */
-  private async withoutTooLongSeries(
-    candidates: FeedCandidate[],
-    context: FeedContext,
-  ): Promise<FeedCandidate[]> {
-    const cap = context.avoid.seriesMaxEpisodes;
-    if (cap === null || context.mediaType !== 'series') return candidates;
-
-    const checked = await Promise.all(
-      candidates.map(async (candidate) => {
-        try {
-          const episodes = await this.tmdbService.getSeriesEpisodeCount(
-            candidate.id,
-          );
-          return episodes > cap ? null : candidate;
-        } catch {
-          this.logger.warn(
-            `Failed to read the episode count for series/${candidate.id}; keeping it`,
-          );
-          return candidate;
-        }
-      }),
-    );
-
-    return checked.filter((candidate) => candidate !== null);
+    return [...discovered, ...similar, ...popular];
   }
 
   private async discoverByTaste(
@@ -223,10 +189,11 @@ export class TitleFinderService {
       page: options.page,
     } as QueryParamsDto;
 
-    // Series carry no length data at discover time, so the window is movies only.
+    // Series carry no length data at discover time, so shorts are dropped for
+    // movies only.
     const runtime =
       context.mediaType === 'movie'
-        ? movieRuntimeParams(context.avoid.movieMaxRuntime)
+        ? { 'with_runtime.gte': MIN_MOVIE_RUNTIME }
         : {};
 
     const params = {
