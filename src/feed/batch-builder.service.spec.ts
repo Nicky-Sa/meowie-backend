@@ -42,9 +42,7 @@ const contextWithLikedCount = (likedCount: number): FeedContext => ({
     avoid: [],
     exploreLevel: 2,
     era: 'both',
-    reality: 'both',
     authority: 'both',
-    commitment: 'both',
   },
   avoid: {
     blockedGenreIds: new Set(),

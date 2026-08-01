@@ -1,7 +1,7 @@
 import { GenreId } from '@/taste/constants/pools.constant';
 import { Option } from '@/types/option';
 
-export type TasteAxis = 'era' | 'reality' | 'authority' | 'commitment';
+export type TasteAxis = 'era' | 'authority';
 
 // The one place the answer values are written. Everything else reads its
 // types from here, so changing a value is caught at compile time.
@@ -13,38 +13,22 @@ export const ERA = {
   BOTH,
 } as const;
 
-export const REALITY = {
-  REALISTIC: 'realistic',
-  FANTASY: 'fantasy',
-  BOTH,
-} as const;
-
 export const AUTHORITY = {
   POPULAR: 'popular',
   CRITICS_CHOICE: 'critics-choice',
   BOTH,
 } as const;
 
-export const COMMITMENT = {
-  SHORT: 'short',
-  LONG: 'long',
-  BOTH,
-} as const;
-
 export const ANSWER_VALUES = {
   era: [ERA.CLASSIC, ERA.NEW_RELEASE, ERA.BOTH],
-  reality: [REALITY.REALISTIC, REALITY.FANTASY, REALITY.BOTH],
   authority: [AUTHORITY.POPULAR, AUTHORITY.CRITICS_CHOICE, AUTHORITY.BOTH],
-  commitment: [COMMITMENT.SHORT, COMMITMENT.LONG, COMMITMENT.BOTH],
 } as const;
 
 export type AnswerFor<TAxis extends TasteAxis> =
   (typeof ANSWER_VALUES)[TAxis][number];
 
 export type EraAnswer = AnswerFor<'era'>;
-export type RealityAnswer = AnswerFor<'reality'>;
 export type AuthorityAnswer = AnswerFor<'authority'>;
-export type CommitmentAnswer = AnswerFor<'commitment'>;
 
 export type TasteQuestion<TAxis extends TasteAxis = TasteAxis> = {
   id: TAxis;
@@ -67,43 +51,21 @@ export type TitleRatings = Record<number, TitleAnswer>;
 
 export const TASTE_QUESTIONS: [
   TasteQuestion<'era'>,
-  TasteQuestion<'reality'>,
   TasteQuestion<'authority'>,
-  TasteQuestion<'commitment'>,
 ] = [
   {
     id: 'era',
     axis: 'Era',
-    prompt: 'Older classics, or newer releases?',
+    prompt: 'Which one do you prefer?',
     sideA: {
       label: 'Classics',
-      description: 'Older, timeless picks',
+      description: 'Release year before 2000',
       id: ERA.CLASSIC,
     },
     sideB: {
       label: 'New releases',
-      description: 'Recent and current',
+      description: 'Release year after 2000',
       id: ERA.NEW_RELEASE,
-    },
-    both: {
-      label: 'No preference',
-      description: 'I like both',
-      id: BOTH,
-    },
-  },
-  {
-    id: 'reality',
-    axis: 'Reality',
-    prompt: 'Real-life stories, or fantasy worlds?',
-    sideA: {
-      label: 'Realistic',
-      description: 'Real, believable, true to life',
-      id: REALITY.REALISTIC,
-    },
-    sideB: {
-      label: 'Fantasy',
-      description: 'Escapist, sci-fi, the unreal',
-      id: REALITY.FANTASY,
     },
     both: {
       label: 'No preference',
@@ -114,7 +76,7 @@ export const TASTE_QUESTIONS: [
   {
     id: 'authority',
     axis: 'Taste',
-    prompt: 'What everyone loves, or what the critics pick?',
+    prompt: 'Which one do you prefer?',
     sideA: {
       label: 'Most Popular',
       description: "What everyone's watching",
@@ -124,26 +86,6 @@ export const TASTE_QUESTIONS: [
       label: "Critics' Choice",
       description: 'Highly rated, award winning',
       id: AUTHORITY.CRITICS_CHOICE,
-    },
-    both: {
-      label: 'No preference',
-      description: 'I like both',
-      id: BOTH,
-    },
-  },
-  {
-    id: 'commitment',
-    axis: 'Commitment',
-    prompt: 'Short and sweet, or long and epic?',
-    sideA: {
-      label: 'Short & mini',
-      description: 'Quick films, limited series',
-      id: COMMITMENT.SHORT,
-    },
-    sideB: {
-      label: 'Long & epic',
-      description: 'Long films, many seasons',
-      id: COMMITMENT.LONG,
     },
     both: {
       label: 'No preference',
@@ -191,10 +133,6 @@ export const countOpinions = (ratings: TitleRatings): number =>
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;
 export const MODERN_MIN_YEAR = 2015;
-
-// Genre families behind the realistic/fantasy answer (movie + TV genre ids).
-export const REALISTIC_GENRE_IDS = [99, 36, 10752, 10768, 80, 18];
-export const FANTASY_GENRE_IDS = [878, 14, 10765, 16];
 
 export const DEFAULT_EXPLORE_LEVEL = 2; // "Balanced"
 

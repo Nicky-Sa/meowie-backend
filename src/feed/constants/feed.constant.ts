@@ -30,11 +30,6 @@ export const feedCacheKeys = (userId: number, mediaType: MediaType) => {
 
 export type FeedCacheKeys = ReturnType<typeof feedCacheKeys>;
 
-// Commitment → movie runtime window on taste discovery (spec values). Series
-// have no runtime/seasons at discover time, so commitment is movies-only.
-export const SHORT_MAX_RUNTIME = 100;
-export const LONG_MIN_RUNTIME = 150;
-
 // TMDB popularity at or above this gets the full crowd-boost score.
 export const POPULARITY_FOR_FULL_SCORE = 100;
 // Ratings only count fully once a title has at least this many votes.
@@ -52,7 +47,6 @@ const blend = (tight: number, loose: number, exploreLevel: number): number => {
 
 export type RankingWeights = {
   era: number;
-  reality: number;
   authority: number;
   quality: number;
   closeToDisliked: number;
@@ -64,7 +58,6 @@ export type RankingWeights = {
 // matching, more shuffle.
 export const rankingWeightsFor = (exploreLevel: number): RankingWeights => ({
   era: blend(0.5, 0.15, exploreLevel),
-  reality: blend(0.5, 0.15, exploreLevel),
   authority: blend(0.5, 0.15, exploreLevel),
   quality: 0.6,
   closeToDisliked: blend(1, 0.4, exploreLevel),

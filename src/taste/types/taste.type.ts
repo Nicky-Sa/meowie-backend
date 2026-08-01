@@ -1,9 +1,7 @@
 import {
   AuthorityAnswer,
   AvoidId,
-  CommitmentAnswer,
   EraAnswer,
-  RealityAnswer,
   TitleRatings,
 } from '@/taste/constants/journey.constant';
 
@@ -14,7 +12,5 @@ export type TasteForFeed = {
   avoid: AvoidId[];
   exploreLevel: number;
   era: EraAnswer;
-  reality: RealityAnswer;
   authority: AuthorityAnswer;
-  commitment: CommitmentAnswer;
 };

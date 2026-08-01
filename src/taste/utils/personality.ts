@@ -6,7 +6,6 @@ import {
   Personality,
   PersonalityGroup,
   PERSONALITY_GROUPS,
-  RealityValue,
 } from '@/taste/constants/personality.constant';
 import {
   GenreId,
@@ -21,8 +20,6 @@ import {
   EraAnswer,
   idsAnswered,
   RARITY_WEIGHTS,
-  REALITY,
-  RealityAnswer,
   TitleRatings,
   AUTHORITY,
 } from '@/taste/constants/journey.constant';
@@ -31,7 +28,6 @@ export type PersonalityInput = {
   movieRatings: TitleRatings;
   seriesRatings: TitleRatings;
   era: EraAnswer;
-  reality: RealityAnswer;
   authority: AuthorityAnswer;
 };
 
@@ -80,30 +76,25 @@ const topGenre = (liked: Title[]): GenreId | null => {
 
 type GroupSides = {
   era: EraValue;
-  reality: RealityValue;
   authority: AuthorityValue;
 };
 
 // Answered sides first, so a group that matches nothing — every answer was
 // 'no preference' — still lands on the popular-modern side it always used to.
 const ERA_SIDES = [ERA.NEW_RELEASE, ERA.CLASSIC];
-const REALITY_SIDES = [REALITY.REALISTIC, REALITY.FANTASY];
 const AUTHORITY_SIDES = [AUTHORITY.POPULAR, AUTHORITY.CRITICS_CHOICE];
 
 const ALL_GROUP_SIDES: GroupSides[] = ERA_SIDES.flatMap((era) =>
-  REALITY_SIDES.flatMap((reality) =>
-    AUTHORITY_SIDES.map((authority) => ({ era, reality, authority })),
-  ),
+  AUTHORITY_SIDES.map((authority) => ({ era, authority })),
 );
 
 const groupFor = (sides: GroupSides): PersonalityGroup => {
-  const key: GroupKey = `${sides.era}_${sides.reality}_${sides.authority}`;
+  const key: GroupKey = `${sides.era}_${sides.authority}`;
   return PERSONALITY_GROUPS[key];
 };
 
 const answersMatched = (sides: GroupSides, input: PersonalityInput): number =>
   (sides.era === input.era ? 1 : 0) +
-  (sides.reality === input.reality ? 1 : 0) +
   (sides.authority === input.authority ? 1 : 0);
 
 /**
@@ -120,14 +111,9 @@ const groupsByAnswers = (input: PersonalityInput): PersonalityGroup[] =>
 /**
  * Picks the shareable cat card. The top genre leads: the closest group that has
  * a cat for it wins, and the answers only choose between that genre's cats.
- * Commitment plays no part — it only steers the feed.
  */
 export const personalityFor = (input: PersonalityInput): Personality => {
-  if (
-    input.era === BOTH &&
-    input.reality === BOTH &&
-    input.authority === BOTH
-  ) {
+  if (input.era === BOTH && input.authority === BOTH) {
     return EVERYTHING_CAT;
   }
 

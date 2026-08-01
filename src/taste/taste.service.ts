@@ -74,9 +74,7 @@ export class TasteService {
       avoid: taste?.avoid ?? [],
       exploreLevel: taste?.exploreLevel ?? DEFAULT_EXPLORE_LEVEL,
       era: taste?.era ?? BOTH,
-      reality: taste?.reality ?? BOTH,
       authority: taste?.authority ?? BOTH,
-      commitment: taste?.commitment ?? BOTH,
     };
   }
 
@@ -87,9 +85,7 @@ export class TasteService {
       movieRatings: taste.movieRatings,
       seriesRatings: taste.seriesRatings,
       era: taste.era,
-      reality: taste.reality,
       authority: taste.authority,
-      commitment: taste.commitment,
       avoid: taste.avoid,
       exploreLevel: taste.exploreLevel,
       personality: personalityFor(taste),

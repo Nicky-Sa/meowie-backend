@@ -38,10 +38,9 @@ single one owns the feed:
   likes most, from the taste deck and their library. It pages along with the
   discover counter, so later batches bring new titles rather than the same first
   page. Its share grows with how many titles they liked.
-- **taste** — TMDB discover, one query per answered question (era, reality lean,
-  crowd/critics lean, length window), walking deeper TMDB pages as the user
-  scrolls. It no longer narrows by genre, so it is the broad filler rather than
-  the aim.
+- **taste** — TMDB discover, one query per answered question (era, crowd/critics
+  lean), walking deeper TMDB pages as the user scrolls. It no longer narrows by
+  genre, so it is the broad filler rather than the aim.
 - **popular** — always on, so a narrow taste never turns into a narrow feed.
 
 ## What gets hidden, and what gets pushed down
@@ -88,10 +87,6 @@ series, and costs one cached lookup per series candidate when the chip is on.
 Family isn't the same thing — plenty of Family films are made for adults too.
 Blocking kids' films properly would need TMDB certifications (G / PG), which is
 a fourth kind of rule.
-
-A "long watches" cap and a "long films" commitment answer contradict each other.
-The cap wins: the length floor drops back to the minimum, so the user still gets
-films rather than an empty window.
 
 ## Things that surprise people
 

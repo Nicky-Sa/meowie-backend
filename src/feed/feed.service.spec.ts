@@ -43,9 +43,7 @@ const taste = {
       avoid: [],
       exploreLevel: 2,
       era: 'both',
-      reality: 'both',
       authority: 'both',
-      commitment: 'both',
     }),
 } as unknown as TasteService;
 

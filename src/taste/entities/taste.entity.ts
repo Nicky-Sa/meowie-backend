@@ -11,9 +11,7 @@ import { User } from '@/user/entities/users.entity';
 import {
   AuthorityAnswer,
   AvoidId,
-  CommitmentAnswer,
   EraAnswer,
-  RealityAnswer,
   TitleRatings,
 } from '@/taste/constants/journey.constant';
 
@@ -36,13 +34,7 @@ export class Taste {
   era: EraAnswer;
 
   @Column({ type: 'varchar' })
-  reality: RealityAnswer;
-
-  @Column({ type: 'varchar' })
   authority: AuthorityAnswer;
-
-  @Column({ type: 'varchar' })
-  commitment: CommitmentAnswer;
 
   @Column('text', { array: true })
   avoid: AvoidId[];

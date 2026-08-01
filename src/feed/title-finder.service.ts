@@ -31,12 +31,8 @@ import { Duration } from '@/common/app.constants';
 import { movieRuntimeParams } from '@/feed/utils/movie-runtime';
 import {
   CLASSIC_MAX_YEAR,
-  CommitmentAnswer,
   ERA,
-  FANTASY_GENRE_IDS,
-  REALISTIC_GENRE_IDS,
   MODERN_MIN_YEAR,
-  REALITY,
   AUTHORITY,
 } from '@/taste/constants/journey.constant';
 
@@ -160,15 +156,6 @@ export class TitleFinderService {
       });
     }
 
-    // The reality lean is the one answer that names genres, and they are the
-    // same ids for movies and series.
-    if (taste.reality === REALITY.REALISTIC) {
-      queries.push({ genreIds: REALISTIC_GENRE_IDS });
-    }
-    if (taste.reality === REALITY.FANTASY) {
-      queries.push({ genreIds: FANTASY_GENRE_IDS });
-    }
-
     if (taste.authority === AUTHORITY.POPULAR) {
       queries.push({ genreIds: [], sort: SortOption.POPULARITY });
     }
@@ -194,7 +181,6 @@ export class TitleFinderService {
       page,
       sort: tasteQuery.sort ?? SortOption.RANDOM,
       genreIds: tasteQuery.genreIds,
-      commitment: context.taste.commitment,
       // extraParams last: a query's own floor beats the shared one. Floors the
       // sort itself brings (POPULARITY adds rating and vote minimums further
       // down) still win over both.
@@ -216,9 +202,6 @@ export class TitleFinderService {
     const results = await this.discoverPage(context, {
       page,
       sort: SortOption.POPULARITY,
-      // The avoid exclusions hold for popular titles too. The commitment lean
-      // doesn't — that's a preference, not a rule.
-      commitment: null,
       extraParams: { 'vote_count.gte': POPULAR_VOTE_COUNT_FLOOR },
     });
 
@@ -230,7 +213,6 @@ export class TitleFinderService {
     options: {
       page: number;
       sort: SortOption;
-      commitment: CommitmentAnswer | null;
       genreIds?: number[];
       extraParams: DiscoverParams;
     },
@@ -244,7 +226,7 @@ export class TitleFinderService {
     // Series carry no length data at discover time, so the window is movies only.
     const runtime =
       context.mediaType === 'movie'
-        ? movieRuntimeParams(context.avoid.movieMaxRuntime, options.commitment)
+        ? movieRuntimeParams(context.avoid.movieMaxRuntime)
         : {};
 
     const params = {

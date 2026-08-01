@@ -60,6 +60,14 @@ role:
 - **`migrator`** — direct/unpooled (`DB_HOST_MIGRATOR`, max 2), used by the TypeORM CLI
   (`src/database/data-source.ts`) for generate/run/revert.
 
+**Never hand-write a migration.** Change the entity, then run `npm run migration:gen` and
+let TypeORM diff it — that is why nearly every file in `migrations/` is named `*-auto.ts`.
+Writing the SQL yourself gets you a second migration doing the same job as the generated
+one; all pending migrations run in a single transaction, so the duplicate fails on an
+already-changed column and rolls the whole run back. Only edit a generated file to fix a
+real fault in it — most often a `down()` that does `ADD ... NOT NULL` with no default,
+which Postgres rejects on a table that has rows. Add `DEFAULT`, then `DROP DEFAULT`.
+
 Both connect over SSL pinned to the bundled `supabase-prod-ca-2021.crt`.
 `invalidWhereValuesBehavior` is set to **throw** on `null`/`undefined` in WHERE clauses —
 a stray `undefined` in a query is an error, not a silent full-table match. Entities live

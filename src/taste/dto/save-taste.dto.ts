@@ -16,13 +16,11 @@ import {
   AVOID_IDS,
   AuthorityAnswer,
   AvoidId,
-  CommitmentAnswer,
   countOpinions,
   EraAnswer,
   EXPLORE_LEVELS,
   MAX_RATED_TITLES,
   MIN_RATED_MOVIES,
-  RealityAnswer,
   TITLE_ANSWERS,
   TitleAnswer,
   TitleRatings,
@@ -80,16 +78,8 @@ export class SaveTasteReqDto {
   era: EraAnswer;
 
   @IsString()
-  @IsIn([...ANSWER_VALUES.reality])
-  reality: RealityAnswer;
-
-  @IsString()
   @IsIn([...ANSWER_VALUES.authority])
   authority: AuthorityAnswer;
-
-  @IsString()
-  @IsIn([...ANSWER_VALUES.commitment])
-  commitment: CommitmentAnswer;
 
   @IsArray()
   @IsString({ each: true })
@@ -107,9 +97,7 @@ export type TasteResDto = {
   movieRatings: TitleRatings;
   seriesRatings: TitleRatings;
   era: EraAnswer;
-  reality: RealityAnswer;
   authority: AuthorityAnswer;
-  commitment: CommitmentAnswer;
   avoid: AvoidId[];
   exploreLevel: number;
   personality: Personality;
