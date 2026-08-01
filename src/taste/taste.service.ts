@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Taste } from '@/taste/entities/taste.entity';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
-import { User } from '@/user/entities/users.entity';
 import { CacheService } from '@/cache/cache.service';
 import { feedCacheKeys } from '@/feed/constants/feed.constant';
 import { Cacheable } from '@/cache/cacheable.decorator';
@@ -23,21 +22,15 @@ export class TasteService {
   constructor(
     @InjectRepository(Taste)
     private readonly tasteRepository: Repository<Taste>,
-    private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
   ) {}
 
   async save(userId: number, dto: SaveTasteReqDto): Promise<TasteResDto> {
-    await this.dataSource.transaction(async (manager) => {
-      // The global pipe strips unknown fields, so the DTO holds columns only.
-      await manager.upsert(
-        Taste,
-        { userId, ...dto },
-        { conflictPaths: ['userId'] },
-      );
-
-      await manager.update(User, { id: userId }, { hasFilledInTaste: true });
-    });
+    // The global pipe strips unknown fields, so the DTO holds columns only.
+    await this.tasteRepository.upsert(
+      { userId, ...dto },
+      { conflictPaths: ['userId'] },
+    );
 
     const staleKeys = [
       tasteForFeedCacheKey(userId),
@@ -48,6 +41,10 @@ export class TasteService {
     await Promise.all(staleKeys.map((key) => this.cacheService.del(key)));
 
     return this.toResDto(dto);
+  }
+
+  async hasFilledIn(userId: number): Promise<boolean> {
+    return this.tasteRepository.existsBy({ userId });
   }
 
   async findByUserId(userId: number): Promise<TasteResDto | null> {

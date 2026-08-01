@@ -8,8 +8,10 @@ import { FindOptionsSelect, Repository, UpdateResult } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
 import { RequestOtpReqDto } from '@/auth/dto/auth.dto';
 import { DeleteUserReqDto } from '@/user/dto/delete-user.dto';
+import { CurrentUser } from '@/user/dto/current-user.dto';
 import { ChurnLog } from '@/user/entities/churn-log.entity';
 import { DataSource } from 'typeorm';
+import { TasteService } from '@/taste/taste.service';
 
 type FindOneBy =
   | { key: 'email'; value: string | null }
@@ -25,6 +27,7 @@ export class UserService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private readonly dataSource: DataSource,
+    private readonly tasteService: TasteService,
   ) {}
 
   async findOneBy(
@@ -71,11 +74,17 @@ export class UserService {
     }
   }
 
-  async currentUser(userId: number | null) {
-    return await this.findOneBy({
-      key: 'id',
-      value: userId,
-    });
+  async currentUser(userId: number | null): Promise<CurrentUser | null> {
+    const user = await this.findOneBy({ key: 'id', value: userId });
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      ...user,
+      hasFilledInTaste: await this.tasteService.hasFilledIn(user.id),
+    };
   }
 
   async deleteUser(userId: number, dto: DeleteUserReqDto) {

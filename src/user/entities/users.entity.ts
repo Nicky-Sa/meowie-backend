@@ -28,9 +28,6 @@ export class User {
   })
   hashedRefreshToken: string | null;
 
-  @Column({ default: false })
-  hasFilledInTaste: boolean;
-
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
