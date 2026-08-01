@@ -5,227 +5,167 @@ import {
   BOTH,
   ERA,
   AUTHORITY,
+  TitleAnswer,
   TitleRatings,
 } from '@/taste/constants/journey.constant';
-import {
-  Personality,
-  EVERYTHING_CAT,
-  PERSONALITY_GROUPS,
-} from '@/taste/constants/personality.constant';
+import { CATS, EVERYTHING_CAT } from '@/taste/constants/personality.constant';
 
-const idFromPool = (pool: Title[], title: string): number => {
-  const found = pool.find((entry) => entry.title === title);
-  if (!found) throw new Error(`Title not in pool: ${title}`);
-  return found.tmdbId;
-};
+const idsInGenre = (
+  pool: Title[],
+  genreId: number,
+  howMany: number,
+): number[] =>
+  pool
+    .filter((title) => title.mainGenreId === genreId)
+    .slice(0, howMany)
+    .map((title) => title.tmdbId);
 
-const movieId = (title: string): number => idFromPool(MOVIES, title);
-const seriesId = (title: string): number => idFromPool(SERIES, title);
-
-const likedMovies = (...titles: string[]): TitleRatings =>
-  Object.fromEntries(titles.map((title) => [movieId(title), 'like']));
+const ratings = (ids: number[], answer: TitleAnswer): TitleRatings =>
+  Object.fromEntries(ids.map((id) => [id, answer]));
 
 const inputWith = (overrides: Partial<PersonalityInput>): PersonalityInput => ({
   movieRatings: {},
   seriesRatings: {},
-  era: ERA.NEW_RELEASE,
-  authority: AUTHORITY.POPULAR,
+  era: BOTH,
+  authority: BOTH,
   ...overrides,
 });
 
-const personality = (overrides: Partial<PersonalityInput>) =>
-  personalityFor(inputWith(overrides));
+const catNamed = (name: string) => {
+  const found = CATS.find((cat) => cat.name === name);
+  if (!found) throw new Error(`No cat named ${name}`);
+  return found;
+};
 
-describe('the top genre leads', () => {
-  it('gives the same cat whatever the answers are, when the genre has one', () => {
-    // Crime has a single cat, so no set of answers can steer away from it.
-    const movieRatings = likedMovies('The Godfather', 'Pulp Fiction');
-
-    expect(
-      personality({
-        era: ERA.NEW_RELEASE,
-        authority: AUTHORITY.CRITICS_CHOICE,
-        movieRatings,
-      }).name,
-    ).toBe('Tony Meowtana');
+describe('personalityFor', () => {
+  it('gives the everything cat when nothing was liked and no side taken', () => {
+    expect(personalityFor(inputWith({}))).toEqual(EVERYTHING_CAT);
   });
 
-  it('lets the answers choose between a genre with several cats', () => {
-    const movieRatings = likedMovies('The Lord of the Rings'); // Fantasy
-
-    const cat = (overrides: Partial<PersonalityInput>) =>
-      personality({ movieRatings, ...overrides }).name;
-
-    expect(cat({ era: ERA.CLASSIC, authority: AUTHORITY.CRITICS_CHOICE })).toBe(
-      'Edward Scissorpaws',
+  it('ignores ids that are not in the deck', () => {
+    // One like and one dislike, so the way they rated says nothing either.
+    const picked = personalityFor(
+      inputWith({
+        movieRatings: {
+          ...ratings([99999], 'like'),
+          ...ratings([99998], 'dislike'),
+        },
+      }),
     );
-    expect(cat({ era: ERA.NEW_RELEASE, authority: AUTHORITY.POPULAR })).toBe(
-      'Hairy Pawter',
+
+    expect(picked).toEqual(EVERYTHING_CAT);
+  });
+
+  it('picks a cat of the genre the user liked most', () => {
+    const picked = personalityFor(
+      inputWith({ movieRatings: ratings(idsInGenre(MOVIES, 27, 4), 'like') }),
     );
-    expect(
-      cat({ era: ERA.NEW_RELEASE, authority: AUTHORITY.CRITICS_CHOICE }),
-    ).toBe('Furrodo Bagpaws');
+
+    expect(catNamed(picked.name).genres).toContain(27);
   });
 
-  it('counts one vote per liked title, so two beat one rarer', () => {
-    // Two crime likes outrank one music like, though Music is the rarer genre.
-    const result = personality({
-      movieRatings: likedMovies(
-        'The Godfather',
-        'Pulp Fiction',
-        'Bohemian Rhapsody',
-      ),
-    });
-
-    expect(result.name).toBe('Tony Meowtana');
-  });
-});
-
-describe('only likes vote', () => {
-  it('ignores a disliked title', () => {
-    const result = personality({
-      movieRatings: {
-        ...likedMovies('The Godfather'),
-        [movieId('Bohemian Rhapsody')]: 'dislike',
-        [movieId('Whiplash')]: 'dislike',
-      },
-    });
-
-    // Music would win on count if dislikes voted; Crime wins because they don't.
-    expect(result.name).toBe('Tony Meowtana');
-  });
-
-  it("ignores a title marked haven't seen", () => {
-    const notSeen = personality({
-      movieRatings: {
-        ...likedMovies('The Godfather'),
-        [movieId('Bohemian Rhapsody')]: 'not-seen',
-      },
-    });
-
-    expect(notSeen).toEqual(
-      personality({ movieRatings: likedMovies('The Godfather') }),
+  it('reads liked series the same way as liked movies', () => {
+    const picked = personalityFor(
+      inputWith({ seriesRatings: ratings(idsInGenre(SERIES, 16, 4), 'like') }),
     );
+
+    expect(catNamed(picked.name).genres).toContain(16);
   });
-});
 
-describe("a 'no preference' answer steps aside", () => {
-  it('leaves the choice to the answer given', () => {
-    const movieRatings = likedMovies('The Lord of the Rings'); // Fantasy
+  it('lets the answers choose between two cats of the same genre', () => {
+    const crime = idsInGenre(MOVIES, 80, 4);
 
-    expect(
-      personality({
+    const classicCritics = personalityFor(
+      inputWith({
+        movieRatings: ratings(crime, 'like'),
         era: ERA.CLASSIC,
-        authority: BOTH,
-        movieRatings,
-      }).name,
-    ).toBe('Edward Scissorpaws');
-  });
-
-  it('breaks a tie between two cats on the modern side', () => {
-    // Fantasy has a critics' cat on both sides of era, and era went unanswered.
-    const movieRatings = likedMovies('The Lord of the Rings');
-
-    expect(
-      personality({
-        era: BOTH,
         authority: AUTHORITY.CRITICS_CHOICE,
-        movieRatings,
-      }).name,
-    ).toBe('Furrodo Bagpaws');
-  });
-
-  it('falls back to the popular-modern side when nothing else decides', () => {
-    expect(personality({ era: BOTH })).toEqual(
-      personality({ era: ERA.NEW_RELEASE }),
+      }),
     );
-    expect(personality({ authority: BOTH })).toEqual(
-      personality({ authority: AUTHORITY.POPULAR }),
+    const newPopular = personalityFor(
+      inputWith({
+        movieRatings: ratings(crime, 'like'),
+        era: ERA.NEW_RELEASE,
+        authority: AUTHORITY.POPULAR,
+      }),
     );
-  });
-});
 
-describe('the everything cat', () => {
-  it("wins when both answers are 'both'", () => {
-    const result = personality({ era: BOTH, authority: BOTH });
-
-    expect(result).toEqual(EVERYTHING_CAT);
+    expect(catNamed(classicCritics.name).era).toBe(ERA.CLASSIC);
+    expect(catNamed(newPopular.name).era).toBe(ERA.NEW_RELEASE);
+    expect(catNamed(classicCritics.name).genres).toContain(80);
+    expect(catNamed(newPopular.name).genres).toContain(80);
   });
 
-  it("stays away while one answer is not 'both'", () => {
-    expect(
-      personality({ era: BOTH, authority: AUTHORITY.POPULAR }),
-    ).not.toEqual(EVERYTHING_CAT);
-    expect(personality({ era: ERA.CLASSIC, authority: BOTH })).not.toEqual(
-      EVERYTHING_CAT,
+  it('reads the answers alone when the user liked nothing', () => {
+    const picked = personalityFor(
+      inputWith({ era: ERA.CLASSIC, authority: AUTHORITY.CRITICS_CHOICE }),
     );
+
+    expect(catNamed(picked.name).era).toBe(ERA.CLASSIC);
+    expect(catNamed(picked.name).authority).toBe(AUTHORITY.CRITICS_CHOICE);
   });
 
-  it("still wins on two 'both' answers with likes in hand", () => {
-    const result = personality({
-      era: BOTH,
-      authority: BOTH,
-      movieRatings: likedMovies('The Godfather'),
-    });
+  it('separates a hard-to-please rater from an easy-going one', () => {
+    const crime = idsInGenre(MOVIES, 80, 8);
 
-    expect(result).toEqual(EVERYTHING_CAT);
-  });
-});
+    const hardToPlease = personalityFor(
+      inputWith({
+        movieRatings: {
+          ...ratings(crime.slice(0, 2), 'like'),
+          ...ratings(crime.slice(2), 'dislike'),
+        },
+        era: ERA.CLASSIC,
+        authority: AUTHORITY.CRITICS_CHOICE,
+      }),
+    );
+    const easyGoing = personalityFor(
+      inputWith({
+        movieRatings: ratings(crime, 'like'),
+        era: ERA.CLASSIC,
+        authority: AUTHORITY.CRITICS_CHOICE,
+      }),
+    );
 
-describe('picking the cat', () => {
-  it("uses the group's own cat when nothing was liked", () => {
-    const result = personality({
-      era: ERA.CLASSIC,
-      authority: AUTHORITY.POPULAR,
-    });
-
-    expect(result.name).toBe('Luke Skywhisker');
-  });
-
-  it("falls back to a group's own cat for a genre no cat covers", () => {
-    // Comedy is the top genre here, and no group has a comedy cat.
-    const result = personality({
-      era: ERA.CLASSIC,
-      authority: AUTHORITY.POPULAR,
-      movieRatings: likedMovies('The Grand Budapest Hotel'),
-    });
-
-    expect(result.name).toBe('Luke Skywhisker');
+    expect(catNamed(hardToPlease.name).trait).toBe('hard-to-please');
+    expect(hardToPlease.name).not.toBe(easyGoing.name);
   });
 
-  it('works on series likes too', () => {
-    // Dark locks Mystery, which only the new-release critics group has a cat for.
-    const result = personality({
-      era: ERA.NEW_RELEASE,
-      authority: AUTHORITY.CRITICS_CHOICE,
-      seriesRatings: { [seriesId('Dark')]: 'like' },
-    });
+  it('reads a deck of skips as lots left to watch', () => {
+    const adventure = idsInGenre(MOVIES, 12, 6);
 
-    expect(result.name).toBe('Rust Clawle');
+    const picked = personalityFor(
+      inputWith({
+        movieRatings: {
+          ...ratings(adventure.slice(0, 2), 'like'),
+          ...ratings(adventure.slice(2), 'not-seen'),
+        },
+        era: ERA.CLASSIC,
+        authority: AUTHORITY.POPULAR,
+      }),
+    );
+
+    expect(catNamed(picked.name).trait).toBe('lots-left-to-watch');
   });
 });
 
 describe('every cat card', () => {
-  const everyCat: Personality[] = [
-    EVERYTHING_CAT,
-    ...Object.values(PERSONALITY_GROUPS).flatMap((group) => [
-      group.default,
-      ...Object.values(group.byGenre).filter(
-        (cat): cat is Personality => cat !== undefined,
-      ),
-    ]),
-  ];
-
   it('has a name and a picture', () => {
-    for (const cat of everyCat) {
+    for (const cat of [EVERYTHING_CAT, ...CATS]) {
       expect(cat.name).not.toBe('');
       expect(cat.image).toMatch(/^https:\/\/.+\.png$/);
     }
   });
 
-  it('is used by only one entry', () => {
-    const images = everyCat.map((cat) => cat.image);
+  it('uses its picture and its name only once', () => {
+    const cards = [EVERYTHING_CAT, ...CATS];
 
-    expect(new Set(images).size).toBe(images.length);
+    expect(new Set(cards.map((cat) => cat.image)).size).toBe(cards.length);
+    expect(new Set(cards.map((cat) => cat.name)).size).toBe(cards.length);
+  });
+
+  it('stands for at least one genre', () => {
+    for (const cat of CATS) {
+      expect(cat.genres.length).toBeGreaterThan(0);
+    }
   });
 });

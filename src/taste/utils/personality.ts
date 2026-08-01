@@ -1,11 +1,9 @@
 import {
-  AuthorityValue,
-  EraValue,
+  Cat,
+  CATS,
   EVERYTHING_CAT,
-  GroupKey,
   Personality,
-  PersonalityGroup,
-  PERSONALITY_GROUPS,
+  Trait,
 } from '@/taste/constants/personality.constant';
 import {
   GenreId,
@@ -15,13 +13,10 @@ import {
 } from '@/taste/constants/pools.constant';
 import {
   AuthorityAnswer,
-  BOTH,
-  ERA,
   EraAnswer,
   idsAnswered,
   RARITY_WEIGHTS,
   TitleRatings,
-  AUTHORITY,
 } from '@/taste/constants/journey.constant';
 
 export type PersonalityInput = {
@@ -39,91 +34,121 @@ const poolByTmdbId = (pool: Title[]): Map<number, Title> =>
 const movieByTmdbId = poolByTmdbId(MOVIES);
 const seriesByTmdbId = poolByTmdbId(SERIES);
 
-const likedTitles = (input: PersonalityInput): Title[] =>
+const titlesAnswered = (
+  input: PersonalityInput,
+  answer: Parameters<typeof idsAnswered>[1],
+): Title[] =>
   [
-    ...idsAnswered(input.movieRatings, 'like').map((tmdbId) =>
+    ...idsAnswered(input.movieRatings, answer).map((tmdbId) =>
       movieByTmdbId.get(tmdbId),
     ),
-    ...idsAnswered(input.seriesRatings, 'like').map((tmdbId) =>
+    ...idsAnswered(input.seriesRatings, answer).map((tmdbId) =>
       seriesByTmdbId.get(tmdbId),
     ),
   ].filter((title): title is Title => title !== undefined);
 
 /**
- * The genre the user leant on most. Every title they liked votes once, for its
- * main genre. Ties go to the rarer genre, so a common one can't win by being
- * everywhere.
+ * How much of what the user liked sits in these genres. Rare genres count for
+ * more, so a handful of westerns beats a pile of drama.
  */
-const topGenre = (liked: Title[]): GenreId | null => {
-  const counts = new Map<GenreId, number>();
-  for (const genre of liked.map((title) => title.mainGenreId)) {
-    counts.set(genre, (counts.get(genre) ?? 0) + 1);
+const genreFit = (liked: Title[], genres: GenreId[]): number => {
+  let matched = 0;
+  let total = 0;
+  for (const title of liked) {
+    const weight = RARITY_WEIGHTS[title.mainGenreId] ?? 1;
+    total += weight;
+    if (genres.includes(title.mainGenreId)) matched += weight;
   }
-
-  let best: GenreId | null = null;
-  let bestCount = -1;
-  let bestWeight = -1;
-  for (const [genre, count] of counts) {
-    const weight = RARITY_WEIGHTS[genre] ?? 1;
-    if (count > bestCount || (count === bestCount && weight > bestWeight)) {
-      best = genre;
-      bestCount = count;
-      bestWeight = weight;
-    }
-  }
-  return best;
+  return total === 0 ? 0 : matched / total;
 };
 
-type GroupSides = {
-  era: EraValue;
-  authority: AuthorityValue;
-};
-
-// Answered sides first, so a group that matches nothing — every answer was
-// 'no preference' — still lands on the popular-modern side it always used to.
-const ERA_SIDES = [ERA.NEW_RELEASE, ERA.CLASSIC];
-const AUTHORITY_SIDES = [AUTHORITY.POPULAR, AUTHORITY.CRITICS_CHOICE];
-
-const ALL_GROUP_SIDES: GroupSides[] = ERA_SIDES.flatMap((era) =>
-  AUTHORITY_SIDES.map((authority) => ({ era, authority })),
-);
-
-const groupFor = (sides: GroupSides): PersonalityGroup => {
-  const key: GroupKey = `${sides.era}_${sides.authority}`;
-  return PERSONALITY_GROUPS[key];
-};
-
-const answersMatched = (sides: GroupSides, input: PersonalityInput): number =>
-  (sides.era === input.era ? 1 : 0) +
-  (sides.authority === input.authority ? 1 : 0);
+const HARD_TO_PLEASE_SHARE = 0.6;
+const EASY_GOING_SHARE = 0.7;
+const LOTS_LEFT_SHARE = 0.5;
 
 /**
- * Groups the user's answers agree with most, first. A 'no preference' answer
- * matches neither side, so it steps aside and lets the others decide.
+ * What the way they rated says about them. Only one trait can hold, and the
+ * strongest reading wins: a deck full of skips beats a like/dislike split.
  */
-const groupsByAnswers = (input: PersonalityInput): PersonalityGroup[] =>
-  [...ALL_GROUP_SIDES]
-    .sort(
-      (one, other) => answersMatched(other, input) - answersMatched(one, input),
-    )
-    .map(groupFor);
+const traitFrom = (input: PersonalityInput): Trait | null => {
+  const answers = [
+    ...Object.values(input.movieRatings),
+    ...Object.values(input.seriesRatings),
+  ];
+  if (answers.length === 0) return null;
+
+  const notSeen = answers.filter((answer) => answer === 'not-seen').length;
+  if (notSeen / answers.length >= LOTS_LEFT_SHARE) return 'lots-left-to-watch';
+
+  const likes = answers.filter((answer) => answer === 'like').length;
+  const opinions = answers.length - notSeen;
+  if (opinions === 0) return null;
+
+  if (likes / opinions >= EASY_GOING_SHARE) return 'easy-going';
+  if (1 - likes / opinions >= HARD_TO_PLEASE_SHARE) return 'hard-to-please';
+  return null;
+};
+
+// The genres lead — they say the most about a person — and the two answers and
+// the trait only choose between cats that already fit the genres.
+const GENRE_WEIGHT = 3;
+const TRAIT_WEIGHT = 1.5;
+const ANSWER_WEIGHT = 1;
+
+// A cat that stands for one way of rating counts against a user who rates the
+// other way, or the trait would only ever break ties.
+const traitScore = (cat: Cat, trait: Trait | null): number => {
+  if (cat.trait === undefined || trait === null) return 0;
+  return cat.trait === trait ? TRAIT_WEIGHT : -TRAIT_WEIGHT;
+};
+
+const scoreFor = (
+  cat: Cat,
+  input: PersonalityInput,
+  liked: Title[],
+  trait: Trait | null,
+): number =>
+  GENRE_WEIGHT * genreFit(liked, cat.genres) +
+  (cat.era === input.era ? ANSWER_WEIGHT : 0) +
+  (cat.authority === input.authority ? ANSWER_WEIGHT : 0) +
+  traitScore(cat, trait);
 
 /**
- * Picks the shareable cat card. The top genre leads: the closest group that has
- * a cat for it wins, and the answers only choose between that genre's cats.
+ * Equal scores are broken by the rarer cat, then by the one standing for fewer
+ * genres — without that, a cat covering two genres shadows the cat that covers
+ * only one of them and the narrow cat could never be given out.
+ */
+const beats = (
+  cat: Cat,
+  score: number,
+  best: Cat,
+  bestScore: number,
+): boolean =>
+  score > bestScore ||
+  (score === bestScore &&
+    (cat.rarity > best.rarity ||
+      (cat.rarity === best.rarity && cat.genres.length < best.genres.length)));
+
+/**
+ * Picks the shareable cat card: the one that fits the deck and the answers
+ * best. A user who liked nothing and took no side gets the cat that stands for
+ * everything.
  */
 export const personalityFor = (input: PersonalityInput): Personality => {
-  if (input.era === BOTH && input.authority === BOTH) {
-    return EVERYTHING_CAT;
+  const liked = titlesAnswered(input, 'like');
+  const trait = traitFrom(input);
+
+  let best: Cat | null = null;
+  let bestScore = 0;
+  for (const cat of CATS) {
+    const score = scoreFor(cat, input, liked, trait);
+    if (
+      best === null ? score > bestScore : beats(cat, score, best, bestScore)
+    ) {
+      best = cat;
+      bestScore = score;
+    }
   }
 
-  const groups = groupsByAnswers(input);
-  const top = topGenre(likedTitles(input));
-
-  const catForGenre =
-    top === null
-      ? undefined
-      : groups.map((group) => group.byGenre[top]).find((cat) => cat);
-
-  return catForGenre ?? groups[0].default;
+  return best ?? EVERYTHING_CAT;
 };

@@ -1,4 +1,4 @@
-import { Title } from '@/taste/constants/pools.constant';
+import { GenreId, Title } from '@/taste/constants/pools.constant';
 
 const shuffled = <TItem>(items: TItem[]): TItem[] => {
   const mixed = [...items];
@@ -10,14 +10,28 @@ const shuffled = <TItem>(items: TItem[]): TItem[] => {
 };
 
 /**
- * Gives every user a different order without losing the genre spread. A pool is
- * two rounds of one title per genre, so each round is shuffled on its own and
- * they stay in order — the first cards still cover every genre exactly once.
+ * A different order for every user without losing the genre spread: each
+ * genre's titles are shuffled, then dealt one genre at a time. The first cards
+ * therefore cover as many genres as the pool holds before any genre repeats,
+ * whatever the counts per genre are.
  */
 export const shuffledPool = (pool: Title[]): Title[] => {
-  const roundSize = Math.ceil(pool.length / 2);
-  return [
-    ...shuffled(pool.slice(0, roundSize)),
-    ...shuffled(pool.slice(roundSize)),
-  ];
+  const byGenre = new Map<GenreId, Title[]>();
+  for (const title of pool) {
+    byGenre.set(title.mainGenreId, [
+      ...(byGenre.get(title.mainGenreId) ?? []),
+      title,
+    ]);
+  }
+
+  const piles = shuffled([...byGenre.values()].map(shuffled));
+  const deepestPile = Math.max(0, ...piles.map((pile) => pile.length));
+
+  const dealt: Title[] = [];
+  for (let round = 0; round < deepestPile; round++) {
+    for (const pile of piles) {
+      if (round < pile.length) dealt.push(pile[round]);
+    }
+  }
+  return dealt;
 };

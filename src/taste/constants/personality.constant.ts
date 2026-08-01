@@ -12,60 +12,195 @@ import {
  */
 export type Personality = { name: string; image: string };
 
-export type PersonalityGroup = {
-  default: Personality;
-  byGenre: Partial<Record<GenreId, Personality>>;
-};
-
 export type EraValue = Exclude<EraAnswer, typeof BOTH>;
 export type AuthorityValue = Exclude<AuthorityAnswer, typeof BOTH>;
 
-export type GroupKey = `${EraValue}_${AuthorityValue}`;
+/**
+ * How the user went through the deck, which says something the genres don't:
+ * a hard-to-please rater is a different person from one who likes everything.
+ */
+export type Trait = 'hard-to-please' | 'easy-going' | 'lots-left-to-watch';
 
-const cat = (name: string, file: string): Personality => ({
-  name,
-  image: `https://meowie-public.s3.eu-central-1.amazonaws.com/taste/personalities/${file}`,
-});
-
-export const PERSONALITY_GROUPS: Record<GroupKey, PersonalityGroup> = {
-  classic_popular: {
-    default: cat('Luke Skywhisker', 'luke-skywhisker.png'),
-    byGenre: {
-      18: cat('Furrest Gump', 'furrest-gump.png'), // Drama
-      80: cat('Tony Meowtana', 'tony-meowtana.png'), // Crime
-      12: cat('Indiana Bones', 'indiana-bones.png'), // Adventure
-      16: cat('Simeow', 'simeow.png'), // Animation
-    },
-  },
-  'classic_critics-choice': {
-    default: cat('The Catfather', 'the-catfather.png'),
-    byGenre: {
-      53: cat('Hannibal Licker', 'hannibal-licker.png'), // Thriller
-      36: cat('Maximeow', 'maximeow.png'), // History
-      27: cat('Jack Scratchrance', 'jack-scratchrance.png'), // Horror
-      14: cat('Edward Scissorpaws', 'edward-scissorpaws.png'), // Fantasy
-    },
-  },
-  'new-release_popular': {
-    default: cat('The Dark Kitten', 'the-dark-kitten.png'),
-    byGenre: {
-      28: cat('John Whisk', 'john-whisk.png'), // Action
-      10402: cat('Freddie Purrcury', 'freddie-purrcury.png'), // Music
-      878: cat('Iron Cat', 'iron-cat.png'), // Science Fiction
-      14: cat('Hairy Pawter', 'hairy-pawter.png'), // Fantasy
-    },
-  },
-  'new-release_critics-choice': {
-    default: cat('Heisenpurr', 'heisenpurr.png'),
-    byGenre: {
-      18: cat('Tony Sopurrano', 'tony-sopurrano.png'), // Drama
-      9648: cat('Rust Clawle', 'rust-clawle.png'), // Mystery
-      14: cat('Furrodo Bagpaws', 'furrodo-bagpaws.png'), // Fantasy
-      53: cat('Dream Whisker', 'dream-whisker.png'), // Thriller
-    },
-  },
+/**
+ * What a cat stands for. Every field is a leaning, not a rule — a cat is picked
+ * by how well it fits, so an empty field simply never adds anything.
+ */
+export type Cat = Personality & {
+  genres: GenreId[];
+  era?: EraValue;
+  authority?: AuthorityValue;
+  trait?: Trait;
+  // Breaks ties, and nothing else. A rare cat is more fun to be given, so it
+  // wins when two cats fit equally well.
+  rarity: number;
 };
 
-// Shown only when both main questions were answered 'both', so there is
-// nothing stated to place the user in a group.
-export const EVERYTHING_CAT = cat('The Cativore', 'the-cativore.png');
+const image = (file: string) =>
+  `https://meowie-public.s3.eu-central-1.amazonaws.com/taste/personalities/${file}`;
+
+const cat = (
+  name: string,
+  file: string,
+  profile: Omit<Cat, 'name' | 'image'>,
+): Cat => ({ name, image: image(file), ...profile });
+
+export const CATS: Cat[] = [
+  cat('Luke Skywhisker', 'luke-skywhisker.png', {
+    genres: [878, 12],
+    era: 'classic',
+    authority: 'popular',
+    rarity: 1,
+  }),
+  cat('The Catfather', 'the-catfather.png', {
+    genres: [80],
+    era: 'classic',
+    authority: 'critics-choice',
+    trait: 'hard-to-please',
+    rarity: 2,
+  }),
+  cat('The Dark Kitten', 'the-dark-kitten.png', {
+    genres: [28, 53],
+    era: 'new-release',
+    authority: 'popular',
+    rarity: 1,
+  }),
+  cat('Heisenpurr', 'heisenpurr.png', {
+    genres: [80, 18],
+    era: 'new-release',
+    authority: 'critics-choice',
+    rarity: 2,
+  }),
+  cat('Furrest Gump', 'furrest-gump.png', {
+    genres: [18],
+    era: 'classic',
+    authority: 'popular',
+    trait: 'easy-going',
+    rarity: 1,
+  }),
+  cat('Tony Meowtana', 'tony-meowtana.png', {
+    genres: [80],
+    era: 'classic',
+    authority: 'popular',
+    rarity: 2,
+  }),
+  cat('Indiana Bones', 'indiana-bones.png', {
+    genres: [12],
+    era: 'classic',
+    authority: 'popular',
+    trait: 'lots-left-to-watch',
+    rarity: 2,
+  }),
+  cat('Simeow', 'simeow.png', {
+    genres: [16],
+    era: 'classic',
+    authority: 'popular',
+    trait: 'easy-going',
+    rarity: 2,
+  }),
+  cat('Hannibal Licker', 'hannibal-licker.png', {
+    genres: [53],
+    era: 'classic',
+    authority: 'critics-choice',
+    trait: 'hard-to-please',
+    rarity: 3,
+  }),
+  cat('Maximeow', 'maximeow.png', {
+    genres: [36],
+    era: 'classic',
+    authority: 'popular',
+    rarity: 2,
+  }),
+  cat('Jack Scratchrance', 'jack-scratchrance.png', {
+    genres: [27],
+    era: 'classic',
+    authority: 'critics-choice',
+    rarity: 3,
+  }),
+  cat('Edward Scissorpaws', 'edward-scissorpaws.png', {
+    genres: [14],
+    era: 'classic',
+    authority: 'critics-choice',
+    rarity: 3,
+  }),
+  cat('John Whisk', 'john-whisk.png', {
+    genres: [28],
+    era: 'new-release',
+    authority: 'popular',
+    rarity: 1,
+  }),
+  cat('Freddie Purrcury', 'freddie-purrcury.png', {
+    genres: [10402],
+    era: 'new-release',
+    authority: 'popular',
+    rarity: 3,
+  }),
+  cat('Iron Cat', 'iron-cat.png', {
+    genres: [878],
+    era: 'new-release',
+    authority: 'popular',
+    rarity: 1,
+  }),
+  cat('Hairy Pawter', 'hairy-pawter.png', {
+    genres: [14],
+    era: 'new-release',
+    authority: 'popular',
+    trait: 'lots-left-to-watch',
+    rarity: 1,
+  }),
+  cat('Tony Sopurrano', 'tony-sopurrano.png', {
+    genres: [18, 80],
+    era: 'classic',
+    authority: 'critics-choice',
+    rarity: 2,
+  }),
+  cat('Rust Clawle', 'rust-clawle.png', {
+    genres: [9648],
+    era: 'new-release',
+    authority: 'critics-choice',
+    trait: 'hard-to-please',
+    rarity: 3,
+  }),
+  cat('Furrodo Bagpaws', 'furrodo-bagpaws.png', {
+    genres: [14, 12],
+    era: 'new-release',
+    authority: 'popular',
+    rarity: 2,
+  }),
+  cat('Dream Whisker', 'dream-whisker.png', {
+    genres: [53, 878],
+    era: 'new-release',
+    authority: 'critics-choice',
+    rarity: 3,
+  }),
+  cat('Rocky Pawboa', 'rocky-pawboa.png', {
+    genres: [18, 10751],
+    era: 'classic',
+    authority: 'popular',
+    rarity: 2,
+  }),
+  cat('Ripurr', 'ripurr.png', {
+    genres: [878, 27],
+    era: 'classic',
+    authority: 'critics-choice',
+    trait: 'hard-to-please',
+    rarity: 3,
+  }),
+  cat('Wolf of Wool Street', 'wolf-of-wool-street.png', {
+    genres: [80, 35],
+    era: 'new-release',
+    authority: 'popular',
+    rarity: 2,
+  }),
+  cat('Paw Atreides', 'paw-atreides.png', {
+    genres: [878],
+    era: 'new-release',
+    authority: 'critics-choice',
+    rarity: 3,
+  }),
+];
+
+// Given when nothing else fits: no titles liked and no side taken.
+export const EVERYTHING_CAT: Personality = {
+  name: 'The Cativore',
+  image: image('the-cativore.png'),
+};

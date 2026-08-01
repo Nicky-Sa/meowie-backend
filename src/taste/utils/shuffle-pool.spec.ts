@@ -19,13 +19,11 @@ describe.each([
     expect(ids(pool)).toEqual(before);
   });
 
-  it('still covers every genre once before repeating one', () => {
-    const roundSize = pool.length / 2;
+  it('covers every genre before it shows a second of any', () => {
+    const genreCount = new Set(pool.map((title) => title.mainGenreId)).size;
     const genres = shuffledPool(pool).map((title) => title.mainGenreId);
-    const firstRound = new Set(genres.slice(0, roundSize));
 
-    expect(firstRound.size).toBe(roundSize);
-    expect(new Set(genres.slice(roundSize))).toEqual(firstRound);
+    expect(new Set(genres.slice(0, genreCount)).size).toBe(genreCount);
   });
 
   it('gives a different order across runs', () => {
