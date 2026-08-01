@@ -113,10 +113,8 @@ export type AvoidChip = Option<string>;
 
 export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
-// "Haven't seen it" doesn't count towards the minimum. The cap only stops a
-// client sending an absurd list; the deck holds far fewer.
+// "Haven't seen it" doesn't count towards the minimum.
 export const MIN_RATED_MOVIES = 5;
-export const MAX_RATED_TITLES = 50;
 
 export const idsAnswered = (
   ratings: TitleRatings,
@@ -132,7 +130,7 @@ export const countOpinions = (ratings: TitleRatings): number =>
 
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;
-export const MODERN_MIN_YEAR = 2015;
+export const MODERN_MIN_YEAR = 2000;
 
 export const DEFAULT_EXPLORE_LEVEL = 2; // "Balanced"
 

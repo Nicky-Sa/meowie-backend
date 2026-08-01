@@ -523,3 +523,8 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/fWwxYAuqY4Na7fKI3Qq2nFWCwG8.jpg',
   },
 ];
+
+// Movie and series ids live in separate TMDB namespaces and can collide, so
+// each pool keeps its own set.
+export const MOVIE_IDS = new Set(MOVIES.map((title) => title.tmdbId));
+export const SERIES_IDS = new Set(SERIES.map((title) => title.tmdbId));

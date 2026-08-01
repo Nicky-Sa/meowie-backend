@@ -19,13 +19,13 @@ import {
   countOpinions,
   EraAnswer,
   EXPLORE_LEVELS,
-  MAX_RATED_TITLES,
   MIN_RATED_MOVIES,
   TITLE_ANSWERS,
   TitleAnswer,
   TitleRatings,
 } from '@/taste/constants/journey.constant';
 import { Personality } from '@/taste/constants/personality.constant';
+import { MOVIE_IDS, SERIES_IDS } from '@/taste/constants/pools.constant';
 
 const isTitleRatings = (value: unknown): value is TitleRatings =>
   typeof value === 'object' &&
@@ -39,14 +39,16 @@ const isTitleRatings = (value: unknown): value is TitleRatings =>
 
 @ValidatorConstraint({ name: 'titleRatings' })
 class AreTitleRatings implements ValidatorConstraintInterface {
-  validate(ratings: unknown): boolean {
+  validate(ratings: unknown, args: ValidationArguments): boolean {
+    const [poolIds] = args.constraints as [Set<number>];
     return (
-      isTitleRatings(ratings) && Object.keys(ratings).length <= MAX_RATED_TITLES
+      isTitleRatings(ratings) &&
+      Object.keys(ratings).every((tmdbId) => poolIds.has(Number(tmdbId)))
     );
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${args.property} must map TMDB ids to one of: ${TITLE_ANSWERS.join(', ')}`;
+    return `${args.property} must map ids from the taste deck to one of: ${TITLE_ANSWERS.join(', ')}`;
   }
 }
 
@@ -64,13 +66,13 @@ class EnoughOpinions implements ValidatorConstraintInterface {
 }
 
 export class SaveTasteReqDto {
-  // TMDB ids are not checked against the seed pools, so a live pool can replace
-  // them without touching this DTO — only the count is limited.
-  @Validate(AreTitleRatings)
+  // Only ids the deck actually serves are accepted, so replacing the pools with
+  // a live source means this check has to follow.
+  @Validate(AreTitleRatings, [MOVIE_IDS])
   @Validate(EnoughOpinions)
   movieRatings: TitleRatings;
 
-  @Validate(AreTitleRatings)
+  @Validate(AreTitleRatings, [SERIES_IDS])
   seriesRatings: TitleRatings;
 
   @IsString()
