@@ -19,6 +19,13 @@ export type Title = {
 
 export const MOVIES: Title[] = [
   {
+    title: 'Nomadland',
+    year: 2021,
+    mainGenreId: 18, // Drama
+    tmdbId: 581734,
+    poster: 'https://image.tmdb.org/t/p/w500/8Vc5EOUEIF1EUXuX9eLFf7BvN3P.jpg',
+  },
+  {
     title: 'Joker',
     year: 2019,
     mainGenreId: 18, // Drama
@@ -33,11 +40,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/2JRyCKaRKyJAVpsIHeLvPw5nHmw.jpg',
   },
   {
-    title: 'Requiem for a Dream',
-    year: 2000,
+    title: 'Manchester by the Sea',
+    year: 2016,
     mainGenreId: 18, // Drama
-    tmdbId: 641,
-    poster: 'https://image.tmdb.org/t/p/w500/9BTwsLaMVHOGFlmsSlx5QYCaXb.jpg',
+    tmdbId: 334541,
+    poster: 'https://image.tmdb.org/t/p/w500/o9VXYOuaJxCEKOxbA86xqtwmqYn.jpg',
   },
   {
     title: 'Whiplash',
@@ -47,11 +54,18 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/7fn624j5lj3xTme2SgiLCeuedmO.jpg',
   },
   {
-    title: 'Manchester by the Sea',
-    year: 2016,
+    title: 'The Tree of Life',
+    year: 2011,
     mainGenreId: 18, // Drama
-    tmdbId: 334541,
-    poster: 'https://image.tmdb.org/t/p/w500/o9VXYOuaJxCEKOxbA86xqtwmqYn.jpg',
+    tmdbId: 8967,
+    poster: 'https://image.tmdb.org/t/p/w500/l8cwuB5WJSoj4uMAsnzuHBOMaSJ.jpg',
+  },
+  {
+    title: 'Requiem for a Dream',
+    year: 2000,
+    mainGenreId: 18, // Drama
+    tmdbId: 641,
+    poster: 'https://image.tmdb.org/t/p/w500/9BTwsLaMVHOGFlmsSlx5QYCaXb.jpg',
   },
   {
     title: 'Forrest Gump',
@@ -61,25 +75,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/Cw4hIUIAmSYfK9QfaUW5igp9La.jpg',
   },
   {
-    title: 'Nomadland',
-    year: 2021,
-    mainGenreId: 18, // Drama
-    tmdbId: 581734,
-    poster: 'https://image.tmdb.org/t/p/w500/8Vc5EOUEIF1EUXuX9eLFf7BvN3P.jpg',
-  },
-  {
-    title: 'The Tree of Life',
-    year: 2011,
-    mainGenreId: 18, // Drama
-    tmdbId: 8967,
-    poster: 'https://image.tmdb.org/t/p/w500/l8cwuB5WJSoj4uMAsnzuHBOMaSJ.jpg',
-  },
-  {
-    title: 'The Wolf of Wall Street',
-    year: 2013,
+    title: 'Killers of the Flower Moon',
+    year: 2023,
     mainGenreId: 80, // Crime
-    tmdbId: 106646,
-    poster: 'https://image.tmdb.org/t/p/w500/kW9LmvYHAaS9iA0tHmZVq8hQYoq.jpg',
+    tmdbId: 466420,
+    poster: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg',
   },
   {
     title: 'Uncut Gems',
@@ -87,6 +87,20 @@ export const MOVIES: Title[] = [
     mainGenreId: 80, // Crime
     tmdbId: 473033,
     poster: 'https://image.tmdb.org/t/p/w500/6XN1vxHc7kUSqNWtaQKN45J5x2v.jpg',
+  },
+  {
+    title: 'Nightcrawler',
+    year: 2014,
+    mainGenreId: 80, // Crime
+    tmdbId: 242582,
+    poster: 'https://image.tmdb.org/t/p/w500/j9HrX8f7GbZQm1BrBiR40uFQZSb.jpg',
+  },
+  {
+    title: 'The Wolf of Wall Street',
+    year: 2013,
+    mainGenreId: 80, // Crime
+    tmdbId: 106646,
+    poster: 'https://image.tmdb.org/t/p/w500/kW9LmvYHAaS9iA0tHmZVq8hQYoq.jpg',
   },
   {
     title: 'Drive',
@@ -103,11 +117,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/uB7RDZby43Wvu8SKGHHTwGyTDBX.jpg',
   },
   {
-    title: 'Nightcrawler',
-    year: 2014,
+    title: 'Scarface',
+    year: 1983,
     mainGenreId: 80, // Crime
-    tmdbId: 242582,
-    poster: 'https://image.tmdb.org/t/p/w500/j9HrX8f7GbZQm1BrBiR40uFQZSb.jpg',
+    tmdbId: 111,
+    poster: 'https://image.tmdb.org/t/p/w500/iQ5ztdjvteGeboxtmRdXEChJOHh.jpg',
   },
   {
     title: 'The Godfather',
@@ -117,46 +131,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg',
   },
   {
-    title: 'Scarface',
-    year: 1983,
-    mainGenreId: 80, // Crime
-    tmdbId: 111,
-    poster: 'https://image.tmdb.org/t/p/w500/iQ5ztdjvteGeboxtmRdXEChJOHh.jpg',
-  },
-  {
-    title: 'Killers of the Flower Moon',
-    year: 2023,
-    mainGenreId: 80, // Crime
-    tmdbId: 466420,
-    poster: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg',
-  },
-  {
     title: 'Barbie',
     year: 2023,
     mainGenreId: 35, // Comedy
     tmdbId: 346698,
     poster: 'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg',
-  },
-  {
-    title: 'Napoleon Dynamite',
-    year: 2004,
-    mainGenreId: 35, // Comedy
-    tmdbId: 8193,
-    poster: 'https://image.tmdb.org/t/p/w500/6Iv6Uwa2SBLN0dSGM00rdrwN4MJ.jpg',
-  },
-  {
-    title: 'The Big Lebowski',
-    year: 1998,
-    mainGenreId: 35, // Comedy
-    tmdbId: 115,
-    poster: 'https://image.tmdb.org/t/p/w500/3bv6WAp6BSxxYvB5ozKFUYuRA8C.jpg',
-  },
-  {
-    title: 'Borat',
-    year: 2006,
-    mainGenreId: 35, // Comedy
-    tmdbId: 496,
-    poster: 'https://image.tmdb.org/t/p/w500/7g9kBHMN2KTr5KUf8aen187Mdn.jpg',
   },
   {
     title: 'Jojo Rabbit',
@@ -173,13 +152,6 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/AqH7q89NxGRDAyRWKqsL3OBtYfV.jpg',
   },
   {
-    title: 'Anchorman: The Legend of Ron Burgundy',
-    year: 2004,
-    mainGenreId: 35, // Comedy
-    tmdbId: 8699,
-    poster: 'https://image.tmdb.org/t/p/w500/mhZIcRePT7U8viFQVjt1ZjYIsR4.jpg',
-  },
-  {
     title: 'Superbad',
     year: 2007,
     mainGenreId: 35, // Comedy
@@ -187,11 +159,32 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/ek8e8txUyUwd2BNqj6lFEerJfbq.jpg',
   },
   {
-    title: 'Hereditary',
-    year: 2018,
-    mainGenreId: 27, // Horror
-    tmdbId: 493922,
-    poster: 'https://image.tmdb.org/t/p/w500/4GFPuL14eXi66V96xBWY73Y9PfR.jpg',
+    title: 'Borat',
+    year: 2006,
+    mainGenreId: 35, // Comedy
+    tmdbId: 496,
+    poster: 'https://image.tmdb.org/t/p/w500/7g9kBHMN2KTr5KUf8aen187Mdn.jpg',
+  },
+  {
+    title: 'Napoleon Dynamite',
+    year: 2004,
+    mainGenreId: 35, // Comedy
+    tmdbId: 8193,
+    poster: 'https://image.tmdb.org/t/p/w500/6Iv6Uwa2SBLN0dSGM00rdrwN4MJ.jpg',
+  },
+  {
+    title: 'Anchorman: The Legend of Ron Burgundy',
+    year: 2004,
+    mainGenreId: 35, // Comedy
+    tmdbId: 8699,
+    poster: 'https://image.tmdb.org/t/p/w500/mhZIcRePT7U8viFQVjt1ZjYIsR4.jpg',
+  },
+  {
+    title: 'The Big Lebowski',
+    year: 1998,
+    mainGenreId: 35, // Comedy
+    tmdbId: 115,
+    poster: 'https://image.tmdb.org/t/p/w500/3bv6WAp6BSxxYvB5ozKFUYuRA8C.jpg',
   },
   {
     title: 'Midsommar',
@@ -201,39 +194,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/7LEI8ulZzO5gy9Ww2NVCrKmHeDZ.jpg',
   },
   {
-    title: 'The Witch',
-    year: 2016,
+    title: 'Hereditary',
+    year: 2018,
     mainGenreId: 27, // Horror
-    tmdbId: 310131,
-    poster: 'https://image.tmdb.org/t/p/w500/zap5hpFCWSvdWSuPGAQyjUv2wAC.jpg',
-  },
-  {
-    title: 'The Shining',
-    year: 1980,
-    mainGenreId: 27, // Horror
-    tmdbId: 694,
-    poster: 'https://image.tmdb.org/t/p/w500/uAR0AWqhQL1hQa69UDEbb2rE5Wx.jpg',
-  },
-  {
-    title: 'It Follows',
-    year: 2015,
-    mainGenreId: 27, // Horror
-    tmdbId: 270303,
-    poster: 'https://image.tmdb.org/t/p/w500/iwnQ1JH1wdWrGYkgWySptJ5284A.jpg',
-  },
-  {
-    title: 'Saw',
-    year: 2004,
-    mainGenreId: 27, // Horror
-    tmdbId: 176,
-    poster: 'https://image.tmdb.org/t/p/w500/rLNSOudrayDBo1uqXjrhxcjODIC.jpg',
-  },
-  {
-    title: 'The Babadook',
-    year: 2014,
-    mainGenreId: 27, // Horror
-    tmdbId: 242224,
-    poster: 'https://image.tmdb.org/t/p/w500/qt3fqapeo94TfvMyld8P7gkpXLz.jpg',
+    tmdbId: 493922,
+    poster: 'https://image.tmdb.org/t/p/w500/4GFPuL14eXi66V96xBWY73Y9PfR.jpg',
   },
   {
     title: 'Get Out',
@@ -243,18 +208,53 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg',
   },
   {
-    title: 'Blade Runner 2049',
-    year: 2017,
-    mainGenreId: 878, // Science Fiction
-    tmdbId: 335984,
-    poster: 'https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg',
+    title: 'The Witch',
+    year: 2016,
+    mainGenreId: 27, // Horror
+    tmdbId: 310131,
+    poster: 'https://image.tmdb.org/t/p/w500/zap5hpFCWSvdWSuPGAQyjUv2wAC.jpg',
   },
   {
-    title: 'Interstellar',
+    title: 'It Follows',
+    year: 2015,
+    mainGenreId: 27, // Horror
+    tmdbId: 270303,
+    poster: 'https://image.tmdb.org/t/p/w500/iwnQ1JH1wdWrGYkgWySptJ5284A.jpg',
+  },
+  {
+    title: 'The Babadook',
     year: 2014,
+    mainGenreId: 27, // Horror
+    tmdbId: 242224,
+    poster: 'https://image.tmdb.org/t/p/w500/qt3fqapeo94TfvMyld8P7gkpXLz.jpg',
+  },
+  {
+    title: 'Saw',
+    year: 2004,
+    mainGenreId: 27, // Horror
+    tmdbId: 176,
+    poster: 'https://image.tmdb.org/t/p/w500/rLNSOudrayDBo1uqXjrhxcjODIC.jpg',
+  },
+  {
+    title: 'The Shining',
+    year: 1980,
+    mainGenreId: 27, // Horror
+    tmdbId: 694,
+    poster: 'https://image.tmdb.org/t/p/w500/uAR0AWqhQL1hQa69UDEbb2rE5Wx.jpg',
+  },
+  {
+    title: 'Everything Everywhere All at Once',
+    year: 2022,
     mainGenreId: 878, // Science Fiction
-    tmdbId: 157336,
-    poster: 'https://image.tmdb.org/t/p/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg',
+    tmdbId: 545611,
+    poster: 'https://image.tmdb.org/t/p/w500/u68AjlvlutfEIcpmbYpKcdi09ut.jpg',
+  },
+  {
+    title: 'Dune',
+    year: 2021,
+    mainGenreId: 878, // Science Fiction
+    tmdbId: 438631,
+    poster: 'https://image.tmdb.org/t/p/w500/gDzOcq0pfeCeqMBwKIJlSmQpjkZ.jpg',
   },
   {
     title: 'Tenet',
@@ -271,6 +271,20 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/4YRplSk6BhH6PRuE9gfyw9byUJ6.jpg',
   },
   {
+    title: 'Blade Runner 2049',
+    year: 2017,
+    mainGenreId: 878, // Science Fiction
+    tmdbId: 335984,
+    poster: 'https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg',
+  },
+  {
+    title: 'Interstellar',
+    year: 2014,
+    mainGenreId: 878, // Science Fiction
+    tmdbId: 157336,
+    poster: 'https://image.tmdb.org/t/p/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg',
+  },
+  {
     title: 'Under the Skin',
     year: 2013,
     mainGenreId: 878, // Science Fiction
@@ -278,25 +292,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/kX41SU4XFBbeXvVzEb0vbzpkGgO.jpg',
   },
   {
-    title: 'Dune',
-    year: 2021,
-    mainGenreId: 878, // Science Fiction
-    tmdbId: 438631,
-    poster: 'https://image.tmdb.org/t/p/w500/gDzOcq0pfeCeqMBwKIJlSmQpjkZ.jpg',
-  },
-  {
     title: 'Iron Man',
     year: 2008,
     mainGenreId: 878, // Science Fiction
     tmdbId: 1726,
     poster: 'https://image.tmdb.org/t/p/w500/78lPtwv72eTNqFW9COBYI0dWDJa.jpg',
-  },
-  {
-    title: 'Everything Everywhere All at Once',
-    year: 2022,
-    mainGenreId: 878, // Science Fiction
-    tmdbId: 545611,
-    poster: 'https://image.tmdb.org/t/p/w500/u68AjlvlutfEIcpmbYpKcdi09ut.jpg',
   },
   {
     title: 'Alien',
@@ -313,13 +313,6 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg',
   },
   {
-    title: "Pan's Labyrinth",
-    year: 2006,
-    mainGenreId: 14, // Fantasy
-    tmdbId: 1417,
-    poster: 'https://image.tmdb.org/t/p/w500/z7xXihu5wHuSMWymq5VAulPVuvg.jpg',
-  },
-  {
     title: 'The Green Knight',
     year: 2021,
     mainGenreId: 14, // Fantasy
@@ -327,11 +320,18 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/if4hw3Ou5Sav9Em7WWHj66mnywp.jpg',
   },
   {
-    title: 'Edward Scissorhands',
-    year: 1990,
+    title: "Pan's Labyrinth",
+    year: 2006,
     mainGenreId: 14, // Fantasy
-    tmdbId: 162,
-    poster: 'https://image.tmdb.org/t/p/w500/e0FqKFvGPdQNWG8tF9cZBtev9Em.jpg',
+    tmdbId: 1417,
+    poster: 'https://image.tmdb.org/t/p/w500/z7xXihu5wHuSMWymq5VAulPVuvg.jpg',
+  },
+  {
+    title: 'The Fall',
+    year: 2006,
+    mainGenreId: 14, // Fantasy
+    tmdbId: 14784,
+    poster: 'https://image.tmdb.org/t/p/w500/ez7xavvDr5yDz4sSvI55xDp0BoU.jpg',
   },
   {
     title: 'The Lord of the Rings',
@@ -348,11 +348,18 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg',
   },
   {
-    title: 'The Fall',
-    year: 2006,
+    title: 'Edward Scissorhands',
+    year: 1990,
     mainGenreId: 14, // Fantasy
-    tmdbId: 14784,
-    poster: 'https://image.tmdb.org/t/p/w500/ez7xavvDr5yDz4sSvI55xDp0BoU.jpg',
+    tmdbId: 162,
+    poster: 'https://image.tmdb.org/t/p/w500/e0FqKFvGPdQNWG8tF9cZBtev9Em.jpg',
+  },
+  {
+    title: 'Baby Driver',
+    year: 2017,
+    mainGenreId: 28, // Action
+    tmdbId: 339403,
+    poster: 'https://image.tmdb.org/t/p/w500/tYzFuYXmT8LOYASlFCkaPiAFAl0.jpg',
   },
   {
     title: 'Mad Max: Fury Road',
@@ -376,18 +383,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/Abnm1Ws3JH0ReCfEhLMPwPcMcGO.jpg',
   },
   {
-    title: 'Kill Bill: Vol. 1',
-    year: 2003,
+    title: 'Fast Five',
+    year: 2011,
     mainGenreId: 28, // Action
-    tmdbId: 24,
-    poster: 'https://image.tmdb.org/t/p/w500/v7TaX8kXMXs5yFFGR41guUDNcnB.jpg',
-  },
-  {
-    title: 'Baby Driver',
-    year: 2017,
-    mainGenreId: 28, // Action
-    tmdbId: 339403,
-    poster: 'https://image.tmdb.org/t/p/w500/tYzFuYXmT8LOYASlFCkaPiAFAl0.jpg',
+    tmdbId: 51497,
+    poster: 'https://image.tmdb.org/t/p/w500/gEfQjjQwY7fh5bI4GlG0RrBu7Pz.jpg',
   },
   {
     title: 'The Dark Knight',
@@ -397,18 +397,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
   },
   {
-    title: 'Fast Five',
-    year: 2011,
+    title: 'Kill Bill: Vol. 1',
+    year: 2003,
     mainGenreId: 28, // Action
-    tmdbId: 51497,
-    poster: 'https://image.tmdb.org/t/p/w500/gEfQjjQwY7fh5bI4GlG0RrBu7Pz.jpg',
-  },
-  {
-    title: 'Gone Girl',
-    year: 2014,
-    mainGenreId: 53, // Thriller
-    tmdbId: 210577,
-    poster: 'https://image.tmdb.org/t/p/w500/ts996lKsxvjkO2yiYG0ht4qAicO.jpg',
+    tmdbId: 24,
+    poster: 'https://image.tmdb.org/t/p/w500/v7TaX8kXMXs5yFFGR41guUDNcnB.jpg',
   },
   {
     title: 'Parasite',
@@ -418,11 +411,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
   },
   {
-    title: 'Fight Club',
-    year: 1999,
+    title: 'Gone Girl',
+    year: 2014,
     mainGenreId: 53, // Thriller
-    tmdbId: 550,
-    poster: 'https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg',
+    tmdbId: 210577,
+    poster: 'https://image.tmdb.org/t/p/w500/ts996lKsxvjkO2yiYG0ht4qAicO.jpg',
   },
   {
     title: 'Prisoners',
@@ -439,13 +432,6 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/viWheBd44bouiLCHgNMvahLThqx.jpg',
   },
   {
-    title: 'The Silence of the Lambs',
-    year: 1991,
-    mainGenreId: 53, // Thriller
-    tmdbId: 274,
-    poster: 'https://image.tmdb.org/t/p/w500/uS9m8OBk1A8eM9I042bx8XXpqAq.jpg',
-  },
-  {
     title: 'Inception',
     year: 2010,
     mainGenreId: 53, // Thriller
@@ -460,32 +446,25 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/6YmeO4pB7XTh8P8F960O1uA14JO.jpg',
   },
   {
+    title: 'Fight Club',
+    year: 1999,
+    mainGenreId: 53, // Thriller
+    tmdbId: 550,
+    poster: 'https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg',
+  },
+  {
+    title: 'The Silence of the Lambs',
+    year: 1991,
+    mainGenreId: 53, // Thriller
+    tmdbId: 274,
+    poster: 'https://image.tmdb.org/t/p/w500/uS9m8OBk1A8eM9I042bx8XXpqAq.jpg',
+  },
+  {
     title: 'Spider-Man: Into the Spider-Verse',
     year: 2018,
     mainGenreId: 16, // Animation
     tmdbId: 324857,
     poster: 'https://image.tmdb.org/t/p/w500/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg',
-  },
-  {
-    title: 'Spirited Away',
-    year: 2001,
-    mainGenreId: 16, // Animation
-    tmdbId: 129,
-    poster: 'https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',
-  },
-  {
-    title: 'Coraline',
-    year: 2009,
-    mainGenreId: 16, // Animation
-    tmdbId: 14836,
-    poster: 'https://image.tmdb.org/t/p/w500/4jeFXQYytChdZYE9JYO7Un87IlW.jpg',
-  },
-  {
-    title: 'Persepolis',
-    year: 2007,
-    mainGenreId: 16, // Animation
-    tmdbId: 2011,
-    poster: 'https://image.tmdb.org/t/p/w500/aU8i2QAdTyRR1nYb36Gq51xXP8p.jpg',
   },
   {
     title: 'The Lego Movie',
@@ -495,6 +474,13 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/lbctonEnewCYZ4FYoTZhs8cidAl.jpg',
   },
   {
+    title: 'Coraline',
+    year: 2009,
+    mainGenreId: 16, // Animation
+    tmdbId: 14836,
+    poster: 'https://image.tmdb.org/t/p/w500/4jeFXQYytChdZYE9JYO7Un87IlW.jpg',
+  },
+  {
     title: 'WALL·E',
     year: 2008,
     mainGenreId: 16, // Animation
@@ -502,11 +488,25 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg',
   },
   {
+    title: 'Persepolis',
+    year: 2007,
+    mainGenreId: 16, // Animation
+    tmdbId: 2011,
+    poster: 'https://image.tmdb.org/t/p/w500/aU8i2QAdTyRR1nYb36Gq51xXP8p.jpg',
+  },
+  {
     title: 'The Simpsons Movie',
     year: 2007,
     mainGenreId: 16, // Animation
     tmdbId: 35,
     poster: 'https://image.tmdb.org/t/p/w500/s3b8TZWwmkYc2KoJ5zk77qB6PzY.jpg',
+  },
+  {
+    title: 'Spirited Away',
+    year: 2001,
+    mainGenreId: 16, // Animation
+    tmdbId: 129,
+    poster: 'https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',
   },
   {
     title: 'The Revenant',
@@ -537,13 +537,6 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/7lLJgKnAicAcR5UEuo8xhSMj18w.jpg',
   },
   {
-    title: 'Raiders of the Lost Ark',
-    year: 1981,
-    mainGenreId: 12, // Adventure
-    tmdbId: 85,
-    poster: 'https://image.tmdb.org/t/p/w500/ceG9VzoRAVGwivFU403Wc3AHRys.jpg',
-  },
-  {
     title: 'The Beach',
     year: 2000,
     mainGenreId: 12, // Adventure
@@ -551,18 +544,18 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/4y7LxD8TSi6AtsM2xSYqUm1gu7u.jpg',
   },
   {
+    title: 'Raiders of the Lost Ark',
+    year: 1981,
+    mainGenreId: 12, // Adventure
+    tmdbId: 85,
+    poster: 'https://image.tmdb.org/t/p/w500/ceG9VzoRAVGwivFU403Wc3AHRys.jpg',
+  },
+  {
     title: 'Knives Out',
     year: 2019,
     mainGenreId: 9648, // Mystery
     tmdbId: 546554,
     poster: 'https://image.tmdb.org/t/p/w500/pThyQovXQrw2m0s9x82twj48Jq4.jpg',
-  },
-  {
-    title: 'Memento',
-    year: 2000,
-    mainGenreId: 9648, // Mystery
-    tmdbId: 77,
-    poster: 'https://image.tmdb.org/t/p/w500/nzlv62aC0octS5AklAiWpXLX9Z0.jpg',
   },
   {
     title: 'Shutter Island',
@@ -579,6 +572,13 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/Ag2B2KHKQPukjH7WutmgnnSNurZ.jpg',
   },
   {
+    title: 'Memento',
+    year: 2000,
+    mainGenreId: 9648, // Mystery
+    tmdbId: 77,
+    poster: 'https://image.tmdb.org/t/p/w500/nzlv62aC0octS5AklAiWpXLX9Z0.jpg',
+  },
+  {
     title: 'Se7en',
     year: 1995,
     mainGenreId: 9648, // Mystery
@@ -586,18 +586,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/191nKfP0ehp3uIvWqgPbFmI4lv9.jpg',
   },
   {
-    title: 'La La Land',
-    year: 2016,
+    title: 'Past Lives',
+    year: 2023,
     mainGenreId: 10749, // Romance
-    tmdbId: 313369,
-    poster: 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg',
-  },
-  {
-    title: 'Twilight',
-    year: 2008,
-    mainGenreId: 10749, // Romance
-    tmdbId: 8966,
-    poster: 'https://image.tmdb.org/t/p/w500/3Gkb6jm6962ADUPaCBqzz9CTbn9.jpg',
+    tmdbId: 666277,
+    poster: 'https://image.tmdb.org/t/p/w500/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg',
   },
   {
     title: 'Call Me by Your Name',
@@ -607,11 +600,25 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/mZ4gBdfkhP9tvLH1DO4m4HYtiyi.jpg',
   },
   {
+    title: 'La La Land',
+    year: 2016,
+    mainGenreId: 10749, // Romance
+    tmdbId: 313369,
+    poster: 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg',
+  },
+  {
     title: '(500) Days of Summer',
     year: 2009,
     mainGenreId: 10749, // Romance
     tmdbId: 19913,
     poster: 'https://image.tmdb.org/t/p/w500/qXAuQ9hF30sQRsXf40OfRVl0MJZ.jpg',
+  },
+  {
+    title: 'Twilight',
+    year: 2008,
+    mainGenreId: 10749, // Romance
+    tmdbId: 8966,
+    poster: 'https://image.tmdb.org/t/p/w500/3Gkb6jm6962ADUPaCBqzz9CTbn9.jpg',
   },
   {
     title: 'Titanic',
@@ -621,11 +628,18 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg',
   },
   {
-    title: 'Past Lives',
-    year: 2023,
-    mainGenreId: 10749, // Romance
-    tmdbId: 666277,
-    poster: 'https://image.tmdb.org/t/p/w500/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg',
+    title: 'Elvis',
+    year: 2022,
+    mainGenreId: 10402, // Music
+    tmdbId: 614934,
+    poster: 'https://image.tmdb.org/t/p/w500/qBOKWqAFbveZ4ryjJJwbie6tXkQ.jpg',
+  },
+  {
+    title: 'Rocketman',
+    year: 2019,
+    mainGenreId: 10402, // Music
+    tmdbId: 504608,
+    poster: 'https://image.tmdb.org/t/p/w500/f4FF18ia7yTvHf2izNrHqBmgH8U.jpg',
   },
   {
     title: 'Bohemian Rhapsody',
@@ -649,32 +663,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/gQRfiyfGvr1az0quaYyMram3Aqt.jpg',
   },
   {
-    title: 'Rocketman',
-    year: 2019,
-    mainGenreId: 10402, // Music
-    tmdbId: 504608,
-    poster: 'https://image.tmdb.org/t/p/w500/f4FF18ia7yTvHf2izNrHqBmgH8U.jpg',
-  },
-  {
-    title: 'Elvis',
-    year: 2022,
-    mainGenreId: 10402, // Music
-    tmdbId: 614934,
-    poster: 'https://image.tmdb.org/t/p/w500/qBOKWqAFbveZ4ryjJJwbie6tXkQ.jpg',
-  },
-  {
     title: 'Oppenheimer',
     year: 2023,
     mainGenreId: 36, // History
     tmdbId: 872585,
     poster: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
-  },
-  {
-    title: 'Braveheart',
-    year: 1995,
-    mainGenreId: 36, // History
-    tmdbId: 197,
-    poster: 'https://image.tmdb.org/t/p/w500/or1gBugydmjToAEq7OZY0owwFk.jpg',
   },
   {
     title: 'The Favourite',
@@ -689,6 +682,13 @@ export const MOVIES: Title[] = [
     mainGenreId: 36, // History
     tmdbId: 98,
     poster: 'https://image.tmdb.org/t/p/w500/wN2xWp1eIwCKOD0BHTcErTBv1Uq.jpg',
+  },
+  {
+    title: 'Braveheart',
+    year: 1995,
+    mainGenreId: 36, // History
+    tmdbId: 197,
+    poster: 'https://image.tmdb.org/t/p/w500/or1gBugydmjToAEq7OZY0owwFk.jpg',
   },
   {
     title: "Schindler's List",
@@ -712,18 +712,18 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/b4Oe15CGLL61Ped0RAS9JpqdmCt.jpg',
   },
   {
-    title: 'Full Metal Jacket',
-    year: 1987,
-    mainGenreId: 10752, // War
-    tmdbId: 600,
-    poster: 'https://image.tmdb.org/t/p/w500/kMKyx1k8hWWscYFnPbnxxN4Eqo4.jpg',
-  },
-  {
     title: 'American Sniper',
     year: 2014,
     mainGenreId: 10752, // War
     tmdbId: 190859,
     poster: 'https://image.tmdb.org/t/p/w500/i1U46OwMc6vlm7OoSUKfqUH615e.jpg',
+  },
+  {
+    title: 'Full Metal Jacket',
+    year: 1987,
+    mainGenreId: 10752, // War
+    tmdbId: 600,
+    poster: 'https://image.tmdb.org/t/p/w500/kMKyx1k8hWWscYFnPbnxxN4Eqo4.jpg',
   },
   {
     title: 'Apocalypse Now',
@@ -733,11 +733,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/gQB8Y5RCMkv2zwzFHbUJX3kAhvA.jpg',
   },
   {
-    title: 'Django Unchained',
-    year: 2012,
+    title: 'The Power of the Dog',
+    year: 2021,
     mainGenreId: 37, // Western
-    tmdbId: 68718,
-    poster: 'https://image.tmdb.org/t/p/w500/7oWY8VDWW7thTzWh3OKYRkWUlD5.jpg',
+    tmdbId: 600583,
+    poster: 'https://image.tmdb.org/t/p/w500/kEy48iCzGnp0ao1cZbNeWR6yIhC.jpg',
   },
   {
     title: 'The Hateful Eight',
@@ -747,11 +747,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/jIywvdPjia2t3eKYbjVTcwBQlG8.jpg',
   },
   {
-    title: 'The Power of the Dog',
-    year: 2021,
+    title: 'Django Unchained',
+    year: 2012,
     mainGenreId: 37, // Western
-    tmdbId: 600583,
-    poster: 'https://image.tmdb.org/t/p/w500/kEy48iCzGnp0ao1cZbNeWR6yIhC.jpg',
+    tmdbId: 68718,
+    poster: 'https://image.tmdb.org/t/p/w500/7oWY8VDWW7thTzWh3OKYRkWUlD5.jpg',
   },
   {
     title: 'True Grit',
@@ -768,20 +768,6 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/qbYgqOczabWNn2XKwgMtVrntD6P.jpg',
   },
   {
-    title: 'Free Solo',
-    year: 2018,
-    mainGenreId: 99, // Documentary
-    tmdbId: 515042,
-    poster: 'https://image.tmdb.org/t/p/w500/v4QfYZMACODlWul9doN9RxE99ag.jpg',
-  },
-  {
-    title: 'Blackfish',
-    year: 2013,
-    mainGenreId: 99, // Documentary
-    tmdbId: 158999,
-    poster: 'https://image.tmdb.org/t/p/w500/kCk4mDFE96Mn1AYfEcbxkIiw7ND.jpg',
-  },
-  {
     title: 'My Octopus Teacher',
     year: 2020,
     mainGenreId: 99, // Documentary
@@ -796,6 +782,13 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/yFsP0BAJhAH3RTXCAnGvI1CtaUb.jpg',
   },
   {
+    title: 'Free Solo',
+    year: 2018,
+    mainGenreId: 99, // Documentary
+    tmdbId: 515042,
+    poster: 'https://image.tmdb.org/t/p/w500/v4QfYZMACODlWul9doN9RxE99ag.jpg',
+  },
+  {
     title: "Won't You Be My Neighbor?",
     year: 2018,
     mainGenreId: 99, // Documentary
@@ -803,11 +796,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/8qE8NZjiP2M884baH0VoLF828Vp.jpg',
   },
   {
-    title: 'Rocky',
-    year: 1976,
-    mainGenreId: 10751, // Family
-    tmdbId: 1366,
-    poster: 'https://image.tmdb.org/t/p/w500/aYtBYWqCdUqcnoodWJdcTG3pFev.jpg',
+    title: 'Blackfish',
+    year: 2013,
+    mainGenreId: 99, // Documentary
+    tmdbId: 158999,
+    poster: 'https://image.tmdb.org/t/p/w500/kCk4mDFE96Mn1AYfEcbxkIiw7ND.jpg',
   },
   {
     title: 'Paddington 2',
@@ -817,6 +810,13 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/1OJ9vkD5xPt3skC6KguyXAgagRZ.jpg',
   },
   {
+    title: 'Matilda',
+    year: 1996,
+    mainGenreId: 10751, // Family
+    tmdbId: 10830,
+    poster: 'https://image.tmdb.org/t/p/w500/wYoDpWInsBEVSmWStnRH06ddoyk.jpg',
+  },
+  {
     title: 'Home Alone',
     year: 1990,
     mainGenreId: 10751, // Family
@@ -824,11 +824,11 @@ export const MOVIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/onTSipZ8R3bliBdKfPtsDuHTdlL.jpg',
   },
   {
-    title: 'Matilda',
-    year: 1996,
+    title: 'Rocky',
+    year: 1976,
     mainGenreId: 10751, // Family
-    tmdbId: 10830,
-    poster: 'https://image.tmdb.org/t/p/w500/wYoDpWInsBEVSmWStnRH06ddoyk.jpg',
+    tmdbId: 1366,
+    poster: 'https://image.tmdb.org/t/p/w500/aYtBYWqCdUqcnoodWJdcTG3pFev.jpg',
   },
   {
     title: 'Willy Wonka & the Chocolate Factory',
@@ -841,13 +841,6 @@ export const MOVIES: Title[] = [
 
 export const SERIES: Title[] = [
   {
-    title: 'Succession',
-    year: 2018,
-    mainGenreId: 18, // Drama
-    tmdbId: 76331,
-    poster: 'https://image.tmdb.org/t/p/w500/z0XiwdrCQ9yVIr4O0pxzaAYRxdW.jpg',
-  },
-  {
     title: 'Euphoria',
     year: 2019,
     mainGenreId: 18, // Drama
@@ -855,11 +848,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/ypmtwojDd751Peszi62DVLytqqC.jpg',
   },
   {
-    title: 'This Is Us',
-    year: 2016,
+    title: 'Succession',
+    year: 2018,
     mainGenreId: 18, // Drama
-    tmdbId: 67136,
-    poster: 'https://image.tmdb.org/t/p/w500/huxmY6Dmzwpv5Q2hnNft0UMK7vf.jpg',
+    tmdbId: 76331,
+    poster: 'https://image.tmdb.org/t/p/w500/z0XiwdrCQ9yVIr4O0pxzaAYRxdW.jpg',
   },
   {
     title: "The Handmaid's Tale",
@@ -867,6 +860,13 @@ export const SERIES: Title[] = [
     mainGenreId: 18, // Drama
     tmdbId: 69478,
     poster: 'https://image.tmdb.org/t/p/w500/eGUT7j3n3rn5yGihlCgwUnD70HV.jpg',
+  },
+  {
+    title: 'This Is Us',
+    year: 2016,
+    mainGenreId: 18, // Drama
+    tmdbId: 67136,
+    poster: 'https://image.tmdb.org/t/p/w500/huxmY6Dmzwpv5Q2hnNft0UMK7vf.jpg',
   },
   {
     title: 'Mr. Robot',
@@ -883,11 +883,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg',
   },
   {
-    title: 'Breaking Bad',
-    year: 2008,
+    title: 'You',
+    year: 2018,
     mainGenreId: 80, // Crime
-    tmdbId: 1396,
-    poster: 'https://image.tmdb.org/t/p/w500/anFx9aTOOYqgS3v7x3R84Kz67ly.jpg',
+    tmdbId: 78191,
+    poster: 'https://image.tmdb.org/t/p/w500/oANi0vEE92nuijiZQgPZ88FSxqQ.jpg',
   },
   {
     title: 'Ozark',
@@ -897,13 +897,6 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/pCGyPVrI9Fzw6rE1Pvi4BIXF6ET.jpg',
   },
   {
-    title: 'Peaky Blinders',
-    year: 2013,
-    mainGenreId: 80, // Crime
-    tmdbId: 60574,
-    poster: 'https://image.tmdb.org/t/p/w500/vUUqzWa2LnHIVqkaKVlVGkVcZIW.jpg',
-  },
-  {
     title: 'Narcos',
     year: 2015,
     mainGenreId: 80, // Crime
@@ -911,32 +904,18 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/rTmal9fDbwh5F0waol2hq35U4ah.jpg',
   },
   {
-    title: 'You',
-    year: 2018,
+    title: 'Peaky Blinders',
+    year: 2013,
     mainGenreId: 80, // Crime
-    tmdbId: 78191,
-    poster: 'https://image.tmdb.org/t/p/w500/oANi0vEE92nuijiZQgPZ88FSxqQ.jpg',
+    tmdbId: 60574,
+    poster: 'https://image.tmdb.org/t/p/w500/vUUqzWa2LnHIVqkaKVlVGkVcZIW.jpg',
   },
   {
-    title: 'The Office',
-    year: 2005,
-    mainGenreId: 35, // Comedy
-    tmdbId: 2316,
-    poster: 'https://image.tmdb.org/t/p/w500/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
-  },
-  {
-    title: 'Fleabag',
-    year: 2016,
-    mainGenreId: 35, // Comedy
-    tmdbId: 67070,
-    poster: 'https://image.tmdb.org/t/p/w500/27vEYsRKa3eAniwmoccOoluEXQ1.jpg',
-  },
-  {
-    title: "It's Always Sunny in Philadelphia",
-    year: 2005,
-    mainGenreId: 35, // Comedy
-    tmdbId: 2710,
-    poster: 'https://image.tmdb.org/t/p/w500/o0tMMK33JqmtpcWw0H41cEr9xQB.jpg',
+    title: 'Breaking Bad',
+    year: 2008,
+    mainGenreId: 80, // Crime
+    tmdbId: 1396,
+    poster: 'https://image.tmdb.org/t/p/w500/anFx9aTOOYqgS3v7x3R84Kz67ly.jpg',
   },
   {
     title: 'Ted Lasso',
@@ -946,32 +925,32 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/5fhZdwP1DVJ0FyVH6vrFdHwpXIn.jpg',
   },
   {
+    title: 'Fleabag',
+    year: 2016,
+    mainGenreId: 35, // Comedy
+    tmdbId: 67070,
+    poster: 'https://image.tmdb.org/t/p/w500/27vEYsRKa3eAniwmoccOoluEXQ1.jpg',
+  },
+  {
+    title: 'The Office',
+    year: 2005,
+    mainGenreId: 35, // Comedy
+    tmdbId: 2316,
+    poster: 'https://image.tmdb.org/t/p/w500/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
+  },
+  {
+    title: "It's Always Sunny in Philadelphia",
+    year: 2005,
+    mainGenreId: 35, // Comedy
+    tmdbId: 2710,
+    poster: 'https://image.tmdb.org/t/p/w500/o0tMMK33JqmtpcWw0H41cEr9xQB.jpg',
+  },
+  {
     title: 'Seinfeld',
     year: 1989,
     mainGenreId: 35, // Comedy
     tmdbId: 1400,
     poster: 'https://image.tmdb.org/t/p/w500/aCw8ONfyz3AhngVQa1E2Ss4KSUQ.jpg',
-  },
-  {
-    title: 'Stranger Things',
-    year: 2016,
-    mainGenreId: 878, // Science Fiction
-    tmdbId: 66732,
-    poster: 'https://image.tmdb.org/t/p/w500/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg',
-  },
-  {
-    title: 'Black Mirror',
-    year: 2011,
-    mainGenreId: 878, // Science Fiction
-    tmdbId: 42009,
-    poster: 'https://image.tmdb.org/t/p/w500/seN6rRfN0I6n8iDXjlSMk1QjNcq.jpg',
-  },
-  {
-    title: 'Westworld',
-    year: 2016,
-    mainGenreId: 878, // Science Fiction
-    tmdbId: 63247,
-    poster: 'https://image.tmdb.org/t/p/w500/ALlSU9du9iRiKIIoY1sREGNqQ5.jpg',
   },
   {
     title: 'Severance',
@@ -988,18 +967,25 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/tg9I5pOY4M9CKj8U0cxVBTsm5eh.jpg',
   },
   {
-    title: 'Game of Thrones',
-    year: 2011,
-    mainGenreId: 14, // Fantasy
-    tmdbId: 1399,
-    poster: 'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
+    title: 'Stranger Things',
+    year: 2016,
+    mainGenreId: 878, // Science Fiction
+    tmdbId: 66732,
+    poster: 'https://image.tmdb.org/t/p/w500/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg',
   },
   {
-    title: 'The Witcher',
-    year: 2019,
-    mainGenreId: 14, // Fantasy
-    tmdbId: 71912,
-    poster: 'https://image.tmdb.org/t/p/w500/AoGsDM02UVt0npBA8OvpDcZbaMi.jpg',
+    title: 'Westworld',
+    year: 2016,
+    mainGenreId: 878, // Science Fiction
+    tmdbId: 63247,
+    poster: 'https://image.tmdb.org/t/p/w500/ALlSU9du9iRiKIIoY1sREGNqQ5.jpg',
+  },
+  {
+    title: 'Black Mirror',
+    year: 2011,
+    mainGenreId: 878, // Science Fiction
+    tmdbId: 42009,
+    poster: 'https://image.tmdb.org/t/p/w500/seN6rRfN0I6n8iDXjlSMk1QjNcq.jpg',
   },
   {
     title: 'The Lord of the Rings',
@@ -1009,11 +995,32 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/kf5Hz70tjNAHg4swGDzOr9BfoZ1.jpg',
   },
   {
+    title: 'The Witcher',
+    year: 2019,
+    mainGenreId: 14, // Fantasy
+    tmdbId: 71912,
+    poster: 'https://image.tmdb.org/t/p/w500/AoGsDM02UVt0npBA8OvpDcZbaMi.jpg',
+  },
+  {
     title: 'His Dark Materials',
     year: 2019,
     mainGenreId: 14, // Fantasy
     tmdbId: 68507,
     poster: 'https://image.tmdb.org/t/p/w500/g6tIKGc3f1H5QMz1dcgCwADKpZ7.jpg',
+  },
+  {
+    title: 'Game of Thrones',
+    year: 2011,
+    mainGenreId: 14, // Fantasy
+    tmdbId: 1399,
+    poster: 'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
+  },
+  {
+    title: 'Squid Game',
+    year: 2021,
+    mainGenreId: 28, // Action
+    tmdbId: 93405,
+    poster: 'https://image.tmdb.org/t/p/w500/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg',
   },
   {
     title: 'The Boys',
@@ -1030,25 +1037,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg',
   },
   {
-    title: 'Squid Game',
-    year: 2021,
-    mainGenreId: 28, // Action
-    tmdbId: 93405,
-    poster: 'https://image.tmdb.org/t/p/w500/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg',
-  },
-  {
     title: 'Lost',
     year: 2004,
     mainGenreId: 28, // Action
     tmdbId: 4607,
     poster: 'https://image.tmdb.org/t/p/w500/og6S0aTZU6YUJAbqxeKjCa3kY1E.jpg',
-  },
-  {
-    title: 'True Detective',
-    year: 2014,
-    mainGenreId: 9648, // Mystery
-    tmdbId: 46648,
-    poster: 'https://image.tmdb.org/t/p/w500/dC7jkj2g1aU8sxKqM6D4g44xA6w.jpg',
   },
   {
     title: 'Dark',
@@ -1058,11 +1051,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg',
   },
   {
-    title: 'Sherlock',
-    year: 2010,
+    title: 'True Detective',
+    year: 2014,
     mainGenreId: 9648, // Mystery
-    tmdbId: 19885,
-    poster: 'https://image.tmdb.org/t/p/w500/7WTsnHkbA0FaG6R9twfFde0I9hl.jpg',
+    tmdbId: 46648,
+    poster: 'https://image.tmdb.org/t/p/w500/dC7jkj2g1aU8sxKqM6D4g44xA6w.jpg',
   },
   {
     title: 'The Killing',
@@ -1070,6 +1063,20 @@ export const SERIES: Title[] = [
     mainGenreId: 9648, // Mystery
     tmdbId: 34415,
     poster: 'https://image.tmdb.org/t/p/w500/3yiwAUNGn1rsPSVmFgVwPVJFtYf.jpg',
+  },
+  {
+    title: 'Sherlock',
+    year: 2010,
+    mainGenreId: 9648, // Mystery
+    tmdbId: 19885,
+    poster: 'https://image.tmdb.org/t/p/w500/7WTsnHkbA0FaG6R9twfFde0I9hl.jpg',
+  },
+  {
+    title: 'Arcane',
+    year: 2021,
+    mainGenreId: 16, // Animation
+    tmdbId: 94605,
+    poster: 'https://image.tmdb.org/t/p/w500/abf8tHznhSvl9BAElD2cQeRr7do.jpg',
   },
   {
     title: 'BoJack Horseman',
@@ -1084,13 +1091,6 @@ export const SERIES: Title[] = [
     mainGenreId: 16, // Animation
     tmdbId: 60625,
     poster: 'https://image.tmdb.org/t/p/w500/owhkU6KRqdXoUQpjV8uyZGPtX58.jpg',
-  },
-  {
-    title: 'Arcane',
-    year: 2021,
-    mainGenreId: 16, // Animation
-    tmdbId: 94605,
-    poster: 'https://image.tmdb.org/t/p/w500/abf8tHznhSvl9BAElD2cQeRr7do.jpg',
   },
   {
     title: 'Attack on Titan',
@@ -1112,6 +1112,13 @@ export const SERIES: Title[] = [
     mainGenreId: 16, // Animation
     tmdbId: 456,
     poster: 'https://image.tmdb.org/t/p/w500/uWpG7GqfKGQqX4YMAo3nv5OrglV.jpg',
+  },
+  {
+    title: 'Shōgun',
+    year: 2024,
+    mainGenreId: 36, // History
+    tmdbId: 126308,
+    poster: 'https://image.tmdb.org/t/p/w500/7O4iVfOMQmdCSxhOg1WnzG1AgYT.jpg',
   },
   {
     title: 'Chernobyl',
@@ -1142,18 +1149,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/1A1BwgWO3Sw379VEhR0vkTuE3XW.jpg',
   },
   {
-    title: 'Shōgun',
-    year: 2024,
-    mainGenreId: 36, // History
-    tmdbId: 126308,
-    poster: 'https://image.tmdb.org/t/p/w500/7O4iVfOMQmdCSxhOg1WnzG1AgYT.jpg',
-  },
-  {
-    title: 'Band of Brothers',
-    year: 2001,
+    title: 'SAS Rogue Heroes',
+    year: 2022,
     mainGenreId: 10752, // War
-    tmdbId: 4613,
-    poster: 'https://image.tmdb.org/t/p/w500/pGzV187ogXzgJrvPRy2YPi29ofH.jpg',
+    tmdbId: 93870,
+    poster: 'https://image.tmdb.org/t/p/w500/Tc1mRuP5QrGaetGKcitZkhTU9g.jpg',
   },
   {
     title: 'The Pacific',
@@ -1170,6 +1170,13 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/wiihoYOODwh82xVzPoiaztlg6c9.jpg',
   },
   {
+    title: 'Band of Brothers',
+    year: 2001,
+    mainGenreId: 10752, // War
+    tmdbId: 4613,
+    poster: 'https://image.tmdb.org/t/p/w500/pGzV187ogXzgJrvPRy2YPi29ofH.jpg',
+  },
+  {
     title: 'M*A*S*H',
     year: 1972,
     mainGenreId: 10752, // War
@@ -1177,11 +1184,18 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/6rhuM3oMoEWKxAdrm7IyM8oq8cC.jpg',
   },
   {
-    title: 'SAS Rogue Heroes',
-    year: 2022,
-    mainGenreId: 10752, // War
-    tmdbId: 93870,
-    poster: 'https://image.tmdb.org/t/p/w500/Tc1mRuP5QrGaetGKcitZkhTU9g.jpg',
+    title: 'The Last of Us',
+    year: 2023,
+    mainGenreId: 27, // Horror
+    tmdbId: 100088,
+    poster: 'https://image.tmdb.org/t/p/w500/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg',
+  },
+  {
+    title: 'Midnight Mass',
+    year: 2021,
+    mainGenreId: 27, // Horror
+    tmdbId: 97400,
+    poster: 'https://image.tmdb.org/t/p/w500/3eVSQJdiBin6A7F7nsg62eJFf0Y.jpg',
   },
   {
     title: 'The Haunting of Hill House',
@@ -1205,18 +1219,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/aN29llVoCFtBTwDZFtqdD9d8dHb.jpg',
   },
   {
-    title: 'Midnight Mass',
+    title: '1883',
     year: 2021,
-    mainGenreId: 27, // Horror
-    tmdbId: 97400,
-    poster: 'https://image.tmdb.org/t/p/w500/3eVSQJdiBin6A7F7nsg62eJFf0Y.jpg',
-  },
-  {
-    title: 'The Last of Us',
-    year: 2023,
-    mainGenreId: 27, // Horror
-    tmdbId: 100088,
-    poster: 'https://image.tmdb.org/t/p/w500/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg',
+    mainGenreId: 37, // Western
+    tmdbId: 118357,
+    poster: 'https://image.tmdb.org/t/p/w500/waLbm384SQDwLTCn6ttPqQS5kfV.jpg',
   },
   {
     title: 'Yellowstone',
@@ -1224,13 +1231,6 @@ export const SERIES: Title[] = [
     mainGenreId: 37, // Western
     tmdbId: 73586,
     poster: 'https://image.tmdb.org/t/p/w500/vOYfRZ0NpUK5hG2CB2dJFnYJlGe.jpg',
-  },
-  {
-    title: 'Deadwood',
-    year: 2004,
-    mainGenreId: 37, // Western
-    tmdbId: 1406,
-    poster: 'https://image.tmdb.org/t/p/w500/fWwxYAuqY4Na7fKI3Qq2nFWCwG8.jpg',
   },
   {
     title: 'Godless',
@@ -1247,11 +1247,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/ckC9pL9yeYpOoK5aJ7GbYYWheK7.jpg',
   },
   {
-    title: '1883',
-    year: 2021,
+    title: 'Deadwood',
+    year: 2004,
     mainGenreId: 37, // Western
-    tmdbId: 118357,
-    poster: 'https://image.tmdb.org/t/p/w500/waLbm384SQDwLTCn6ttPqQS5kfV.jpg',
+    tmdbId: 1406,
+    poster: 'https://image.tmdb.org/t/p/w500/fWwxYAuqY4Na7fKI3Qq2nFWCwG8.jpg',
   },
   {
     title: 'Tiger King',
@@ -1259,6 +1259,13 @@ export const SERIES: Title[] = [
     mainGenreId: 99, // Documentary
     tmdbId: 100698,
     poster: 'https://image.tmdb.org/t/p/w500/dXQCEjVth8P8L47XIsoRt0oL8Gw.jpg',
+  },
+  {
+    title: 'The Last Dance',
+    year: 2020,
+    mainGenreId: 99, // Documentary
+    tmdbId: 79525,
+    poster: 'https://image.tmdb.org/t/p/w500/oVf4xGGbDtwVHiKn8uTuSriY7PH.jpg',
   },
   {
     title: 'Making a Murderer',
@@ -1282,11 +1289,11 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/bNcNxUtZ520d5de5s78onoiSiwQ.jpg',
   },
   {
-    title: 'The Last Dance',
-    year: 2020,
-    mainGenreId: 99, // Documentary
-    tmdbId: 79525,
-    poster: 'https://image.tmdb.org/t/p/w500/oVf4xGGbDtwVHiKn8uTuSriY7PH.jpg',
+    title: 'Heartstopper',
+    year: 2022,
+    mainGenreId: 10749, // Romance
+    tmdbId: 124834,
+    poster: 'https://image.tmdb.org/t/p/w500/dQc0QbDiHjGmWxTfKtBgYtS4bj5.jpg',
   },
   {
     title: 'Normal People',
@@ -1303,25 +1310,18 @@ export const SERIES: Title[] = [
     poster: 'https://image.tmdb.org/t/p/w500/uXTg565ahu9RwonCX1V2Hex1NU6.jpg',
   },
   {
-    title: 'Outlander',
-    year: 2014,
-    mainGenreId: 10749, // Romance
-    tmdbId: 56570,
-    poster: 'https://image.tmdb.org/t/p/w500/oftZNfyTVNU7IfOqoGLoT8MGvNs.jpg',
-  },
-  {
-    title: 'Heartstopper',
-    year: 2022,
-    mainGenreId: 10749, // Romance
-    tmdbId: 124834,
-    poster: 'https://image.tmdb.org/t/p/w500/dQc0QbDiHjGmWxTfKtBgYtS4bj5.jpg',
-  },
-  {
     title: 'Modern Love',
     year: 2019,
     mainGenreId: 10749, // Romance
     tmdbId: 91602,
     poster: 'https://image.tmdb.org/t/p/w500/cP9CJ9nvPT3cnnBSlGFgwq7odIR.jpg',
+  },
+  {
+    title: 'Outlander',
+    year: 2014,
+    mainGenreId: 10749, // Romance
+    tmdbId: 56570,
+    poster: 'https://image.tmdb.org/t/p/w500/oftZNfyTVNU7IfOqoGLoT8MGvNs.jpg',
   },
 ];
 
