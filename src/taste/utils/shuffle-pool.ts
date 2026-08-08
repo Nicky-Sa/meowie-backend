@@ -24,7 +24,7 @@ export const shuffledPool = (pool: Title[]): Title[] => {
     ]);
   }
 
-  const piles = shuffled([...byGenre.values()].map(shuffled));
+  const piles = shuffled([...byGenre.values()]);
   const deepestPile = Math.max(0, ...piles.map((pile) => pile.length));
 
   const dealt: Title[] = [];
