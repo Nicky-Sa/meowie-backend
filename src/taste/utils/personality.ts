@@ -106,9 +106,11 @@ const scoreFor = (
   cat: Cat,
   input: PersonalityInput,
   liked: Title[],
+  disliked: Title[],
   trait: Trait | null,
 ): number =>
-  GENRE_WEIGHT * genreFit(liked, cat.genres) +
+  GENRE_WEIGHT * genreFit(liked, cat.genres) -
+  GENRE_WEIGHT * genreFit(disliked, cat.genres) +
   (cat.era === input.era ? ANSWER_WEIGHT : 0) +
   (cat.authority === input.authority ? ANSWER_WEIGHT : 0) +
   traitScore(cat, trait);
@@ -136,12 +138,13 @@ const beats = (
  */
 export const personalityFor = (input: PersonalityInput): Personality => {
   const liked = titlesAnswered(input, 'like');
+  const disliked = titlesAnswered(input, 'dislike');
   const trait = traitFrom(input);
 
   let best: Cat | null = null;
   let bestScore = 0;
   for (const cat of CATS) {
-    const score = scoreFor(cat, input, liked, trait);
+    const score = scoreFor(cat, input, liked, disliked, trait);
     if (
       best === null ? score > bestScore : beats(cat, score, best, bestScore)
     ) {
