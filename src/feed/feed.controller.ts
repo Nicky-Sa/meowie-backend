@@ -53,13 +53,10 @@ export class FeedController {
     return feed;
   }
 
-  // Set only after a result: an error must not inherit the guest header and
-  // get held by CloudFront for an hour.
-  // Guest feeds are identical for everyone, so they're CDN-cacheable;
-  // personalized responses must never be shared. CloudFront's cache key doesn't
-  // include Authorization, so the client tags guest requests `audience=guest`.
-  // A refresh is never cacheable — `refresh=true` is its own cache key, so the
-  // CDN would hand every later pull the same "fresh" feed for an hour.
+  /**
+   * CloudFront ignores Authorization, so the client marks guest calls with
+   * `audience=guest`. Runs after a result: errors and refreshes stay uncached.
+   */
   private setCacheHeaders(
     res: Response,
     userId: number | null,
