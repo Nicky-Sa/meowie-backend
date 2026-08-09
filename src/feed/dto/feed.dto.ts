@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, Max } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { Page } from '@/common/types/media-query';
-import { MAX_FEED_PAGE } from '@/feed/constants/feed.constant';
+import { MAX_FEED_PAGE } from '@/feed/engine/constants/feed.constant';
 
 export class FeedQueryDto extends Page {
   // The pool is capped, so pages past it hold nothing to serve.

@@ -7,7 +7,7 @@ import { SortOption } from '@/common/types/media-query';
 import { FeedResDto } from '@/feed/dto/feed.dto';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
-import { MAX_FEED_PAGE } from '@/feed/constants/feed.constant';
+import { MAX_FEED_PAGE } from '@/feed/engine/constants/feed.constant';
 
 @Injectable()
 export class FeedService {

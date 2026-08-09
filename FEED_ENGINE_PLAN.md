@@ -86,9 +86,10 @@ The taste deck and the library both produce seeds, and they share nothing but th
 what they return — a list of `{ id, weight }`, positive for liked, negative for disliked.
 The deck carries no strength and no useful date; library rows carry a 1–10 rating and a
 date worth using. So each gets its own function and its own rules, and they meet only at
-the end, when their weights are added together.
+the end, when the lists are joined.
 
-Keep the joining step able to take any number of lists, not exactly two.
+Keep the joining step able to take any number of lists, not exactly two. Each list carries
+a priority, and on a repeated title the best priority wins. The library is 1, taste is 2.
 
 ### Source A — the taste deck
 
@@ -138,8 +139,13 @@ Nothing else depends on it.
 
 ### Joining them
 
-Add the two lists. A title in both gets both weights. That addition is the only place the
-sources touch, and it's the only thing the joining function does.
+A title that shows up in both lists keeps the library weight and drops the taste one. The
+deck answer was given once at sign-up and only says like or dislike; the library row is
+newer and carries a real 1–10 rating. Inception liked in the deck (+0.2) and later rated 10
+in the library ends up +1.0, not +1.2.
+
+That replacement is the only place the sources touch, and it's the only thing the joining
+function does.
 
 ### What we're guaranteed
 
@@ -175,9 +181,10 @@ Every id in the seed list is dropped from the pool: the user already knows it. B
 
 ### Work items
 
-- [ ] `feed/seeds/from-deck.ts` — taste row in, weighted list out
+- [ ] `feed/seeds/taste.seed.ts` — taste ratings in, weighted list out
 - [ ] `feed/seeds/from-library.ts` — library rows in, weighted list out, recency included
-- [ ] `feed/seeds/join.ts` — several weighted lists in, one out. Adds, nothing else
+- [ ] `feed/seeds/join.ts` — several weighted lists in, one out. Best priority wins on a
+      repeated id, nothing else
 - [ ] `feed/seeds/pick.ts` — joined list in, liked and disliked seed lists out
 - [ ] Tests per source, so a change to library weights can't break the deck
 - [ ] Make the backend enforce 5 **liked** movies. `EnoughOpinions` in `save-taste.dto.ts`

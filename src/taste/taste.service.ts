@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Taste } from '@/taste/entities/taste.entity';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
 import { CacheService } from '@/cache/cache.service';
-import { feedCacheKeys } from '@/feed/constants/feed.constant';
+import { feedCacheKeys } from '@/feed/engine/constants/feed.constant';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { MEDIA_TYPE_VALUES } from '@/types/media-type';
