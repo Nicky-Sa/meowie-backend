@@ -16,10 +16,10 @@ import {
   AVOID_IDS,
   AuthorityAnswer,
   AvoidId,
-  countOpinions,
+  idsAnswered,
   EraAnswer,
   EXPLORE_LEVELS,
-  MIN_MOVIES_TO_RATE,
+  MIN_MOVIES_TO_LIKE,
   TITLE_ANSWERS,
   TitleAnswer,
   TitleRatings,
@@ -52,16 +52,17 @@ class AreTitleRatings implements ValidatorConstraintInterface {
   }
 }
 
-@ValidatorConstraint({ name: 'enoughOpinions' })
-class EnoughOpinions implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'enoughLikes' })
+class EnoughLikes implements ValidatorConstraintInterface {
   validate(ratings: unknown): boolean {
     return (
-      isTitleRatings(ratings) && countOpinions(ratings) >= MIN_MOVIES_TO_RATE
+      isTitleRatings(ratings) &&
+      idsAnswered(ratings, 'like').length >= MIN_MOVIES_TO_LIKE
     );
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${args.property} needs at least ${MIN_MOVIES_TO_RATE} titles marked liked or disliked`;
+    return `${args.property} needs at least ${MIN_MOVIES_TO_LIKE} titles marked liked`;
   }
 }
 
@@ -69,7 +70,7 @@ export class SaveTasteReqDto {
   // Only ids the deck actually serves are accepted, so replacing the pools with
   // a live source means this check has to follow.
   @Validate(AreTitleRatings, [MOVIE_IDS])
-  @Validate(EnoughOpinions)
+  @Validate(EnoughLikes)
   movieRatings: TitleRatings;
 
   @Validate(AreTitleRatings, [SERIES_IDS])

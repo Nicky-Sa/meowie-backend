@@ -111,8 +111,9 @@ export type AvoidChip = Option<string>;
 
 export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
-// "Haven't seen it" doesn't count towards the minimum.
-export const MIN_MOVIES_TO_RATE = 5;
+// Likes only. The feed walk starts from liked titles, so dislikes and
+// "haven't seen it" give it nowhere to start.
+export const MIN_MOVIES_TO_LIKE = 5;
 
 export const idsAnswered = (
   ratings: TitleRatings,
@@ -121,10 +122,6 @@ export const idsAnswered = (
   Object.entries(ratings)
     .filter(([, given]) => given === answer)
     .map(([tmdbId]) => Number(tmdbId));
-
-// "Haven't seen it" says nothing about their taste, so it doesn't count.
-export const countOpinions = (ratings: TitleRatings): number =>
-  Object.values(ratings).filter((answer) => answer !== 'not-seen').length;
 
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;

@@ -12,5 +12,5 @@ export type TasteJourneyResDto = {
   questions: readonly TasteQuestion[];
   avoidChips: readonly AvoidChip[];
   exploreLevels: readonly string[];
-  minMoviesToRate: number;
+  minMoviesToLike: number;
 };
