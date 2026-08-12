@@ -50,25 +50,24 @@ export class PersonService {
     const combinedCredits = await this.tmdbService.getCombinedCredits(personId);
     const { cast, crew } = combinedCredits;
 
-    const castResults: PosterInfo[] = cast.map((item) =>
-      this.mapToPosterInfo(
+    // newest first; sorted before the merge below, which keeps the order it is given
+    const sortedCredits = [
+      ...cast.map((item) => ({
         item,
-        item.character ? `Performing as ${item.character}` : 'N/A',
-      ),
-    );
-
-    const crewResults: PosterInfo[] = crew.map((item) =>
-      this.mapToPosterInfo(item, item.job),
-    );
+        role: item.character ? `Performing as ${item.character}` : 'N/A',
+      })),
+      ...crew.map((item) => ({ item, role: item.job })),
+    ].sort((a, b) => this.getReleaseTime(b.item) - this.getReleaseTime(a.item));
 
     // aggregated based on id which is media's id
-    const results = [...castResults, ...crewResults].reduce((acc, item) => {
+    const results = sortedCredits.reduce((acc, credit) => {
+      const item = this.mapToPosterInfo(credit.item, credit.role);
       const existingItem = acc.find((i) => i.id === item.id);
       if (existingItem) {
         if (existingItem.role === 'N/A') {
           existingItem.role = item.role;
         } else {
-          existingItem.role += `, and ${item.role}`;
+          existingItem.role += `, ${item.role}`;
         }
       } else {
         acc.push(item);
@@ -77,6 +76,15 @@ export class PersonService {
     }, [] as PosterInfo[]);
 
     return { results, page: 1, total_pages: 1, total_results: results.length };
+  }
+
+  /** Titles with no date get 0, so they land at the end of the newest-first list. */
+  private getReleaseTime(
+    item: TMDB_CombinedCreditsCast | TMDB_CombinedCreditsCrew,
+  ): number {
+    const date = item.release_date || item.first_air_date;
+    const time = date ? new Date(date).getTime() : 0;
+    return Number.isNaN(time) ? 0 : time;
   }
 
   private mapToPosterInfo(
