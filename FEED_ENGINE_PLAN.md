@@ -73,124 +73,172 @@ delete:
   and the app breaks without it.
 
 ---
-
 ## Phase 1 — The seed list
 
-**Seeds** are the titles the user has already told us about, good or bad. Everything the
-engine does starts from them: Phase 2 walks out from the liked ones, and the pool leaves
-out every title on the list, because the user already knows it. One list answers both.
+**Seeds** are the titles the user has already told us something about, either by liking, disliking, rating, saving, or watching them. Everything starts here.
+
+The seed list is also used later to remove titles the user already knows from the feed.
 
 ### Two seed sources, never mixed
 
-The taste deck and the library both produce seeds, and they share nothing but the shape of
-what they return — a list of `{ id, weight }`, positive for liked, negative for disliked.
-The deck carries no strength and no useful date; library rows carry a 1–10 rating and a
-date worth using. So each gets its own function and its own rules, and they meet only at
-the end, when the lists are joined.
+There are two sources of seeds:
 
-Keep the joining step able to take any number of lists, not exactly two. Each list carries
-a priority, and on a repeated title the best priority wins. The library is 1, taste is 2.
+* **Taste deck** — explicit `like`, `dislike`, or `not-seen` answers.
+* **Library** — saved and seen titles, with an optional 1–10 rating and a date.
+
+Each source has its own rules. They both return `{ id, weight }`, with positive weights meaning good and negative weights meaning bad. They are joined at the end.
+
+The join must accept any number of seed lists, not just these two. Each source has a priority. If the same title appears more than once, the entry with the highest priority wins.
+
+For now:
+
+```text
+library = priority 1
+taste   = priority 2
+```
+
+This means the library always wins when a title appears in both sources, even if it changes the sign.
+
+For example:
+
+```text
+taste deck:  Inception → like     (+0.2)
+library:     Inception → rated 3  (negative)
+```
+
+The library entry replaces the taste-deck entry completely. We do not add the two weights together.
 
 ### Source A — the taste deck
 
-Answers are `like`, `dislike` or `not-seen`, and nothing more. No strength, no useful date:
-every answer was given in the same minute, so recency has no meaning here.
+The deck only tells us `like`, `dislike`, or `not-seen`.
 
-- `like` → **+0.2**
-- `dislike` → **−0.2**
-- `not-seen` → **skipped entirely.** It says nothing about taste, and leaving it out is
-  also what keeps those titles eligible to appear in the feed later.
+* `like` → **+0.2**
+* `dislike` → **−0.2**
+* `not-seen` → **skip it**
 
-That is the whole source. Every weight is the same size, because the deck never asks how
-much someone liked something.
+`not-seen` is important: it says nothing about the user's taste, so it must not become a seed. The title can still appear in the feed later.
+
+Every deck answer has the same weight because the deck doesn't ask how strongly the user feels about a title.
 
 ### Source B — the library
 
-Rows carry a 1–10 rating and a date, so this source has real strength and real age.
+Library rows have more information, so they get their own weights:
 
 | Row                 | Weight |
-| ------------------- | ------ |
-| Rated 10            | +1.0   |
-| Rated 8             | +0.56  |
-| Saved, not seen yet | +0.5   |
-| Rated 7             | +0.33  |
-| Rated 6             | +0.11  |
-| Seen, never rated   | +0.1   |
-| Rated 5             | −0.11  |
-| Rated 1             | −1.0   |
+| ------------------- | -----: |
+| Rated 10            |   +1.0 |
+| Rated 8             |  +0.56 |
+| Saved, not seen yet |   +0.5 |
+| Rated 7             |  +0.33 |
+| Rated 6             |  +0.11 |
+| Seen, never rated   |   +0.1 |
+| Rated 5             |  −0.11 |
+| Rated 1             |   −1.0 |
 
-Ratings come from one formula, with the scale read from `library.constants.ts` so the two
-can never drift apart:
+Ratings use one formula:
 
-```
-midpoint = (LOWEST_RATING + HIGHEST_RATING) / 2        // 5.5
+```text
+midpoint = (LOWEST_RATING + HIGHEST_RATING) / 2
 weight   = (rating - midpoint) / (HIGHEST_RATING - midpoint)
 ```
 
-**Recency belongs to this source alone.** A title rated last week says more than one rated
-two years ago:
+With a 1–10 scale, that gives:
 
+```text
+10 → +1.0
+5  → -0.11
+1  → -1.0
 ```
+
+The other values are fixed constants from the library rules.
+
+### Recency
+
+Recency only applies to library entries.
+
+A recent action should count more than an old one:
+
+```text
 weight = weight * 0.5 ^ (monthsSinceAction / halfLife)
 ```
 
-`halfLife = 12` months, from `LibraryItem.createdAt`. Build this after the walk works.
-Nothing else depends on it.
+`halfLife = 12` months.
 
-### Joining them
+Use `LibraryItem.createdAt` for the date.
 
-A title that shows up in both lists keeps the library weight and drops the taste one. The
-deck answer was given once at sign-up and only says like or dislike; the library row is
-newer and carries a real 1–10 rating. Inception liked in the deck (+0.2) and later rated 10
-in the library ends up +1.0, not +1.2.
+Recency is applied **before picking the strongest seeds**, so an old rating can become weaker than a newer one.
 
-That replacement is the only place the sources touch, and it's the only thing the joining
-function does.
+Nothing else uses recency.
 
-### What we're guaranteed
+### Joining the sources
 
-**Movies: at least 5 liked seeds**, enforced by the deck. The movie walk always has
-somewhere to start.
+Join all seed lists into one list.
 
-**Series: possibly nothing.** The series deck is optional, so a new user can arrive with an
-empty seed list. The engine doesn't run — the request falls back to the popular feed until
-they rate or save a series. Phase 7 replaces that.
+If a title appears in more than one source, keep the entry from the source with the highest priority and discard the others.
 
-**Weights are flat at first.** With an empty library, source B returns nothing and every
-seed is ±0.2. The seed cap and the recency decay do nothing until the library grows.
+Do not add the weights together.
 
-### Picking seeds from the list
+For example:
 
-The walk doesn't take all of it. Two picks:
+```text
+taste deck:  Inception → +0.2
+library:     Inception → +1.0
 
-- **Liked walk:** the 30 strongest positives. More than that muddies the taste and slows
-  the job; fewer wastes what you know.
-- **Disliked walk:** the 10 strongest negatives. That is enough to mark the obvious things
-  to stay away from.
+result:      Inception → +1.0
+```
 
-Ideally one franchise wouldn't fill either list — five Marvel films as seeds gives you a
-pool of Marvel films. But to spot that, you need to know each seed's genre or which series
-it belongs to, and we don't store that. Getting it means asking TMDB for the details of all
-30 seeds. That is affordable in a job and the answers cache well, but it isn't free. Either
-pay for it here, or wait for Phase 5, which puts that data in our own database.
+And if the library disagrees with the deck:
 
-### The exclusion list
+```text
+taste deck:  Inception → +0.2
+library:     Inception → -0.56
 
-Every id in the seed list is dropped from the pool: the user already knows it. Because
-"haven't seen it" never enters the list, those titles stay eligible, which is what you want.
+result:      Inception → -0.56
+```
+
+### Picking seeds for the walk
+
+The walk doesn't use every seed.
+
+Pick:
+
+* **Positive walk:** the 30 strongest positive seeds.
+* **Negative walk:** the 10 strongest negative seeds.
+
+"Strongest" means the largest absolute weight after recency has been applied.
+
+The positive and negative lists are separate. A title can only be in one of them after the sources have been joined.
+
+### What gets excluded later
+
+Keep the full joined seed list available so Phase 2 can exclude everything the user already knows.
+
+That includes:
+
+* library titles
+* `like` titles
+* `dislike` titles
+
+`not-seen` titles are not in the seed list and therefore stay eligible for the feed.
+
+### Guarantees
+
+**Movies:** the deck requires at least 5 liked titles, so the movie walk always has something to start from.
+
+**Series:** the series deck is optional. A new user can therefore have no series seeds. In that case, don't run the series walk and fall back to the popular feed until they rate or save a series.
+
+**Empty library:** without library data, all deck seeds are simply ±0.2.
 
 ### Work items
 
-- [ ] `feed/seeds/taste.seed.ts` — taste ratings in, weighted list out
-- [ ] `feed/seeds/from-library.ts` — library rows in, weighted list out, recency included
-- [ ] `feed/seeds/join.ts` — several weighted lists in, one out. Best priority wins on a
-      repeated id, nothing else
-- [ ] `feed/seeds/pick.ts` — joined list in, liked and disliked seed lists out
-- [ ] Tests per source, so a change to library weights can't break the deck
-- [ ] Make the backend enforce 5 **liked** movies. `EnoughOpinions` in `save-taste.dto.ts`
-      counts likes and dislikes together today, so five dislikes passes and the guarantee
-      above isn't real
-- [ ] Empty series seed list falls back to the popular feed
+* [x] `feed/seeds/taste.seed.ts` — taste answers in, weighted list out
+* [x] `feed/seeds/from-library.ts` — library rows in, weighted list out, recency included
+* [x] `feed/seeds/join.ts` — any number of weighted lists in, one out; highest priority wins
+* [x] `feed/seeds/pick.ts` — joined list in, positive and negative seed lists out
+* [x] Test that the library completely replaces a matching taste-deck entry, including when the sign changes
+* [x] Test that recency is applied before the 30/10 seed selection
+* [x] Test that `not-seen` never becomes a seed
+* [x] Make the backend enforce 5 **liked** movies. `EnoughOpinions` (now `EnoughLikes`) currently counts likes and dislikes together, so five dislikes can pass the check.
 
 ---
 
@@ -291,6 +339,8 @@ already there.
 - [ ] `feed/generate/walk.ts` — pure function, takes a "get neighbours" function so it tests
       offline
 - [ ] `feed/generate/popular.ts` — the other candidate source
+- [ ] Pool-build orchestration: for series with no seeds, skip the walk and build the pool
+      from `generate/popular.ts`
 - [ ] `feed/filter/hard-rules.ts` — pure function: candidates plus the rules in, survivors out
 - [ ] BullMQ job runs stages 1 to 4 and stores the pool
 - [ ] Test the walk on a small hand-made graph where the answer is obvious

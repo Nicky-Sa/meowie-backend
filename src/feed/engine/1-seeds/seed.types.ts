@@ -13,16 +13,23 @@ export type SeedList = {
 
 export type LibrarySeedItem = Pick<
   LibraryItem,
-  'tmdbId' | 'category' | 'rating'
+  'tmdbId' | 'category' | 'rating' | 'createdAt'
 >;
 
 export type SeedsInput = {
   tasteRatings: TitleRatings;
   libraryItems: LibrarySeedItem[];
+  now?: Date; // it's being passed as an arg to keep the functions pure
 };
 
 export type SeedsOutput = {
   allSeeds: Seed[];
-  likedSeeds: Seed[];
-  dislikedSeeds: Seed[];
+  positiveSeeds: Seed[];
+  negativeSeeds: Seed[];
 };
+
+export type LibraryWeightModifier = (
+  weight: number,
+  item: LibrarySeedItem,
+  now: Date,
+) => number;
