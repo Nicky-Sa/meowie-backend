@@ -231,10 +231,9 @@ series walk and fall back to the popular feed until they rate or save a series.
 
 ### Work items
 
-* [x] `feed/seeds/taste.seed.ts` — taste answers in, weighted list out
-* [x] `feed/seeds/from-library.ts` — library rows in, weighted list out, recency included
-* [x] `feed/seeds/join.ts` — any number of weighted lists in, one out; highest priority wins
-* [x] `feed/seeds/pick.ts` — joined list in, positive and negative seed lists out
+* [x] `feed/engine/1-seeds/taste.source.ts` — taste answers in, weighted list out
+* [x] `feed/engine/1-seeds/library.source.ts` — library rows in, weighted list out, recency included
+* [x] `feed/engine/1-seeds/helpers.ts` — joins weighted lists and picks positive and negative walk seeds
 * [x] Test that the library completely replaces a matching taste-deck entry, including when the sign changes
 * [x] Test that recency is applied before the 30/10 seed selection
 * [x] Test that `not-seen` never becomes a seed
@@ -463,13 +462,13 @@ mainstream seeds only produce a few hundred useful titles, increasing the cap wo
 ### Work items
 
 * [x] `getRecommendationIds` with a one-month cache
-* [x] `feed/generate/walk.ts` — pure function, takes a `getNeighbours` function
+* [x] `feed/engine/2-generate/walk.source.ts` — pure function, takes a `getNeighbours` function
 * [x] Test the walk on a small hand-made graph where the answer is obvious
 * [x] Test that weights from multiple paths are added together
 * [x] Test that titles outside the frontier stay in the pool but don't generate another hop
 * [x] Test that a title with no recommendations doesn't break the walk
 * [x] Run the positive and negative walks separately
-* [ ] `feed/generate/popular.ts` — popular candidates as a separate source
+* [x] `feed/engine/2-generate/popular.source.ts` — popular candidates as a separate source
 * [ ] Merge candidates from all sources without duplicating titles
 * [ ] `feed/filter/hard-rules.ts` — candidates plus the rules in, survivors out
 * [ ] Pool-build orchestration: for series with no seeds, skip the walk and use popular candidates

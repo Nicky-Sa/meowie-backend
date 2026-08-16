@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
-import { walkStage } from '@/feed/engine/2-generate/walk.stage';
+import { walkSource } from '@/feed/engine/2-generate/walk.source';
 
-describe('walkStage.run', () => {
+describe('walkSource', () => {
   it('follows recommendations across three rounds', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [{ id: 1, weight: 1 }],
       getNeighbours: (id) => {
         if (id === 1) return Promise.resolve([2]);
@@ -22,7 +22,7 @@ describe('walkStage.run', () => {
   });
 
   it('splits a title weight evenly between its neighbours', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [{ id: 1, weight: 1 }],
       getNeighbours: (id) => {
         if (id === 1) return Promise.resolve([2, 3]);
@@ -38,7 +38,7 @@ describe('walkStage.run', () => {
   });
 
   it('adds weight when multiple titles point to the same neighbour', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [
         { id: 1, weight: 1 },
         { id: 2, weight: 1 },
@@ -65,7 +65,7 @@ describe('walkStage.run', () => {
 
     const followedIds: number[] = [];
 
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds,
       getNeighbours: (id) => {
         followedIds.push(id);
@@ -84,7 +84,7 @@ describe('walkStage.run', () => {
   });
 
   it('retains restart shares when a title has no neighbours', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [{ id: 1, weight: 1 }],
       getNeighbours: () => Promise.resolve([]),
     });
@@ -93,7 +93,7 @@ describe('walkStage.run', () => {
   });
 
   it('normalizes seed weights before spreading them', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [
         { id: 1, weight: 2 },
         { id: 2, weight: 1 },
@@ -114,7 +114,7 @@ describe('walkStage.run', () => {
   });
 
   it('uses the absolute value of seed weights when creating shares', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [
         { id: 1, weight: -2 },
         { id: 2, weight: -1 },
@@ -135,7 +135,7 @@ describe('walkStage.run', () => {
   });
 
   it('returns an empty result when there are no seeds', async () => {
-    const result = await walkStage.run({
+    const result = await walkSource({
       seeds: [],
       getNeighbours: () => Promise.resolve([]),
     });

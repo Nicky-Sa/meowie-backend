@@ -1,28 +1,27 @@
-import { Seed } from '@/feed/engine/1-seeds/seed.types';
+import { Seed } from '@/feed/engine/engine.type';
 import {
   MAX_TITLES_TO_FOLLOW,
   WALK_RESTART,
   WALK_ROUNDS,
 } from '@/feed/engine/constants/feed.constant';
-import { Stage } from '@/feed/engine/stage.type';
 import {
-  WalkInput,
-  WalkOutput,
+  WalkSourceInput,
+  WalkSourceOutput,
   WalkedTitle,
   Weights,
 } from '@/feed/engine/2-generate/walk.types';
 
 /**
- * Follows recommendation links from the strongest seed titles.
+ * Produces recommendation candidates from a set of seeds.
  *
  * Most of each title's weight is spread evenly across its recommendations.
  * The rest is returned to the original seeds so the walk stays anchored to
  * the user's original taste.
  */
-const run = async ({
+export const walkSource = async ({
   seeds,
   getNeighbours,
-}: WalkInput): Promise<WalkOutput> => {
+}: WalkSourceInput): Promise<WalkSourceOutput> => {
   const normalizedSeeds = normalizeSeedWeights(seeds);
   const collected: Weights = new Map();
   let scores = normalizedSeeds;
@@ -36,8 +35,6 @@ const run = async ({
     .map(([id, weight]): WalkedTitle => ({ id, weight }))
     .sort((a, b) => b.weight - a.weight);
 };
-
-export const walkStage: Stage<WalkInput, Promise<WalkOutput>> = { run };
 
 /**
  * Normalizes the seed weights so that their absolute values add up to 1.
@@ -62,29 +59,18 @@ const normalizeSeedWeights = (seeds: Seed[]): Weights => {
  * their current weight but do not generate another hop. The frontier's weight
  * is spread across its neighbours, while the restart share is added back to
  * the original seeds.
- *
- * For example, with a weight of 0.5, 3 neighbours, and a restart value of
- * 0.2, 0.5 * (1 - 0.2) = 0.4 is spread across the neighbours (0.4 / 3 = 0.1333 each) and 0.5 - 0.4 = 0.1 is returned
- * to the original seed.
  */
 const spread = async (
   scores: Weights,
   seedShares: Weights,
-  getNeighbours: WalkInput['getNeighbours'],
+  getNeighbours: WalkSourceInput['getNeighbours'],
 ): Promise<Weights> => {
-  const frontier = [...scores] // [id, weight]
+  const frontier = [...scores]
     .sort(([, weightA], [, weightB]) => weightB - weightA)
     .slice(0, MAX_TITLES_TO_FOLLOW);
 
   const frontierIds = new Set(frontier.map(([id]) => id));
-
-  // Titles that weren't followed remain available for later rounds.
-  const carriedOver = new Map(
-    [...scores].filter(([id]) => !frontierIds.has(id)),
-  );
-
-  const next = carriedOver;
-
+  const next = new Map([...scores].filter(([id]) => !frontierIds.has(id)));
   const neighbourLists = await Promise.all(
     frontier.map(([id]) => getNeighbours(id)),
   );
@@ -97,7 +83,6 @@ const spread = async (
     const share = (weight * (1 - WALK_RESTART)) / neighbours.length;
 
     for (const neighbour of neighbours) {
-      // next = non-frontier titles that survived + recommendations produced by the frontier
       next.set(neighbour, (next.get(neighbour) ?? 0) + share);
     }
   });
