@@ -463,12 +463,12 @@ mainstream seeds only produce a few hundred useful titles, increasing the cap wo
 ### Work items
 
 * [x] `getRecommendationIds` with a one-month cache
-* [ ] `feed/generate/walk.ts` — pure function, takes a `getNeighbours` function
-* [ ] Test the walk on a small hand-made graph where the answer is obvious
-* [ ] Test that weights from multiple paths are added together
-* [ ] Test that titles outside the frontier stay in the pool but don't generate another hop
-* [ ] Test that a title with no recommendations doesn't break the walk
-* [ ] Run the positive and negative walks separately
+* [x] `feed/generate/walk.ts` — pure function, takes a `getNeighbours` function
+* [x] Test the walk on a small hand-made graph where the answer is obvious
+* [x] Test that weights from multiple paths are added together
+* [x] Test that titles outside the frontier stay in the pool but don't generate another hop
+* [x] Test that a title with no recommendations doesn't break the walk
+* [x] Run the positive and negative walks separately
 * [ ] `feed/generate/popular.ts` — popular candidates as a separate source
 * [ ] Merge candidates from all sources without duplicating titles
 * [ ] `feed/filter/hard-rules.ts` — candidates plus the rules in, survivors out

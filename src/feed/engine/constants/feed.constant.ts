@@ -15,6 +15,10 @@ export const LIBRARY_SEED_HALF_LIFE_MONTHS = 12;
 export const LIBRARY_SEED_PRIORITY = 1;
 export const TASTE_SEED_PRIORITY = 2;
 
+export const WALK_ROUNDS = 3;
+export const WALK_RESTART = 0.2;
+export const MAX_TITLES_TO_FOLLOW = 200;
+
 /**
  * taste.service.ts clears these keys when taste is saved, so both modules
  * must build them from this one place.
