@@ -243,101 +243,237 @@ series walk and fall back to the popular feed until they rate or save a series.
 
 ---
 
-## Phase 2 — Two-hop walk
+## Phase 2 — Walk and candidate generation
 
-**The walk** is how we collect candidates.
+The goal of this phase is to build a pool of titles that might be worth showing.
 
-Ask TMDB for the recommendations of one title and you get about twenty others back. Ask for the recommendations of each
-of those, and you have four hundred. Do it once more and you have thousands. The walk is that: start at the seeds,
-follow the recommendation links two or three steps out, and keep count of how often each title comes up. A title that
-turns up often is close to the user's taste. A title that turns up once is not.
+There are two sources for now:
 
-Five seeds with one step out gives about a hundred titles. That is all the feed has to choose from today.
+1. **The walk** — finds titles close to the user's existing taste.
+2. **Popular titles** — gives us good general candidates that the walk might never reach.
 
-### Two candidate sources, never mixed
+Both produce candidates for the same pool. Neither source scores the title for quality yet. That happens in Phase 3.
 
-The walk and popular titles both produce pool entries directly, and they're scored side by side. Neither ever becomes a
-seed — walking from popular titles would only find more popular titles.
+### 2.1 — The recommendation walk
 
-Phases 5 and 7 each add another one, so keep the pool able to take entries from any number of sources.
+The walk starts from the positive and negative seeds from Phase 1 and follows TMDB's recommendation links.
 
-### Random walk with restart
+If a title has about 20 recommendations, one seed can produce about 20 candidates. Following those candidates again
+produces many more.
 
-Spread weight from the seeds along recommendation links, pulling some back each round.
+The walk runs separately for positive and negative seeds:
 
-```
-scores = seedWeights            // the liked seeds from Phase 1, made to sum to 1
-result = {}
-
-repeat 3 times:
-  next = {}
-  for each (titleId, weight) in scores:
-    neighbours = recommendationIdsOf(titleId)     // ~20 ids
-    share = weight * (1 - restart) / neighbours.length
-    for each n in neighbours:
-      next[n] += share
-  for each (seedId, seedWeight) in seedWeights:
-    next[seedId] += restart * seedWeight
-  scores = next
-  add scores into result
+```text
+positive seeds → positive walk
+negative seeds → negative walk
 ```
 
-A title several seeds point at ends up high. One hanging off a single seed ends up low.
+The positive walk tells us:
 
-Run the same walk on the disliked seeds and subtract the result. Keep it as a **penalty**, not a block — a title can sit
-close to both a liked and a disliked seed.
+> How closely is this title connected to things the user likes?
+
+The negative walk tells us:
+
+> How closely is this title connected to things the user dislikes?
+
+The two walks never mix.
+
+### Spread the weight
+
+Each seed starts with its Phase 1 weight.
+
+For every round:
+
+1. Take the strongest `MAX_FRONTIER` titles from the current scores.
+2. Get their TMDB recommendations.
+3. Spread most of each title's weight evenly across its recommendations.
+4. Keep weaker titles that weren't followed in the current scores. They stay candidates but don't generate another hop.
+5. Put the restart portion back onto the original seeds.
+6. Add the new scores to the result.
+7. Repeat for `WALK_ROUNDS` rounds.
+
+In simple terms:
+
+```text
+current scores
+      ↓
+follow the strongest titles
+      ↓
+spread their weight to recommendations
+      ↓
+put some weight back on the original seeds
+      ↓
+next round
+```
+
+The important part is that **not being in the frontier doesn't remove a title from the pool**. It only means that title
+doesn't get to generate another hop.
+
+### Weight split
+
+With:
+
+```text
+restart = 0.2
+```
+
+80% of a title's weight moves to its recommendations and 20% goes back to the original seed distribution.
+
+For example:
+
+```text
+title weight = 0.5
+20 recommendations
+
+0.5 × 0.8 = 0.4 passed forward
+0.4 / 20  = 0.02 per recommendation
+```
+
+The remaining:
+
+```text
+0.5 × 0.2 = 0.1
+```
+
+is returned to the original seeds.
+
+### Multiple paths add together
+
+If several titles point at the same recommendation, their weights are added.
+
+For example:
+
+```text
+Inception     → Arrival   0.10
+Interstellar  → Arrival   0.15
+```
+
+Arrival gets:
+
+```text
+0.25
+```
+
+That is a useful signal because it means multiple strong titles led to the same candidate.
+
+### No recommendations
+
+If a title has no recommendations, it doesn't generate anything for the next round.
+
+It doesn't cause the walk to fail, and it doesn't create any new candidates.
+
+### The result of the walk
+
+The walk returns the accumulated weights from all rounds.
+
+A title that repeatedly appears, or is reached through several strong paths, ends up with a higher weight than a title
+that appears once.
+
+The positive walk produces a **positive closeness signal**.
+
+The negative walk produces a separate **negative closeness signal**.
+
+Don't make the negative walk return negative numbers. Both walks should use the same simple `{ id, weight }` shape.
+Phase 3 decides how the negative signal affects the final score.
 
 ### Media type
 
-Movies and series get their own walk and their own pool. TMDB rarely recommends a series off a film or the other way
-round, so mixing them gains nothing.
+Movies and series have separate walks and separate pools.
 
-### What the pool drops before anything is scored
+A movie walk only asks for movie recommendations. A series walk only asks for series recommendations.
 
-Three hard filters, applied once when the job finishes the walk:
+They never mix.
 
-- **The seeds themselves**, and everything already in the library or answered `like` /
-  `dislike` in the deck. `not-seen` stays — it says nothing about taste, and they may still want to watch it.
-- **Avoid chips.** TMDB labels titles two ways: a genre, one of about eighteen fixed buckets, and a keyword, a free tag
-  out of thousands. Genre ids come free on every candidate, so genre-based chips are dropped on the spot. Gore and anime
-  have no genre of their own, and TMDB has no horror genre for series, so those need the candidate's keywords — one
-  extra call each, because the recommendations endpoint carries no keywords and takes no filters. A candidate whose
-  keywords can't be read is dropped, since an avoid is a hard rule.
-- **Junk.** Vote count floor, and movies under 30 minutes.
+### 2.2 — Popular candidates
 
-The keyword calls are the expensive part, but they run inside the job rather than in the request, so nobody waits on
-them. Phase 5 removes them.
+Popular titles are a second way to find candidates.
 
-### The blocker
+The purpose isn't to make the feed generic. It's to catch good titles that the recommendation graph never reaches.
 
-Round two needs recommendations for every title found in round one — hundreds of TMDB calls. So:
+For example, a user might have fairly unusual taste, and none of their seeds may point to a highly rated title that
+would still be a good fit. Popular candidates give the feed another way to discover it.
 
-1. `TmdbService.getRecommendationIds(mediaType, id)` — ids only, `@Cacheable` for a month. Lists barely change and
-   entries stay tiny.
-2. Even cached, a cold walk is too slow for a request. Build the pool in a **BullMQ job**; the request reads it.
+Popular titles do **not** become seeds and are never used as starting points for the walk.
 
-Point 2 is the real work. The job runs when taste or the library changes, and on a schedule. A refresh never triggers
-it — refresh only re-draws a page from the pool that is already there.
+For now, popular candidates are simply added to the candidate pool. Phase 3 decides how they score alongside titles
+found by the walk.
+
+If a title comes from both the walk and the popular source, keep both signals rather than creating a duplicate
+candidate. The candidate should carry the walk weight and the fact that it was also found by the popular source.
+
+### 2.3 — Hard filtering
+
+Once all candidates have been generated, apply the hard filters.
+
+Drop:
+
+* **Titles the user already knows:** everything in the full Phase 1 seed list, including library titles and `like` /
+  `dislike` answers. `not-seen` titles stay eligible.
+* **Avoid chips:** drop titles matching the user's hard avoids.
+* **Junk:** apply the vote-count floor and the minimum movie runtime.
+
+Avoids are hard rules. If a title matches one, it is removed rather than merely getting a lower score.
+
+For genre-based avoids, use the genre ids already returned with the candidate.
+
+For avoids that need keywords, fetch the candidate's keywords. If the keywords cannot be read, drop the candidate
+because we can't safely verify the hard rule.
+
+### TMDB calls
+
+The walk can make a lot of TMDB calls, especially in later rounds.
+
+Use:
+
+```text
+getRecommendationIds(mediaType, id)
+```
+
+to fetch recommendation ids only.
+
+Cache these responses for one month. Recommendation lists change slowly and the response is small.
+
+The walk itself should not call TMDB directly. It should receive a function such as:
+
+```ts
+getNeighbours(id)
+```
+
+so the walk stays a pure function and can be tested with a small hand-made graph.
+
+The full walk runs in the background job, not during a feed request.
 
 ### Numbers
 
-- rounds: 3, restart: 0.2
-- pool cap 500 to start, then raise it to around 2000. A page is 20 titles, so 500 only covers 25 refreshes before the
-  pool runs dry. The pool is ids and numbers in Redis, so holding more costs almost nothing.
-- Before settling on a cap, count how many different titles the walk really reaches. Five mainstream seeds may only lead
-  to a few hundred worth keeping, in which case the cap is not what limits the feed and Phase 5 is.
-- `MAX_FEED_PAGE` is worked out from `MAX_POOL_SIZE` today, and the guest feed uses it to reject high page numbers.
-  Raising the pool cap would quietly let guests page much deeper, so split the two constants before touching either.
+Start with:
+
+```text
+WALK_ROUNDS = 3
+WALK_RESTART = 0.2
+MAX_FRONTIER = 200
+```
+
+Don't assume these are optimal. They are starting values.
+
+The initial pool cap is 500 titles. Raise it later if the walk produces enough useful candidates.
+
+Before choosing a larger cap, measure how many different candidates the walk actually produces after filtering. If five
+mainstream seeds only produce a few hundred useful titles, increasing the cap won't solve the problem.
 
 ### Work items
 
-- [ ] `getRecommendationIds` with a one-month cache
-- [ ] `feed/generate/walk.ts` — pure function, takes a "get neighbours" function so it tests offline
-- [ ] `feed/generate/popular.ts` — the other candidate source
-- [ ] Pool-build orchestration: for series with no seeds, skip the walk and build the pool from `generate/popular.ts`
-- [ ] `feed/filter/hard-rules.ts` — pure function: candidates plus the rules in, survivors out
-- [ ] BullMQ job runs stages 1 to 4 and stores the pool
-- [ ] Test the walk on a small hand-made graph where the answer is obvious
+* [ ] `getRecommendationIds` with a one-month cache
+* [ ] `feed/generate/walk.ts` — pure function, takes a `getNeighbours` function
+* [ ] Test the walk on a small hand-made graph where the answer is obvious
+* [ ] Test that weights from multiple paths are added together
+* [ ] Test that titles outside the frontier stay in the pool but don't generate another hop
+* [ ] Test that a title with no recommendations doesn't break the walk
+* [ ] Run the positive and negative walks separately
+* [ ] `feed/generate/popular.ts` — popular candidates as a separate source
+* [ ] Merge candidates from all sources without duplicating titles
+* [ ] `feed/filter/hard-rules.ts` — candidates plus the rules in, survivors out
+* [ ] Pool-build orchestration: for series with no seeds, skip the walk and use popular candidates
+* [ ] BullMQ job runs stages 1 to 4 and stores the pool
 
 ---
 
