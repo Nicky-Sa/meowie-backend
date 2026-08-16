@@ -462,7 +462,7 @@ mainstream seeds only produce a few hundred useful titles, increasing the cap wo
 
 ### Work items
 
-* [ ] `getRecommendationIds` with a one-month cache
+* [x] `getRecommendationIds` with a one-month cache
 * [ ] `feed/generate/walk.ts` — pure function, takes a `getNeighbours` function
 * [ ] Test the walk on a small hand-made graph where the answer is obvious
 * [ ] Test that weights from multiple paths are added together

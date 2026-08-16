@@ -15,7 +15,6 @@ import {
   TMDB_GenresList,
   TMDB_CombinedCredits,
   TMDB_FindByExternalId,
-  TMDB_Keywords,
 } from '@/tmdb/tmdb.type';
 
 @Injectable()
@@ -27,24 +26,6 @@ export class TmdbService {
     private readonly cacheService: CacheService,
   ) {
     this.TMDB_API_KEY = this.env.get('TMDB_API_KEY');
-  }
-
-  /**
-   * Keyword ids for one title. Movies and series return them under different
-   * property names, hence the two reads.
-   */
-  @Cacheable({
-    key: (mediaType: MediaType, id: number) =>
-      `tmdb-keywords-${mediaType}-${id}`,
-    ttl: Duration.ONE_WEEK,
-  })
-  async getKeywordIds(mediaType: MediaType, id: number): Promise<number[]> {
-    const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
-    const response = await this.get<TMDB_Keywords>(
-      `${tmdbMediaType}/${id}/keywords`,
-    );
-    const keywords = response.keywords ?? response.results ?? [];
-    return keywords.map((keyword) => keyword.id);
   }
 
   async multiSearch(query: string): Promise<TMDB_MultiSearch> {

@@ -8,6 +8,8 @@ import { FeedResDto } from '@/feed/dto/feed.dto';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { MAX_FEED_PAGE } from '@/feed/engine/constants/feed.constant';
+import { TmdbService } from '@/tmdb/tmdb.service';
+import { TMDB_Recommendations } from '@/tmdb/tmdb.type';
 
 @Injectable()
 export class FeedService {
@@ -15,7 +17,27 @@ export class FeedService {
     private readonly cacheService: CacheService,
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
+    private readonly tmdbService: TmdbService,
   ) {}
+
+  /**
+   * The links the walk follows. Kept for a month because these lists hardly
+   * change and one walk asks for hundreds of them.
+   */
+  @Cacheable({
+    key: (mediaType: MediaType, id: number) =>
+      `feed-recommendation-ids-${mediaType}-${id}`,
+    ttl: Duration.ONE_MONTH,
+  })
+  async getRecommendationIds(
+    mediaType: MediaType,
+    id: number,
+  ): Promise<number[]> {
+    const response = await this.tmdbService.getRecommendations<
+      TMDB_Recommendations<{ id: number }>
+    >(mediaType, id);
+    return response.results.map((title) => title.id);
+  }
 
   async getFeed(
     userId: number | null,
