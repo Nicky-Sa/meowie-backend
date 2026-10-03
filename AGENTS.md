@@ -6,6 +6,9 @@ Meowie's backend: a NestJS REST API for a movie/TV discovery app. Wraps TMDB, ad
 auth, a personal library, ratings, collections, and AI-assisted search/taste. Postgres
 (Supabase) via TypeORM, Redis for cache/queues/rate-limiting, AWS SES for email.
 
+Do not add test files unless the user explicitly asks for them.
+Use regular method syntax for class methods, including abstract methods. Use arrow functions for standalone functions and callbacks.
+
 ## Commands
 
 ```bash
