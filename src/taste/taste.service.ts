@@ -4,10 +4,8 @@ import { Repository } from 'typeorm';
 import { Taste } from '@/taste/entities/taste.entity';
 import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
 import { CacheService } from '@/cache/cache.service';
-import { feedCacheKeys } from '@/feed/constants/feed.constant';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
-import { MEDIA_TYPE_VALUES } from '@/types/media-type';
 import { personalityFor } from '@/taste/utils/personality';
 import { TasteForFeed } from '@/taste/types/taste.type';
 import {
@@ -32,13 +30,7 @@ export class TasteService {
       { conflictPaths: ['userId'] },
     );
 
-    const staleKeys = [
-      tasteForFeedCacheKey(userId),
-      ...MEDIA_TYPE_VALUES.flatMap((mediaType) =>
-        Object.values(feedCacheKeys(userId, mediaType)),
-      ),
-    ];
-    await Promise.all(staleKeys.map((key) => this.cacheService.del(key)));
+    await this.cacheService.del(tasteForFeedCacheKey(userId));
 
     return { personality: personalityFor(dto) };
   }
