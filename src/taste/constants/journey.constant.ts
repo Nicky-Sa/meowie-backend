@@ -113,14 +113,6 @@ export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
 export const MIN_MOVIES_TO_LIKE = 5;
 
-export const idsAnswered = (
-  ratings: TitleRatings,
-  answer: TitleAnswer,
-): number[] =>
-  Object.entries(ratings)
-    .filter(([, given]) => given === answer)
-    .map(([tmdbId]) => Number(tmdbId));
-
 // What "classic" and "new release" mean in years, product-wide.
 export const CLASSIC_MAX_YEAR = 1999;
 export const MODERN_MIN_YEAR = 2000;

@@ -16,7 +16,6 @@ import {
   AVOID_IDS,
   AuthorityAnswer,
   AvoidId,
-  idsAnswered,
   EraAnswer,
   EXPLORE_LEVELS,
   MIN_MOVIES_TO_LIKE,
@@ -26,6 +25,7 @@ import {
 } from '@/taste/constants/journey.constant';
 import { Personality } from '@/taste/constants/personality.constant';
 import { MOVIE_IDS, SERIES_IDS } from '@/taste/constants/pools.constant';
+import { titleIdsMarkedAs } from '@/taste/utils/taste.utils';
 
 const isTitleRatings = (value: unknown): value is TitleRatings =>
   typeof value === 'object' &&
@@ -57,7 +57,7 @@ class EnoughLikes implements ValidatorConstraintInterface {
   validate(ratings: unknown): boolean {
     return (
       isTitleRatings(ratings) &&
-      idsAnswered(ratings, 'like').length >= MIN_MOVIES_TO_LIKE
+      titleIdsMarkedAs(ratings, 'like').length >= MIN_MOVIES_TO_LIKE
     );
   }
 

@@ -14,10 +14,10 @@ import {
 import {
   AuthorityAnswer,
   EraAnswer,
-  idsAnswered,
   RARITY_WEIGHTS,
   TitleRatings,
 } from '@/taste/constants/journey.constant';
+import { titleIdsMarkedAs } from '@/taste/utils/taste.utils';
 
 export type PersonalityInput = {
   movieRatings: TitleRatings;
@@ -36,13 +36,13 @@ const seriesByTmdbId = poolByTmdbId(SERIES);
 
 const titlesAnswered = (
   input: PersonalityInput,
-  answer: Parameters<typeof idsAnswered>[1],
+  answer: Parameters<typeof titleIdsMarkedAs>[1],
 ): Title[] =>
   [
-    ...idsAnswered(input.movieRatings, answer).map((tmdbId) =>
+    ...titleIdsMarkedAs(input.movieRatings, answer).map((tmdbId) =>
       movieByTmdbId.get(tmdbId),
     ),
-    ...idsAnswered(input.seriesRatings, answer).map((tmdbId) =>
+    ...titleIdsMarkedAs(input.seriesRatings, answer).map((tmdbId) =>
       seriesByTmdbId.get(tmdbId),
     ),
   ].filter((title): title is Title => title !== undefined);
