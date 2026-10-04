@@ -1,10 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MIN_RATING_FOR_RECOMMENDATIONS } from '@/feed/constants/feed.constant';
+import {
+  MAX_DETAILS_AT_ONCE,
+  MIN_RATING_FOR_RECOMMENDATIONS,
+} from '@/feed/constants/feed.constant';
+import { Candidate, CandidateDetails } from '@/feed/engine/candidate.types';
+import { DetailsService } from '@/feed/engine/details/details.service';
 import { FEED_INPUTS } from '@/feed/engine/input/input.service';
 import { FeedInput, InputResult } from '@/feed/engine/input/input.types';
 import {
   OrchestratorRequest,
   OrchestratorResult,
+  SourceResults,
 } from '@/feed/engine/orchestrator/orchestrator.types';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource } from '@/feed/engine/source/source.types';
@@ -17,6 +23,7 @@ export class OrchestratorService {
     private readonly inputServices: readonly FeedInput[],
     @Inject(FEED_SOURCES)
     private readonly sourceServices: readonly FeedSource[],
+    private readonly detailsService: DetailsService,
   ) {}
 
   async run({
@@ -28,7 +35,7 @@ export class OrchestratorService {
       this.inputServices.map((input) => input.read({ userId, mediaType })),
     );
 
-    const results: Partial<OrchestratorResult> = {};
+    const results: Partial<SourceResults> = {};
 
     await Promise.all(
       this.sourceServices.map(async (source) => {
@@ -56,10 +63,59 @@ export class OrchestratorService {
       );
     }
 
+    const candidates = this.combineCandidates([
+      results.recommendations.candidates,
+      results.discover.candidates,
+    ]);
+
     return {
-      recommendations: results.recommendations,
-      discover: results.discover,
+      candidates: await this.fetchDetails(candidates),
+      next: {
+        recommendations: results.recommendations.next,
+        discover: results.discover.next,
+      },
     };
+  }
+
+  private combineCandidates(
+    candidateLists: readonly (readonly Candidate[])[],
+  ): Candidate[] {
+    const uniqueCandidates = new Map<string, Candidate>();
+
+    for (const candidates of candidateLists) {
+      for (const candidate of candidates) {
+        uniqueCandidates.set(
+          `${candidate.mediaType}:${candidate.id}`,
+          candidate,
+        );
+      }
+    }
+
+    return [...uniqueCandidates.values()];
+  }
+
+  private async fetchDetails(
+    candidates: readonly Candidate[],
+  ): Promise<CandidateDetails[]> {
+    const result: CandidateDetails[] = [];
+
+    for (
+      let start = 0;
+      start < candidates.length;
+      start += MAX_DETAILS_AT_ONCE
+    ) {
+      const details = await Promise.all(
+        candidates
+          .slice(start, start + MAX_DETAILS_AT_ONCE)
+          .map((candidate) => this.detailsService.fetch(candidate)),
+      );
+
+      for (const candidate of details) {
+        if (candidate !== null) result.push(candidate);
+      }
+    }
+
+    return result;
   }
 
   private getTitleIdsToRecommendFrom(
