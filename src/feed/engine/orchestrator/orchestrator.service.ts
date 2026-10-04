@@ -22,27 +22,44 @@ export class OrchestratorService {
   async run({
     userId,
     mediaType,
-    cursor,
+    cursors,
   }: OrchestratorRequest): Promise<OrchestratorResult> {
     const inputs = await Promise.all(
       this.inputServices.map((input) => input.read({ userId, mediaType })),
     );
 
-    const [recommendations] = await Promise.all(
-      this.sourceServices.map((source) =>
-        source.fetch({
-          titleIds: this.getTitleIdsToRecommendFrom(inputs, mediaType),
-          mediaType,
-          cursor,
-        }),
-      ),
+    const results: Partial<OrchestratorResult> = {};
+
+    await Promise.all(
+      this.sourceServices.map(async (source) => {
+        switch (source.name) {
+          case 'recommendations':
+            results.recommendations = await source.fetch({
+              titleIds: this.getTitleIdsToRecommendFrom(inputs, mediaType),
+              mediaType,
+              cursor: cursors.recommendations,
+            });
+            break;
+          case 'discover':
+            results.discover = await source.fetch({
+              mediaType,
+              cursor: cursors.discover,
+            });
+            break;
+        }
+      }),
     );
 
-    if (!recommendations) {
-      throw new Error('Recommendations source must be registered.');
+    if (!results.recommendations || !results.discover) {
+      throw new Error(
+        'Recommendations and Discover sources must be registered.',
+      );
     }
 
-    return recommendations;
+    return {
+      recommendations: results.recommendations,
+      discover: results.discover,
+    };
   }
 
   private getTitleIdsToRecommendFrom(
