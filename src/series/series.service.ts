@@ -3,8 +3,12 @@ import { CacheService } from '@/cache/cache.service';
 import {
   TMDB_DiscoverSeriesQuery,
   TMDB_DiscoveredSeriesDetail,
-  TMDB_SeriesInfo,
+  TMDB_SeriesDetails,
+  TMDB_SeriesAppendsOptions,
+  TMDB_SeriesDetailsWithAppends,
   TMDB_DiscoveredSeriesList,
+  TMDB_MediaCredits,
+  TMDB_ContentRatings,
 } from '@/tmdb/tmdb.type';
 import {
   InterestingSeriesIdsResDto,
@@ -87,15 +91,11 @@ export class SeriesService extends BaseMediaService {
     );
   }
 
-  async getBasicSeriesInfo<T>(
+  async getBasicSeriesInfo<K extends keyof TMDB_SeriesAppendsOptions = never>(
     id: number,
-    append_to_response: string = '',
-  ): Promise<T> {
-    return await this.tmdbService.getDetails<T>(
-      'series',
-      id,
-      append_to_response,
-    );
+    append_to_response?: K[],
+  ): Promise<TMDB_SeriesDetailsWithAppends<K>> {
+    return await this.tmdbService.getDetails('series', id, append_to_response);
   }
 
   @Cacheable({
@@ -103,10 +103,12 @@ export class SeriesService extends BaseMediaService {
     ttl: Duration.ONE_DAY,
   })
   async getSeriesInfo(id: number, country: string): Promise<SeriesInfoResDto> {
-    const item = await this.getBasicSeriesInfo<TMDB_SeriesInfo>(
-      id,
-      'videos,content_ratings,credits,watch/providers',
-    );
+    const item = await this.getBasicSeriesInfo(id, [
+      'videos',
+      'content_ratings',
+      'credits',
+      'watch/providers',
+    ]);
     const posterPath = getImageWithFallback(item.poster_path, 'series_poster');
     const backdropPath = getImageFullUrl(item.backdrop_path);
 
@@ -201,8 +203,8 @@ export class SeriesService extends BaseMediaService {
   }
 
   private constructSeriesCredits(
-    credits: TMDB_SeriesInfo['credits'],
-    createdBy: TMDB_SeriesInfo['created_by'],
+    credits: TMDB_MediaCredits,
+    createdBy: TMDB_SeriesDetails['created_by'],
   ): SeriesCredits {
     return {
       casts: formatCasts(credits.cast),
@@ -211,7 +213,9 @@ export class SeriesService extends BaseMediaService {
     };
   }
 
-  private formatCreator(createdBy: TMDB_SeriesInfo['created_by']): CreditInfo {
+  private formatCreator(
+    createdBy: TMDB_SeriesDetails['created_by'],
+  ): CreditInfo {
     const creator = createdBy[0];
     if (!creator) {
       return emptyCredit;
@@ -226,7 +230,7 @@ export class SeriesService extends BaseMediaService {
   }
 
   private findContentRating(
-    contentRatings: TMDB_SeriesInfo['content_ratings'],
+    contentRatings: TMDB_ContentRatings,
     country: string,
   ) {
     return (
@@ -238,7 +242,7 @@ export class SeriesService extends BaseMediaService {
   private constructAiringYears(
     firstAirDate: string,
     lastAirDate: string | null,
-    status: TMDB_SeriesInfo['status'],
+    status: TMDB_SeriesDetails['status'],
   ): string {
     if (status === 'Returning Series') {
       if (firstAirDate) {

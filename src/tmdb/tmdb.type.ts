@@ -1,4 +1,6 @@
+// This file is supposed to only hold TMDB response types, request ypes, and query params, not derived or composite types
 import { PaginatedResponse } from '@/common/types/paginated-response';
+import { MediaType } from '@/types/media-type';
 
 export type TMDB_Genre = {
   id: number;
@@ -9,6 +11,19 @@ export type TMDB_GenresList = {
 };
 
 export type TMDB_MediaType = 'movie' | 'tv';
+
+export type TMDB_AppendsOptions<M extends MediaType | TMDB_MediaType> =
+  M extends 'movie' ? TMDB_MovieAppendsOptions : TMDB_SeriesAppendsOptions;
+
+export type TMDB_AppendKey<M extends MediaType | TMDB_MediaType = MediaType> =
+  M extends unknown ? keyof TMDB_AppendsOptions<M> : never;
+
+export type TMDB_DetailsWithAppends<
+  M extends MediaType,
+  K extends TMDB_AppendKey<M> = never,
+> = M extends 'movie'
+  ? TMDB_MovieDetailsWithAppends<K & keyof TMDB_MovieAppendsOptions> // K & keyof TMDB_MovieAppendsOptions means to keep only the keys in K that are also movie append keys.
+  : TMDB_SeriesDetailsWithAppends<K & keyof TMDB_SeriesAppendsOptions>;
 
 //--------------------------------------------------
 // Movie
@@ -104,7 +119,7 @@ export type TMDB_Recommendations<T> = {
   total_results: number;
 };
 
-export type TMDB_MovieInfo = {
+export type TMDB_MovieDetails = {
   id: number;
   adult: boolean;
   backdrop_path?: string;
@@ -131,20 +146,29 @@ export type TMDB_MovieInfo = {
   video: boolean;
   vote_average: number;
   vote_count: number;
-  release_dates: TMDB_ReleaseDates;
-  videos: TMDB_Videos;
-  credits: Omit<TMDB_MediaCredits, 'id'>;
-  'watch/providers': TMDB_WatchProviders;
-  recommendations?: TMDB_Recommendations<TMDB_DiscoveredMovieDetail>;
 };
 
-type TMDB_MediaCredits = {
-  id: number;
+export type TMDB_MovieAppendsOptions = {
+  release_dates: TMDB_ReleaseDates;
+  videos: TMDB_Videos;
+  credits: TMDB_MediaCredits;
+  'watch/providers': TMDB_WatchProviders;
+  recommendations: TMDB_Recommendations<TMDB_DiscoveredMovieDetail>;
+  images: TMDB_MovieImages;
+  keywords: TMDB_Keywords;
+};
+
+export type TMDB_MovieDetailsWithAppends<
+  K extends keyof TMDB_MovieAppendsOptions = never,
+> = TMDB_MovieDetails & Pick<TMDB_MovieAppendsOptions, K>;
+
+export type TMDB_MediaCredits = {
+  id?: number;
   cast: TMDB_Cast[];
   crew: TMDB_Crew[];
 };
 
-type TMDB_Cast = {
+export type TMDB_Cast = {
   adult: boolean;
   gender: number;
   id: number;
@@ -159,7 +183,7 @@ type TMDB_Cast = {
   order: number;
 };
 
-type TMDB_Crew = {
+export type TMDB_Crew = {
   adult: boolean;
   gender: number;
   id: number;
@@ -268,323 +292,6 @@ export type TMDB_MovieSortOption =
   | 'vote_count.asc'
   | 'vote_count.desc';
 
-export type TMDB_DiscoverSeriesQuery = {
-  // --- CORE PARAMS ---
-  /**
-   * Specify the page of results to query.
-   * @default 1
-   */
-  page?: number;
-
-  /**
-   * Specify a language to query translatable fields with.
-   * Pattern: ISO 639-1 (e.g. 'en-US', 'es-ES')
-   * @default 'en-US'
-   */
-  language?: string;
-
-  /**
-   * Choose a sort option for the list of results.
-   * @default 'popularity.desc'
-   */
-  sort_by?: TMDB_SeriesSortOption;
-
-  /**
-   * Used in conjunction with the air_date.gte/lte filter to calculate the proper UTC offset.
-   * @default "America/New_York"
-   */
-  timezone?: string;
-
-  // --- FILTERS: AIR DATES ---
-  /**
-   * Filter and only include Series that have a first air date year
-   * that is equal to the specified value.
-   */
-  first_air_date_year?: number;
-
-  /**
-   * Filter and only include Series that have a first air date
-   * that is greater or equal to the specified value.
-   * Format: YYYY-MM-DD
-   */
-  'first_air_date.gte'?: string;
-
-  /**
-   * Filter and only include Series that have a first air date
-   * that is less than or equal to the specified value.
-   * Format: YYYY-MM-DD
-   */
-  'first_air_date.lte'?: string;
-
-  /**
-   * Filter and only include Series that have an air date (for any episode)
-   * that is greater or equal to the specified value.
-   * Format: YYYY-MM-DD
-   */
-  'air_date.gte'?: string;
-
-  /**
-   * Filter and only include Series that have an air date (for any episode)
-   * that is less than or equal to the specified value.
-   * Format: YYYY-MM-DD
-   */
-  'air_date.lte'?: string;
-
-  /**
-   * Use this filter to include Series that don't have an air date
-   * while using any of the "first_air_date" filters.
-   * @default false
-   */
-  include_null_first_air_dates?: boolean;
-
-  // --- FILTERS: RATINGS & VOTES ---
-  /**
-   * Filter and only include Series that have a vote count
-   * that is greater or equal to the specified value.
-   */
-  'vote_count.gte'?: number;
-
-  /**
-   * Filter and only include Series that have a rating
-   * that is greater or equal to the specified value.
-   */
-  'vote_average.gte'?: number;
-
-  /**
-   * Filter and only include Series that have a rating
-   * that is less than or equal to the specified value.
-   */
-  'vote_average.lte'?: number;
-
-  // --- FILTERS: GENRES & NETWORKS ---
-  /**
-   * Comma separated value of genre ids that you want to include in the results.
-   * ',' = AND
-   * '|' = OR
-   */
-  with_genres?: string;
-
-  /**
-   * Comma separated value of genre ids that you want to exclude from the results.
-   */
-  without_genres?: string;
-
-  /**
-   * Comma separated value of network ids that you want to include in the results.
-   * ',' = OR
-   * '|' = AND
-   */
-  with_networks?: string;
-
-  /**
-   * Comma separated value of keyword ids that you want to include in the results.
-   */
-  with_keywords?: string;
-
-  /**
-   * Comma separated value of keyword ids that you want to exclude from the results.
-   */
-  without_keywords?: string;
-
-  // --- FILTERS: STATUS & TYPE ---
-  /**
-   * Comma separated value of status types to include.
-   * 0: Returning Series
-   * 1: Planned
-   * 2: In Production
-   * 3: Ended
-   * 4: Canceled
-   * 5: Pilot
-   */
-  with_status?: string;
-
-  /**
-   * Comma separated value of show types to include.
-   * 0: Documentary
-   * 1: News
-   * 2: Miniseries
-   * 3: Reality
-   * 4: Scripted
-   * 5: Talk Show
-   * 6: Video
-   */
-  with_type?: string;
-
-  /**
-   * Filter and only include Series that have been screened theatrically.
-   */
-  screened_theatrically?: boolean;
-
-  // --- FILTERS: CONTENT & ORIGIN ---
-  /**
-   * Filter and only include Series that have a runtime
-   * that is greater or equal to a value (in minutes).
-   */
-  'with_runtime.gte'?: number;
-
-  /**
-   * Filter and only include Series that have a runtime
-   * that is less than or equal to a value (in minutes).
-   */
-  'with_runtime.lte'?: number;
-
-  /**
-   * Specify an original language to filter results by.
-   */
-  with_original_language?: string;
-
-  /**
-   * Specify an origin country to filter results by.
-   */
-  with_origin_country?: string;
-
-  /**
-   * A comma-separated list of company IDs.
-   */
-  with_companies?: string;
-
-  // --- FILTERS: STREAMING ---
-  /**
-   * A comma-separated list of Watch Provider IDs.
-   * Used in conjunction with `watch_region`.
-   */
-  with_watch_providers?: string;
-
-  /**
-   * An ISO 3166-1 code. Defines the country to check for watch providers.
-   * Required when using `with_watch_providers`.
-   */
-  watch_region?: string;
-
-  /**
-   * Filter by monetization type.
-   */
-  with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
-};
-
-export class TMDB_DiscoveredMoviesList extends PaginatedResponse<TMDB_DiscoveredMovieDetail> {
-  declare results: TMDB_DiscoveredMovieDetail[];
-}
-
-export type TMDB_DiscoveredMovieDetail = {
-  adult: boolean;
-  backdrop_path: string;
-  genre_ids: number[];
-  id: number;
-  original_language: string;
-  original_title: string;
-  overview: string;
-  popularity: number;
-  poster_path: string;
-  release_date: string;
-  title: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
-};
-
-// /3/movie/${id}/images
-type TMDB_Image = {
-  aspect_ratio: number;
-  height: number;
-  iso_639_1: string;
-  file_path: string;
-  vote_average: number;
-  vote_count: number;
-  width: number;
-};
-
-export type TMDB_MovieImages = {
-  backdrops: TMDB_Image[];
-  id: number;
-  logos: TMDB_Image[];
-  posters: TMDB_Image[];
-};
-
-// /search/multi
-// media_type: person
-type SearchResultPerson = {
-  adult: boolean;
-  id: number;
-  name: string;
-  original_name: string;
-  media_type: 'person';
-  popularity: number;
-  gender: number;
-  known_for_department: string;
-  profile_path: string | null;
-  known_for: KnownFor[];
-};
-
-type KnownFor = {
-  adult: boolean;
-  backdrop_path: string;
-  id: number;
-  name: string;
-  original_name: string;
-  overview: string;
-  poster_path: string;
-  media_type: string;
-  original_language: string;
-  genre_ids: number[];
-  popularity: number;
-  first_air_date: string;
-  vote_average: number;
-  vote_count: number;
-  origin_country: string[];
-};
-
-// media_type: movie
-type SearchResultMovie = {
-  adult: boolean;
-  backdrop_path: string;
-  id: number;
-  title: string;
-  original_title: string;
-  overview: string;
-  poster_path: string;
-  media_type: 'movie';
-  original_language: string;
-  genre_ids: number[];
-  popularity: number;
-  release_date: string;
-  video: boolean;
-  vote_average: number;
-  vote_count: number;
-};
-
-// media_type: tv
-type SearchResultSeries = {
-  adult: boolean;
-  backdrop_path: string;
-  id: number;
-  name: string;
-  original_name: string;
-  overview: string;
-  poster_path: string;
-  media_type: 'tv';
-  original_language: string;
-  genre_ids: number[];
-  popularity: number;
-  first_air_date: string;
-  origin_country: string[];
-  vote_average: number;
-  vote_count: number;
-};
-
-export type TMDB_MultiSearchDetail =
-  | SearchResultPerson
-  | SearchResultMovie
-  | SearchResultSeries;
-
-export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
-  declare results: TMDB_MultiSearchDetail[];
-}
-
-//--------------------------------------------------
-// Series
-
-// /3/discover/tv
 export type TMDB_DiscoverMovieQuery = {
   // --- CORE PARAMS ---
   /**
@@ -817,6 +524,129 @@ export type TMDB_DiscoverMovieQuery = {
   with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
 };
 
+export class TMDB_DiscoveredMoviesList extends PaginatedResponse<TMDB_DiscoveredMovieDetail> {
+  declare results: TMDB_DiscoveredMovieDetail[];
+}
+
+export type TMDB_DiscoveredMovieDetail = {
+  adult: boolean;
+  backdrop_path: string;
+  genre_ids: number[];
+  id: number;
+  original_language: string;
+  original_title: string;
+  overview: string;
+  popularity: number;
+  poster_path: string;
+  release_date: string;
+  title: string;
+  video: boolean;
+  vote_average: number;
+  vote_count: number;
+};
+
+// /3/movie/${id}/images
+type TMDB_Image = {
+  aspect_ratio: number;
+  height: number;
+  iso_639_1: string;
+  file_path: string;
+  vote_average: number;
+  vote_count: number;
+  width: number;
+};
+
+export type TMDB_MovieImages = {
+  backdrops: TMDB_Image[];
+  id: number;
+  logos: TMDB_Image[];
+  posters: TMDB_Image[];
+};
+
+// /search/multi
+// media_type: person
+type SearchResultPerson = {
+  adult: boolean;
+  id: number;
+  name: string;
+  original_name: string;
+  media_type: 'person';
+  popularity: number;
+  gender: number;
+  known_for_department: string;
+  profile_path: string | null;
+  known_for: KnownFor[];
+};
+
+type KnownFor = {
+  adult: boolean;
+  backdrop_path: string;
+  id: number;
+  name: string;
+  original_name: string;
+  overview: string;
+  poster_path: string;
+  media_type: string;
+  original_language: string;
+  genre_ids: number[];
+  popularity: number;
+  first_air_date: string;
+  vote_average: number;
+  vote_count: number;
+  origin_country: string[];
+};
+
+// media_type: movie
+type SearchResultMovie = {
+  adult: boolean;
+  backdrop_path: string;
+  id: number;
+  title: string;
+  original_title: string;
+  overview: string;
+  poster_path: string;
+  media_type: 'movie';
+  original_language: string;
+  genre_ids: number[];
+  popularity: number;
+  release_date: string;
+  video: boolean;
+  vote_average: number;
+  vote_count: number;
+};
+
+// media_type: tv
+type SearchResultSeries = {
+  adult: boolean;
+  backdrop_path: string;
+  id: number;
+  name: string;
+  original_name: string;
+  overview: string;
+  poster_path: string;
+  media_type: 'tv';
+  original_language: string;
+  genre_ids: number[];
+  popularity: number;
+  first_air_date: string;
+  origin_country: string[];
+  vote_average: number;
+  vote_count: number;
+};
+
+export type TMDB_MultiSearchDetail =
+  | SearchResultPerson
+  | SearchResultMovie
+  | SearchResultSeries;
+
+export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
+  declare results: TMDB_MultiSearchDetail[];
+}
+
+//--------------------------------------------------
+// Series
+
+// /3/discover/tv
 export type TMDB_SeriesSortOption =
   | 'first_air_date.asc'
   | 'first_air_date.desc'
@@ -830,6 +660,200 @@ export type TMDB_SeriesSortOption =
   | 'vote_average.desc'
   | 'vote_count.asc'
   | 'vote_count.desc';
+
+export type TMDB_DiscoverSeriesQuery = {
+  // --- CORE PARAMS ---
+  /**
+   * Specify the page of results to query.
+   * @default 1
+   */
+  page?: number;
+
+  /**
+   * Specify a language to query translatable fields with.
+   * Pattern: ISO 639-1 (e.g. 'en-US', 'es-ES')
+   * @default 'en-US'
+   */
+  language?: string;
+
+  /**
+   * Choose a sort option for the list of results.
+   * @default 'popularity.desc'
+   */
+  sort_by?: TMDB_SeriesSortOption;
+
+  /**
+   * Used in conjunction with the air_date.gte/lte filter to calculate the proper UTC offset.
+   * @default "America/New_York"
+   */
+  timezone?: string;
+
+  // --- FILTERS: AIR DATES ---
+  /**
+   * Filter and only include Series that have a first air date year
+   * that is equal to the specified value.
+   */
+  first_air_date_year?: number;
+
+  /**
+   * Filter and only include Series that have a first air date
+   * that is greater or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'first_air_date.gte'?: string;
+
+  /**
+   * Filter and only include Series that have a first air date
+   * that is less than or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'first_air_date.lte'?: string;
+
+  /**
+   * Filter and only include Series that have an air date (for any episode)
+   * that is greater or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'air_date.gte'?: string;
+
+  /**
+   * Filter and only include Series that have an air date (for any episode)
+   * that is less than or equal to the specified value.
+   * Format: YYYY-MM-DD
+   */
+  'air_date.lte'?: string;
+
+  /**
+   * Use this filter to include Series that don't have an air date
+   * while using any of the "first_air_date" filters.
+   * @default false
+   */
+  include_null_first_air_dates?: boolean;
+
+  // --- FILTERS: RATINGS & VOTES ---
+  /**
+   * Filter and only include Series that have a vote count
+   * that is greater or equal to the specified value.
+   */
+  'vote_count.gte'?: number;
+
+  /**
+   * Filter and only include Series that have a rating
+   * that is greater or equal to the specified value.
+   */
+  'vote_average.gte'?: number;
+
+  /**
+   * Filter and only include Series that have a rating
+   * that is less than or equal to the specified value.
+   */
+  'vote_average.lte'?: number;
+
+  // --- FILTERS: GENRES & NETWORKS ---
+  /**
+   * Comma separated value of genre ids that you want to include in the results.
+   * ',' = AND
+   * '|' = OR
+   */
+  with_genres?: string;
+
+  /**
+   * Comma separated value of genre ids that you want to exclude from the results.
+   */
+  without_genres?: string;
+
+  /**
+   * Comma separated value of network ids that you want to include in the results.
+   * ',' = OR
+   * '|' = AND
+   */
+  with_networks?: string;
+
+  /**
+   * Comma separated value of keyword ids that you want to include in the results.
+   */
+  with_keywords?: string;
+
+  /**
+   * Comma separated value of keyword ids that you want to exclude from the results.
+   */
+  without_keywords?: string;
+
+  // --- FILTERS: STATUS & TYPE ---
+  /**
+   * Comma separated value of status types to include.
+   * 0: Returning Series
+   * 1: Planned
+   * 2: In Production
+   * 3: Ended
+   * 4: Canceled
+   * 5: Pilot
+   */
+  with_status?: string;
+
+  /**
+   * Comma separated value of show types to include.
+   * 0: Documentary
+   * 1: News
+   * 2: Miniseries
+   * 3: Reality
+   * 4: Scripted
+   * 5: Talk Show
+   * 6: Video
+   */
+  with_type?: string;
+
+  /**
+   * Filter and only include Series that have been screened theatrically.
+   */
+  screened_theatrically?: boolean;
+
+  // --- FILTERS: CONTENT & ORIGIN ---
+  /**
+   * Filter and only include Series that have a runtime
+   * that is greater or equal to a value (in minutes).
+   */
+  'with_runtime.gte'?: number;
+
+  /**
+   * Filter and only include Series that have a runtime
+   * that is less than or equal to a value (in minutes).
+   */
+  'with_runtime.lte'?: number;
+
+  /**
+   * Specify an original language to filter results by.
+   */
+  with_original_language?: string;
+
+  /**
+   * Specify an origin country to filter results by.
+   */
+  with_origin_country?: string;
+
+  /**
+   * A comma-separated list of company IDs.
+   */
+  with_companies?: string;
+
+  // --- FILTERS: STREAMING ---
+  /**
+   * A comma-separated list of Watch Provider IDs.
+   * Used in conjunction with `watch_region`.
+   */
+  with_watch_providers?: string;
+
+  /**
+   * An ISO 3166-1 code. Defines the country to check for watch providers.
+   * Required when using `with_watch_providers`.
+   */
+  watch_region?: string;
+
+  /**
+   * Filter by monetization type.
+   */
+  with_watch_monetization_types?: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
+};
 
 export class TMDB_DiscoveredSeriesList extends PaginatedResponse<TMDB_DiscoveredSeriesDetail> {
   declare results: TMDB_DiscoveredSeriesDetail[];
@@ -853,7 +877,7 @@ export type TMDB_DiscoveredSeriesDetail = {
 };
 
 // /3/series/${id}
-export type TMDB_SeriesInfo = {
+export type TMDB_SeriesDetails = {
   adult: boolean;
   backdrop_path: string;
   created_by: CreatedBy[];
@@ -886,14 +910,22 @@ export type TMDB_SeriesInfo = {
   type: string;
   vote_average: number;
   vote_count: number;
-  videos: TMDB_Videos;
-  credits: Omit<TMDB_MediaCredits, 'id'>;
-  content_ratings: TMDB_ContentRatings;
-  'watch/providers': TMDB_WatchProviders;
-  recommendations?: TMDB_Recommendations<TMDB_DiscoveredSeriesDetail>;
 };
 
-type TMDB_ContentRatings = {
+export type TMDB_SeriesAppendsOptions = {
+  videos: TMDB_Videos;
+  credits: TMDB_MediaCredits;
+  content_ratings: TMDB_ContentRatings;
+  'watch/providers': TMDB_WatchProviders;
+  recommendations: TMDB_Recommendations<TMDB_DiscoveredSeriesDetail>;
+  keywords: TMDB_Keywords;
+};
+
+export type TMDB_SeriesDetailsWithAppends<
+  K extends keyof TMDB_SeriesAppendsOptions = never,
+> = TMDB_SeriesDetails & Pick<TMDB_SeriesAppendsOptions, K>;
+
+export type TMDB_ContentRatings = {
   results: ContentRating[];
 };
 

@@ -15,6 +15,8 @@ import {
   TMDB_GenresList,
   TMDB_CombinedCredits,
   TMDB_FindByExternalId,
+  TMDB_AppendKey,
+  TMDB_DetailsWithAppends,
 } from '@/tmdb/tmdb.type';
 
 @Injectable()
@@ -71,14 +73,17 @@ export class TmdbService {
     return detail.number_of_episodes ?? 0;
   }
 
-  async getDetails<T>(
-    mediaType: MediaType,
+  async getDetails<M extends MediaType, K extends TMDB_AppendKey<M> = never>( // never means default is no append key passed, and not all
+    mediaType: M,
     id: number,
-    append_to_response: string = '',
-  ): Promise<T> {
+    append_to_response?: K[],
+  ): Promise<TMDB_DetailsWithAppends<M, NoInfer<K>>> {
+    // NoInfer keeps the caller's return type from adding unrequested append fields.
     const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
-    return this.get<T>(`${tmdbMediaType}/${id}`, {
-      ...(append_to_response && { append_to_response }),
+    return this.get<TMDB_DetailsWithAppends<M, K>>(`${tmdbMediaType}/${id}`, {
+      ...(append_to_response?.length && {
+        append_to_response: append_to_response.join(','),
+      }),
     });
   }
 

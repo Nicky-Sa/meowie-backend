@@ -3,9 +3,11 @@ import { CreditInfo } from '@/types/credit';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoveredMovieDetail,
-  TMDB_MovieInfo,
+  TMDB_MovieAppendsOptions,
+  TMDB_MovieDetailsWithAppends,
   TMDB_DiscoveredMoviesList,
   TMDB_ReleaseDates,
+  TMDB_MediaCredits,
 } from '@/tmdb/tmdb.type';
 import { getImageFullUrl, getImageWithFallback } from '@/images/images.utils';
 import {
@@ -78,11 +80,11 @@ export class MovieService extends BaseMediaService {
     );
   }
 
-  async getBasicMovieInfo<T>(
+  async getBasicMovieInfo<K extends keyof TMDB_MovieAppendsOptions = never>(
     id: number,
-    append_to_response: string = '',
-  ): Promise<T> {
-    return this.tmdbService.getDetails<T>('movie', id, append_to_response);
+    append_to_response?: K[],
+  ): Promise<TMDB_MovieDetailsWithAppends<K>> {
+    return this.tmdbService.getDetails('movie', id, append_to_response);
   }
 
   @Cacheable({
@@ -90,10 +92,12 @@ export class MovieService extends BaseMediaService {
     ttl: Duration.ONE_DAY,
   })
   async getMovieInfo(id: number, country: string): Promise<MovieInfoResDto> {
-    const item = await this.getBasicMovieInfo<TMDB_MovieInfo>(
-      id,
-      'videos,release_dates,credits,watch/providers',
-    );
+    const item = await this.getBasicMovieInfo(id, [
+      'videos',
+      'release_dates',
+      'credits',
+      'watch/providers',
+    ]);
 
     const posterPath = getImageWithFallback(item.poster_path, 'movie_poster');
     const backdropPath = getImageFullUrl(item.backdrop_path);
@@ -142,7 +146,7 @@ export class MovieService extends BaseMediaService {
     return data;
   }
 
-  constructMovieCredits(credits: TMDB_MovieInfo['credits']): MovieCredits {
+  constructMovieCredits(credits: TMDB_MediaCredits): MovieCredits {
     const casts = formatCasts(credits.cast);
     const crew = formatCrew(credits.crew);
     const director = this.findDirector(credits);
@@ -165,7 +169,7 @@ export class MovieService extends BaseMediaService {
     );
   }
 
-  private findDirector(credits: TMDB_MovieInfo['credits']): CreditInfo {
+  private findDirector(credits: TMDB_MediaCredits): CreditInfo {
     const director = credits.crew
       .filter((crew) => crew.job === 'Director')
       .sort((a, b) => a.popularity - b.popularity)

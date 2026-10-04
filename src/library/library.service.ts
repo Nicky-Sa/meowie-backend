@@ -10,7 +10,7 @@ import {
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
 import { ImagesService } from '@/images/images.service';
-import { TMDB_MovieInfo, TMDB_SeriesInfo } from '@/tmdb/tmdb.type';
+import { TMDB_MovieDetails, TMDB_SeriesDetails } from '@/tmdb/tmdb.type';
 import { GENRES } from '@/constants/items/genres.constant';
 import { getImageWithFallback } from '@/images/images.utils';
 import { LibraryCategory } from '@/library/constants/library.constants';
@@ -191,10 +191,8 @@ export class LibraryService {
     const results = await Promise.all(
       items.map(async (item) => {
         const details = await (item.mediaType === 'movie'
-          ? this.movieService.getBasicMovieInfo<TMDB_MovieInfo>(item.tmdbId)
-          : this.seriesService.getBasicSeriesInfo<TMDB_SeriesInfo>(
-              item.tmdbId,
-            ));
+          ? this.movieService.getBasicMovieInfo(item.tmdbId)
+          : this.seriesService.getBasicSeriesInfo(item.tmdbId));
         const posterPath = getImageWithFallback(
           details.poster_path,
           `${item.mediaType}_poster`,
@@ -202,8 +200,8 @@ export class LibraryService {
 
         const title =
           item.mediaType === 'movie'
-            ? (details as TMDB_MovieInfo).title
-            : (details as TMDB_SeriesInfo).name;
+            ? (details as TMDB_MovieDetails).title
+            : (details as TMDB_SeriesDetails).name;
 
         const blurhash = this.imagesService.generatePlaceholderBlurhash({
           id: details.id,

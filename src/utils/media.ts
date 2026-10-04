@@ -1,8 +1,9 @@
 import {
   TMDB_Genre,
   TMDB_MediaType,
-  TMDB_MovieInfo,
   TMDB_Videos,
+  TMDB_Cast,
+  TMDB_Crew,
 } from '@/tmdb/tmdb.type';
 import { CreditInfo } from '@/types/credit';
 import { PERSON_FALLBACK_URL } from '@/common/app.constants';
@@ -63,9 +64,7 @@ export const formatGenres = (genreIds: TMDB_Genre[]) => {
   }));
 };
 
-export const formatCasts = (
-  tmdbCasts: TMDB_MovieInfo['credits']['cast'],
-): CreditInfo[] => {
+export const formatCasts = (tmdbCasts: TMDB_Cast[]): CreditInfo[] => {
   // 1. Deduplicate first using a Map (Key = ID, Value = Object)
   const uniqueCastMap = new Map(tmdbCasts.map((cast) => [cast.id, cast]));
   // 2. Convert back to array and chain your logic
@@ -81,9 +80,7 @@ export const formatCasts = (
     }));
 };
 
-export const formatCrew = (
-  tmdbCrew: TMDB_MovieInfo['credits']['crew'],
-): CreditInfo[] => {
+export const formatCrew = (tmdbCrew: TMDB_Crew[]): CreditInfo[] => {
   const uniqueCrewMap = new Map(tmdbCrew.map((crew) => [crew.id, crew]));
   return [...uniqueCrewMap.values()]
     .sort((a, b) => b.popularity - a.popularity)
