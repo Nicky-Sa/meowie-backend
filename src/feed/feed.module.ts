@@ -9,6 +9,8 @@ import { FEED_INPUTS } from '@/feed/engine/input/input.service';
 import { FeedInput } from '@/feed/engine/input/input.types';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource } from '@/feed/engine/source/source.types';
+import { FEED_FILTERS } from '@/feed/engine/filter/filter.service';
+import { FeedFilter } from '@/feed/engine/filter/filter.types';
 import { TmdbModule } from '@/tmdb/tmdb.module';
 import { TasteInputService } from '@/feed/engine/input/taste/taste.service';
 import { LibraryInputService } from '@/feed/engine/input/library/library.service';
@@ -17,9 +19,11 @@ import { DiscoverSourceService } from '@/feed/engine/source/discover/discover.se
 import { OrchestratorService } from '@/feed/engine/orchestrator/orchestrator.service';
 import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { DetailsService } from '@/feed/engine/details/details.service';
+import { MarkedTitlesFilterService } from '@/feed/engine/filter/marked-titles/marked-titles.service';
 
 const inputServices = [TasteInputService, LibraryInputService];
 const sourceServices = [RecommendationsSourceService, DiscoverSourceService];
+const filterServices = [MarkedTitlesFilterService];
 
 @Module({
   imports: [MovieModule, SeriesModule, TasteModule, LibraryModule, TmdbModule],
@@ -40,6 +44,12 @@ const sourceServices = [RecommendationsSourceService, DiscoverSourceService];
       provide: FEED_SOURCES,
       useFactory: (...sources: FeedSource[]) => sources,
       inject: sourceServices,
+    },
+    ...filterServices,
+    {
+      provide: FEED_FILTERS,
+      useFactory: (...filters: FeedFilter[]) => filters,
+      inject: filterServices,
     },
   ],
 })

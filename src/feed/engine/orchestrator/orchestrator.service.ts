@@ -5,6 +5,8 @@ import {
 } from '@/feed/constants/feed.constant';
 import { Candidate, CandidateDetails } from '@/feed/engine/candidate.types';
 import { DetailsService } from '@/feed/engine/details/details.service';
+import { FEED_FILTERS } from '@/feed/engine/filter/filter.service';
+import { FeedFilter } from '@/feed/engine/filter/filter.types';
 import { FEED_INPUTS } from '@/feed/engine/input/input.service';
 import { FeedInput, InputResult } from '@/feed/engine/input/input.types';
 import {
@@ -24,6 +26,8 @@ export class OrchestratorService {
     @Inject(FEED_SOURCES)
     private readonly sourceServices: readonly FeedSource[],
     private readonly detailsService: DetailsService,
+    @Inject(FEED_FILTERS)
+    private readonly filterServices: readonly FeedFilter[],
   ) {}
 
   async run({
@@ -31,10 +35,12 @@ export class OrchestratorService {
     mediaType,
     cursors,
   }: OrchestratorRequest): Promise<OrchestratorResult> {
+    // step 1: initial titles to build the candidates from
     const inputs = await Promise.all(
       this.inputServices.map((input) => input.read({ userId, mediaType })),
     );
 
+    // step 2: potential candidates from different sources
     const results: Partial<SourceResults> = {};
 
     await Promise.all(
@@ -67,9 +73,20 @@ export class OrchestratorService {
       results.recommendations.candidates,
       results.discover.candidates,
     ]);
+    const candidatesDetails = await this.fetchDetails(candidates);
+
+    // step 3: removing invaluable titles
+    let filteredCandidates = candidatesDetails;
+
+    for (const filter of this.filterServices) {
+      filteredCandidates = await filter.filter({
+        userId,
+        candidates: filteredCandidates,
+      });
+    }
 
     return {
-      candidates: await this.fetchDetails(candidates),
+      candidates: filteredCandidates,
       next: {
         recommendations: results.recommendations.next,
         discover: results.discover.next,
