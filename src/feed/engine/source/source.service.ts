@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { SourceRequest, SourceResult } from '@/feed/engine/source/source.types';
 
+export const FEED_SOURCES = Symbol('FEED_SOURCES');
+
 @Injectable()
-export abstract class SourceService {
+export abstract class SourceService<TRequest extends SourceRequest> {
   protected constructor() {}
 
   abstract name: string;
-  abstract fetch(request: SourceRequest): Promise<SourceResult>;
+  abstract fetch(request: TRequest): Promise<SourceResult>;
 }

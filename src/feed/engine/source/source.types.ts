@@ -1,9 +1,10 @@
 import { Candidate } from '@/feed/engine/candidate.types';
 import { MediaType } from '@/types/media-type';
-import { InputResult } from '@/feed/engine/input/input.types';
+import type { RecommendationsSourceService } from '@/feed/engine/source/recommendations/recommendations.service';
+
+export type FeedSource = RecommendationsSourceService;
 
 export type SourceRequest = {
-  inputs: readonly InputResult[];
   mediaType: MediaType;
   /** Null starts the source; subsequent values come from its previous batch. */
   cursor: string | null;

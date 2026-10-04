@@ -1,9 +1,11 @@
-import { Candidate, CandidateDetails } from '@/feed/engine/candidate.types';
+import { Candidate } from '@/feed/engine/candidate.types';
 
 export type ScoringRequest = {
-  likedTitles: readonly CandidateDetails[];
-  dislikedTitles: readonly CandidateDetails[];
-  candidates: readonly CandidateDetails[];
+  questions: readonly ScoringQuestion[];
+};
+
+export type ScoringQuestion = Candidate & {
+  question: string;
 };
 
 export type CandidateScore = Candidate & {
