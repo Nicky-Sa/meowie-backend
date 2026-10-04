@@ -1,55 +1,61 @@
 import { Injectable } from '@nestjs/common';
-import { z } from 'zod';
+import { Candidate } from '@/feed/engine/candidate.types';
 import { SourceService } from '@/feed/engine/source/source.service';
-import { SourceResult } from '@/feed/engine/source/source.types';
-import { RecommendationsRequest } from '@/feed/engine/source/recommendations/recommendations.types';
+import { ProgressService } from '@/feed/engine/progress/progress.service';
+import { PageFetchResult } from '@/feed/engine/progress/progress.types';
+import {
+  recommendationsPageSchema,
+  RecommendationsPageRequest,
+  RecommendationsRequest,
+  RecommendationsResult,
+} from '@/feed/engine/source/recommendations/recommendations.types';
 import { TmdbService } from '@/tmdb/tmdb.service';
 import { TMDB_Recommendations } from '@/tmdb/tmdb.type';
-
-const progressSchema = z.array(
-  z.object({
-    id: z.number().int().positive(),
-    page: z.number().int().positive(),
-  }),
-);
+import { MediaType } from '@/types/media-type';
 
 @Injectable()
-export class RecommendationsSourceService extends SourceService<RecommendationsRequest> {
+export class RecommendationsSourceService extends SourceService<
+  RecommendationsRequest,
+  RecommendationsResult
+> {
   readonly name = 'recommendations';
 
-  constructor(private readonly tmdbService: TmdbService) {
+  constructor(
+    private readonly tmdbService: TmdbService,
+    private readonly progressService: ProgressService,
+  ) {
     super();
   }
 
-  async fetch(request: RecommendationsRequest): Promise<SourceResult> {
-    const { titleIds, mediaType, cursor } = request;
-    const pending =
-      cursor === null
-        ? titleIds.map((id) => ({
-            id,
-            page: 1,
-          }))
-        : progressSchema.parse(JSON.parse(cursor));
-    const current = pending.shift();
+  async fetch({
+    titleIds,
+    mediaType,
+    cursor,
+  }: RecommendationsRequest): Promise<RecommendationsResult> {
+    const { results, next } = await this.progressService.fetch({
+      cursor,
+      firstPageRequests: titleIds.map((id) => ({ id, page: 1 })),
+      pageRequestSchema: recommendationsPageSchema,
+      fetchPage: (request) => this.fetchPage(request, mediaType),
+    });
 
-    if (!current) {
-      return { candidates: [], next: { status: 'exhausted' } };
-    }
+    return { candidates: results, next };
+  }
 
+  private async fetchPage(
+    { id, page }: RecommendationsPageRequest,
+    mediaType: MediaType,
+  ): Promise<PageFetchResult<RecommendationsPageRequest, Candidate>> {
     const response = await this.tmdbService.getRecommendations<
       TMDB_Recommendations<{ id: number }>
-    >(mediaType, current.id, current.page);
-
-    if (response.results.length > 0 && current.page < response.total_pages) {
-      pending.push({ id: current.id, page: current.page + 1 });
-    }
+    >(mediaType, id, page);
 
     return {
-      candidates: response.results.map(({ id }) => ({ id, mediaType })),
-      next:
-        pending.length > 0
-          ? { status: 'more', cursor: JSON.stringify(pending) }
-          : { status: 'exhausted' },
+      results: response.results.map(({ id }) => ({ id, mediaType })),
+      nextRequest:
+        response.results.length > 0 && page < response.total_pages
+          ? { id, page: page + 1 }
+          : null,
     };
   }
 }

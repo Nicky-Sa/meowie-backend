@@ -14,6 +14,7 @@ import { TasteInputService } from '@/feed/engine/input/taste/taste.service';
 import { LibraryInputService } from '@/feed/engine/input/library/library.service';
 import { RecommendationsSourceService } from '@/feed/engine/source/recommendations/recommendations.service';
 import { OrchestratorService } from '@/feed/engine/orchestrator/orchestrator.service';
+import { ProgressService } from '@/feed/engine/progress/progress.service';
 
 const inputServices = [TasteInputService, LibraryInputService];
 const sourceServices = [RecommendationsSourceService];
@@ -24,6 +25,7 @@ const sourceServices = [RecommendationsSourceService];
   providers: [
     FeedService,
     OrchestratorService,
+    ProgressService,
     ...inputServices,
     {
       provide: FEED_INPUTS,

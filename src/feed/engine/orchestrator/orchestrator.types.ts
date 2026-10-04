@@ -1,8 +1,11 @@
 import { InputRequest } from '@/feed/engine/input/input.types';
-import { SourceResult } from '@/feed/engine/source/source.types';
+import {
+  RecommendationsRequest,
+  RecommendationsResult,
+} from '@/feed/engine/source/recommendations/recommendations.types';
 
 export type OrchestratorRequest = InputRequest & {
-  cursor: string | null;
+  cursor: RecommendationsRequest['cursor'];
 };
 
-export type OrchestratorResult = SourceResult;
+export type OrchestratorResult = RecommendationsResult;

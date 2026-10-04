@@ -4,13 +4,12 @@ import type { RecommendationsSourceService } from '@/feed/engine/source/recommen
 
 export type FeedSource = RecommendationsSourceService;
 
-export type SourceRequest = {
+export type SourceRequest<TCursor> = {
   mediaType: MediaType;
-  /** Null starts the source; subsequent values come from its previous batch. */
-  cursor: string | null;
+  cursor: TCursor | null; // null starts the source; subsequent values come from its previous batch
 };
 
-export type SourceResult = {
+export type SourceResult<TCursor> = {
   candidates: Candidate[];
-  next: { status: 'more'; cursor: string } | { status: 'exhausted' };
+  next: { status: 'more'; cursor: TCursor } | { status: 'exhausted' };
 };
