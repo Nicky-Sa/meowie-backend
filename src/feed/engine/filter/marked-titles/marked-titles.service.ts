@@ -22,7 +22,7 @@ export class MarkedTitlesFilterService extends FilterService {
 
   async filter({
     userId,
-    candidates,
+    title,
   }: MarkedTitlesRequest): Promise<MarkedTitlesResult> {
     const [taste, items] = await Promise.all([
       this.tasteService.getTasteForFeed(userId),
@@ -30,7 +30,7 @@ export class MarkedTitlesFilterService extends FilterService {
     ]);
     const markedTitles = this.getMarkedTitles(taste, items);
 
-    return candidates.filter(
+    return title.filter(
       ({ id, mediaType }) => !markedTitles.has(`${mediaType}:${id}`),
     );
   }

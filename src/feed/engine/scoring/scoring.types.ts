@@ -1,32 +1,33 @@
-import { Candidate, CandidateDetails } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
+import { TitleWithDetail } from '@/feed/engine/details/details.types';
 
 export type ScoringRequest = {
   titlesWithContext: TitleWithContext[];
-  candidates: CandidateDetails[];
+  candidates: TitleWithDetail[];
 };
 
-export type TitleWithContext = Candidate & {
-  details: CandidateDetails | null;
+export type TitleWithContext = Title & {
+  details: TitleWithDetail | null;
   context: {
     description: string;
   }[];
 };
 
-export type ScoringQuestion = Candidate & {
+export type ScoringQuestion = Title & {
   question: string;
   criteria: readonly string[];
 };
 
-export type CandidateScore = Candidate & {
+export type CandidateScore = Title & {
   score: number;
 };
 
 export type ScoringResult = CandidateScore[];
 
-export type ScoredCandidate = CandidateDetails & Pick<CandidateScore, 'score'>;
+export type ScoredCandidate = TitleWithDetail & Pick<CandidateScore, 'score'>;
 
 export type ScoreSortingRequest = {
-  candidates: CandidateDetails[];
+  candidates: TitleWithDetail[];
   scores: CandidateScore[];
 };
 

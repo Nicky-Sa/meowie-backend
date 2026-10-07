@@ -6,14 +6,14 @@ import { Duration } from '@/common/app.constants';
 import {
   DetailsBatchRequest,
   DetailsBatchResult,
-  NullableCandidateDetails,
+  NullableTitleWithDetail,
 } from '@/feed/engine/details/details.types';
 import { TmdbService } from '@/tmdb/tmdb.service';
 import { TMDB_DetailsWithAppends } from '@/tmdb/tmdb.type';
 import { MediaType } from '@/types/media-type';
 import { extractYearFromDate } from '@/utils/dates';
 import { MAX_DETAILS_AT_ONCE } from '@/feed/constants/feed.constant';
-import { Candidate } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
 
 @Injectable()
 export class DetailsService {
@@ -22,24 +22,18 @@ export class DetailsService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async fetchBatch(
-    candidates: DetailsBatchRequest,
-  ): Promise<DetailsBatchResult> {
+  async fetchBatch(titles: DetailsBatchRequest): Promise<DetailsBatchResult> {
     const result: DetailsBatchResult = [];
 
-    for (
-      let start = 0;
-      start < candidates.length;
-      start += MAX_DETAILS_AT_ONCE
-    ) {
-      const details = await Promise.all(
-        candidates
+    for (let start = 0; start < titles.length; start += MAX_DETAILS_AT_ONCE) {
+      const titlesWithDetail = await Promise.all(
+        titles
           .slice(start, start + MAX_DETAILS_AT_ONCE)
-          .map((candidate) => this.fetchSingle(candidate)),
+          .map((title) => this.fetchSingle(title)),
       );
 
-      for (const candidate of details) {
-        if (candidate !== null) result.push(candidate);
+      for (const item of titlesWithDetail) {
+        if (item !== null) result.push(item);
       }
     }
 
@@ -47,29 +41,29 @@ export class DetailsService {
   }
 
   @Cacheable({
-    key: ({ id, mediaType }: Candidate) => `feed-details-${mediaType}-${id}`,
+    key: ({ id, mediaType }: Title) => `feed-details-${mediaType}-${id}`,
     ttl: Duration.ONE_WEEK,
   })
   private async fetchSingle({
     id,
     mediaType,
-  }: Candidate): Promise<NullableCandidateDetails> {
+  }: Title): Promise<NullableTitleWithDetail> {
     try {
       const data = await this.tmdbService.getDetails(mediaType, id, [
         'keywords',
       ]);
 
-      return this.toCandidateDetails({ id, mediaType }, data);
+      return this.toTitleWithDetail({ id, mediaType }, data);
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 404) return null;
       throw error;
     }
   }
 
-  private toCandidateDetails(
-    { id, mediaType }: Candidate,
+  private toTitleWithDetail(
+    { id, mediaType }: Title,
     data: TMDB_DetailsWithAppends<MediaType, 'keywords'>,
-  ): NullableCandidateDetails {
+  ): NullableTitleWithDetail {
     const title = 'title' in data ? data.title : data.name;
     const date =
       'release_date' in data ? data.release_date : data.first_air_date;

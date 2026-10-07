@@ -15,11 +15,11 @@ export class AvoidFilterService extends FilterService {
     super();
   }
 
-  async filter({ userId, candidates }: AvoidRequest): Promise<AvoidResult> {
+  async filter({ userId, title }: AvoidRequest): Promise<AvoidResult> {
     const { avoid } = await this.tasteService.getTasteForFeed(userId);
     const { blockedGenreIds, blockedKeywordIds } = buildAvoidRules(avoid);
 
-    return candidates.filter(
+    return title.filter(
       ({ genres, keywords }) =>
         !genres.some(({ id }) => blockedGenreIds.has(id)) &&
         !keywords.some(({ id }) => blockedKeywordIds.has(id)),

@@ -1,4 +1,4 @@
-import { Candidate } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
 import { MediaType } from '@/types/media-type';
 import type { RecommendationsSourceService } from '@/feed/engine/source/recommendations/recommendations.service';
 import type { DiscoverSourceService } from '@/feed/engine/source/discover/discover.service';
@@ -11,6 +11,6 @@ export type SourceRequest<TCursor> = {
 };
 
 export type SourceResult<TCursor> = {
-  candidates: Candidate[];
+  candidates: Title[];
   next: { status: 'more'; cursor: TCursor } | { status: 'exhausted' };
 };

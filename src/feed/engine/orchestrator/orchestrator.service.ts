@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { HIGHEST_RATING } from '@/library/constants/library.constants';
-import { Candidate, CandidateDetails } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
+import { TitleWithDetail } from '@/feed/engine/details/details.types';
 import { MIN_RATING_FOR_RECOMMENDATIONS } from '@/feed/constants/feed.constant';
 import { DetailsService } from '@/feed/engine/details/details.service';
 import { MediaType } from '@/types/media-type';
@@ -95,7 +96,7 @@ export class OrchestratorService {
     for (const filterService of this.filterServices) {
       filteredCandidates = await filterService.filter({
         userId,
-        candidates: filteredCandidates,
+        title: filteredCandidates,
       });
     }
 
@@ -122,8 +123,8 @@ export class OrchestratorService {
     };
   }
 
-  private deduplicateTitles(titleLists: Candidate[][]): Candidate[] {
-    const uniqueTitles = new Map<string, Candidate>();
+  private deduplicateTitles(titleLists: Title[][]): Title[] {
+    const uniqueTitles = new Map<string, Title>();
 
     for (const titles of titleLists) {
       for (const title of titles) {
@@ -135,9 +136,9 @@ export class OrchestratorService {
   }
 
   private extractCandidates(
-    candidates: Candidate[],
-    titleDetails: CandidateDetails[],
-  ): CandidateDetails[] {
+    candidates: Title[],
+    titleDetails: TitleWithDetail[],
+  ): TitleWithDetail[] {
     const candidateIds = new Set(
       candidates.map(({ id, mediaType }) => `${mediaType}:${id}`),
     );
@@ -193,8 +194,8 @@ export class OrchestratorService {
   private getAllInputTitles(
     inputs: InputResult[],
     mediaType: MediaType,
-  ): Candidate[] {
-    const titles: Candidate[] = [];
+  ): Title[] {
+    const titles: Title[] = [];
 
     for (const input of inputs) {
       switch (input.type) {
@@ -213,13 +214,13 @@ export class OrchestratorService {
   private addContextToTitle(
     inputs: InputResult[],
     mediaType: MediaType,
-    titleDetails: CandidateDetails[],
+    titleDetails: TitleWithDetail[],
   ): TitleWithContext[] {
     const detailsByTitle = new Map(
       titleDetails.map((title) => [`${title.mediaType}:${title.id}`, title]),
     );
     const titles = new Map<string, TitleWithContext>();
-    const addContext = (title: Candidate, description: string) => {
+    const addContext = (title: Title, description: string) => {
       if (title.mediaType !== mediaType) return;
 
       const titleId = `${title.mediaType}:${title.id}`;

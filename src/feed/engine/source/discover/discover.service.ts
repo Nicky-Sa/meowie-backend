@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Candidate } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
 import { SourceService } from '@/feed/engine/source/source.service';
 import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { PageFetchResult } from '@/feed/engine/progress/progress.types';
@@ -51,7 +51,7 @@ export class DiscoverSourceService extends SourceService<
   private async fetchPage(
     { page }: DiscoverPageRequest,
     mediaType: MediaType,
-  ): Promise<PageFetchResult<DiscoverPageRequest, Candidate>> {
+  ): Promise<PageFetchResult<DiscoverPageRequest, Title>> {
     const response = await this.discover(mediaType, page);
     const lastPage = Math.min(response.total_pages, TMDB_MAX_PAGE);
 

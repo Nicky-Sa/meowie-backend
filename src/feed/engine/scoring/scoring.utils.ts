@@ -1,4 +1,4 @@
-import { CandidateDetails } from '@/feed/engine/candidate.types';
+import { TitleWithDetail } from '@/feed/engine/details/details.types';
 import {
   HIGHEST_RATING,
   LOWEST_RATING,
@@ -22,7 +22,7 @@ export const FIT_LEVELS = [
 ] as const;
 
 export const buildScoringQuestions = (
-  candidates: CandidateDetails[],
+  candidates: TitleWithDetail[],
 ): ScoringQuestion[] =>
   candidates.map((candidate) => ({
     id: candidate.id,

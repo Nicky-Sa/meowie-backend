@@ -1,12 +1,12 @@
-import { Candidate } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
 import { LibraryItem } from '@/library/entities/library-item.entity';
 
-export type LibraryTitle = Candidate & Pick<LibraryItem, 'rating'>;
+export type LibraryTitle = Title & Pick<LibraryItem, 'rating'>;
 
 export type LibraryInputResult = {
   type: 'library';
   titles: {
-    saved: Candidate[];
+    saved: Title[];
     seen: LibraryTitle[];
   };
 };

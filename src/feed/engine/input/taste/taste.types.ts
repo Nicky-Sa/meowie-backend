@@ -1,9 +1,9 @@
-import { Candidate } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
 
 export type TasteInputResult = {
   type: 'taste';
   titles: {
-    liked: Candidate[];
-    disliked: Candidate[];
+    liked: Title[];
+    disliked: Title[];
   };
 };

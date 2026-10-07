@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Candidate } from '@/feed/engine/candidate.types';
+import { Title } from '@/feed/engine/engine.types';
 import { SourceService } from '@/feed/engine/source/source.service';
 import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { PageFetchResult } from '@/feed/engine/progress/progress.types';
@@ -45,7 +45,7 @@ export class RecommendationsSourceService extends SourceService<
   private async fetchPage(
     { id, page }: RecommendationsPageRequest,
     mediaType: MediaType,
-  ): Promise<PageFetchResult<RecommendationsPageRequest, Candidate>> {
+  ): Promise<PageFetchResult<RecommendationsPageRequest, Title>> {
     const response = await this.tmdbService.getRecommendations<
       TMDB_Recommendations<{ id: number }>
     >(mediaType, id, page);
