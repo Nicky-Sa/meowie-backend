@@ -4,13 +4,16 @@ import { CacheService } from '@/cache/cache.service';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import {
-  DetailsRequest,
-  DetailsResult,
+  DetailsBatchRequest,
+  DetailsBatchResult,
+  NullableCandidateDetails,
 } from '@/feed/engine/details/details.types';
 import { TmdbService } from '@/tmdb/tmdb.service';
 import { TMDB_DetailsWithAppends } from '@/tmdb/tmdb.type';
 import { MediaType } from '@/types/media-type';
 import { extractYearFromDate } from '@/utils/dates';
+import { MAX_DETAILS_AT_ONCE } from '@/feed/constants/feed.constant';
+import { Candidate } from '@/feed/engine/candidate.types';
 
 @Injectable()
 export class DetailsService {
@@ -19,12 +22,38 @@ export class DetailsService {
     private readonly cacheService: CacheService,
   ) {}
 
+  async fetchBatch(
+    candidates: DetailsBatchRequest,
+  ): Promise<DetailsBatchResult> {
+    const result: DetailsBatchResult = [];
+
+    for (
+      let start = 0;
+      start < candidates.length;
+      start += MAX_DETAILS_AT_ONCE
+    ) {
+      const details = await Promise.all(
+        candidates
+          .slice(start, start + MAX_DETAILS_AT_ONCE)
+          .map((candidate) => this.fetchSingle(candidate)),
+      );
+
+      for (const candidate of details) {
+        if (candidate !== null) result.push(candidate);
+      }
+    }
+
+    return result;
+  }
+
   @Cacheable({
-    key: ({ id, mediaType }: DetailsRequest) =>
-      `feed-details-${mediaType}-${id}`,
+    key: ({ id, mediaType }: Candidate) => `feed-details-${mediaType}-${id}`,
     ttl: Duration.ONE_WEEK,
   })
-  async fetch({ id, mediaType }: DetailsRequest): Promise<DetailsResult> {
+  private async fetchSingle({
+    id,
+    mediaType,
+  }: Candidate): Promise<NullableCandidateDetails> {
     try {
       const data = await this.tmdbService.getDetails(mediaType, id, [
         'keywords',
@@ -38,9 +67,9 @@ export class DetailsService {
   }
 
   private toCandidateDetails(
-    { id, mediaType }: DetailsRequest,
+    { id, mediaType }: Candidate,
     data: TMDB_DetailsWithAppends<MediaType, 'keywords'>,
-  ): DetailsResult {
+  ): NullableCandidateDetails {
     const title = 'title' in data ? data.title : data.name;
     const date =
       'release_date' in data ? data.release_date : data.first_air_date;

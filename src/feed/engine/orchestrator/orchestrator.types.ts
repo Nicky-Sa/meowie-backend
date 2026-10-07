@@ -1,5 +1,5 @@
 import { InputRequest } from '@/feed/engine/input/input.types';
-import { CandidateDetails } from '@/feed/engine/candidate.types';
+import { ScoredCandidate } from '@/feed/engine/scoring/scoring.types';
 import {
   RecommendationsRequest,
   RecommendationsResult,
@@ -16,13 +16,13 @@ export type OrchestratorRequest = InputRequest & {
   };
 };
 
-export type SourceResults = {
+export type SourceData = {
   recommendations: RecommendationsResult;
   discover: DiscoverResult;
 };
 
 export type OrchestratorResult = {
-  candidates: CandidateDetails[];
+  candidates: ScoredCandidate[];
   next: {
     recommendations: RecommendationsResult['next'];
     discover: DiscoverResult['next'];

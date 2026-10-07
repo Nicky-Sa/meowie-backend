@@ -16,7 +16,6 @@ import { TasteInputService } from '@/feed/engine/input/taste/taste.service';
 import { LibraryInputService } from '@/feed/engine/input/library/library.service';
 import { RecommendationsSourceService } from '@/feed/engine/source/recommendations/recommendations.service';
 import { DiscoverSourceService } from '@/feed/engine/source/discover/discover.service';
-import { OrchestratorService } from '@/feed/engine/orchestrator/orchestrator.service';
 import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { DetailsService } from '@/feed/engine/details/details.service';
 import { MarkedTitlesFilterService } from '@/feed/engine/filter/marked-titles/marked-titles.service';
@@ -31,7 +30,6 @@ const filterServices = [MarkedTitlesFilterService, AvoidFilterService];
   controllers: [FeedController],
   providers: [
     FeedService,
-    OrchestratorService,
     ProgressService,
     DetailsService,
     ...inputServices,

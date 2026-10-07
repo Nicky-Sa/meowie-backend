@@ -1,10 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  MAX_DETAILS_AT_ONCE,
-  MIN_RATING_FOR_RECOMMENDATIONS,
-} from '@/feed/constants/feed.constant';
+import { HIGHEST_RATING } from '@/library/constants/library.constants';
 import { Candidate, CandidateDetails } from '@/feed/engine/candidate.types';
+import { MIN_RATING_FOR_RECOMMENDATIONS } from '@/feed/constants/feed.constant';
 import { DetailsService } from '@/feed/engine/details/details.service';
+import { MediaType } from '@/types/media-type';
 import { FEED_FILTERS } from '@/feed/engine/filter/filter.service';
 import { FeedFilter } from '@/feed/engine/filter/filter.types';
 import { FEED_INPUTS } from '@/feed/engine/input/input.service';
@@ -12,11 +11,13 @@ import { FeedInput, InputResult } from '@/feed/engine/input/input.types';
 import {
   OrchestratorRequest,
   OrchestratorResult,
-  SourceResults,
+  SourceData,
 } from '@/feed/engine/orchestrator/orchestrator.types';
+import { ScoringService } from '@/feed/engine/scoring/scoring.service';
+import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
+import { sortScoredCandidates } from '@/feed/engine/scoring/scoring.utils';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource } from '@/feed/engine/source/source.types';
-import { MediaType } from '@/types/media-type';
 
 @Injectable()
 export class OrchestratorService {
@@ -28,6 +29,7 @@ export class OrchestratorService {
     private readonly detailsService: DetailsService,
     @Inject(FEED_FILTERS)
     private readonly filterServices: readonly FeedFilter[],
+    private readonly scoringService: ScoringService,
   ) {}
 
   async run({
@@ -40,21 +42,23 @@ export class OrchestratorService {
       this.inputServices.map((input) => input.read({ userId, mediaType })),
     );
 
+    const allInputTitles = this.getAllInputTitles(inputs, mediaType);
+
     // step 2: potential candidates from different sources
-    const results: Partial<SourceResults> = {};
+    const sourceData: Partial<SourceData> = {};
 
     await Promise.all(
       this.sourceServices.map(async (source) => {
         switch (source.name) {
           case 'recommendations':
-            results.recommendations = await source.fetch({
+            sourceData.recommendations = await source.fetch({
               titleIds: this.getTitleIdsToRecommendFrom(inputs, mediaType),
               mediaType,
               cursor: cursors.recommendations,
             });
             break;
           case 'discover':
-            results.discover = await source.fetch({
+            sourceData.discover = await source.fetch({
               mediaType,
               cursor: cursors.discover,
             });
@@ -63,80 +67,88 @@ export class OrchestratorService {
       }),
     );
 
-    if (!results.recommendations || !results.discover) {
+    if (!sourceData.recommendations || !sourceData.discover) {
       throw new Error(
         'Recommendations and Discover sources must be registered.',
       );
     }
 
-    const candidates = this.combineCandidates([
-      results.recommendations.candidates,
-      results.discover.candidates,
+    // step 3: fetching the details for the unique set of candidates + inputs to avoid fetching duplicate titles
+    const uniqueCandidates = this.deduplicateTitles([
+      sourceData.recommendations.candidates,
+      sourceData.discover.candidates,
     ]);
-    const candidatesDetails = await this.fetchDetails(candidates);
+    const uniqueTitlesToFetchDetails = this.deduplicateTitles([
+      uniqueCandidates,
+      allInputTitles,
+    ]);
+    const titleDetails = await this.detailsService.fetchBatch(
+      uniqueTitlesToFetchDetails,
+    );
 
-    // step 3: removing invaluable titles
-    let filteredCandidates = candidatesDetails;
+    // step 4: filtering out invaluable/unwanted candidates
+    let filteredCandidates = this.extractCandidates(
+      uniqueCandidates,
+      titleDetails,
+    ); // extracting candidates and leaving inputs out
 
-    for (const filter of this.filterServices) {
-      filteredCandidates = await filter.filter({
+    for (const filterService of this.filterServices) {
+      filteredCandidates = await filterService.filter({
         userId,
         candidates: filteredCandidates,
       });
     }
 
-    return {
+    // step 5: preparing scoring requirements, which would be inputs + context for state and candidates with details for questions
+    const titlesWithContext = this.addContextToTitle(
+      inputs,
+      mediaType,
+      titleDetails,
+    );
+    const scores = await this.scoringService.score({
+      titlesWithContext,
       candidates: filteredCandidates,
+    });
+
+    return {
+      candidates: sortScoredCandidates({
+        candidates: filteredCandidates,
+        scores,
+      }),
       next: {
-        recommendations: results.recommendations.next,
-        discover: results.discover.next,
+        recommendations: sourceData.recommendations.next,
+        discover: sourceData.discover.next,
       },
     };
   }
 
-  private combineCandidates(
-    candidateLists: readonly (readonly Candidate[])[],
-  ): Candidate[] {
-    const uniqueCandidates = new Map<string, Candidate>();
+  private deduplicateTitles(titleLists: Candidate[][]): Candidate[] {
+    const uniqueTitles = new Map<string, Candidate>();
 
-    for (const candidates of candidateLists) {
-      for (const candidate of candidates) {
-        uniqueCandidates.set(
-          `${candidate.mediaType}:${candidate.id}`,
-          candidate,
-        );
+    for (const titles of titleLists) {
+      for (const title of titles) {
+        uniqueTitles.set(`${title.mediaType}:${title.id}`, title);
       }
     }
 
-    return [...uniqueCandidates.values()];
+    return [...uniqueTitles.values()];
   }
 
-  private async fetchDetails(
-    candidates: readonly Candidate[],
-  ): Promise<CandidateDetails[]> {
-    const result: CandidateDetails[] = [];
+  private extractCandidates(
+    candidates: Candidate[],
+    titleDetails: CandidateDetails[],
+  ): CandidateDetails[] {
+    const candidateIds = new Set(
+      candidates.map(({ id, mediaType }) => `${mediaType}:${id}`),
+    );
 
-    for (
-      let start = 0;
-      start < candidates.length;
-      start += MAX_DETAILS_AT_ONCE
-    ) {
-      const details = await Promise.all(
-        candidates
-          .slice(start, start + MAX_DETAILS_AT_ONCE)
-          .map((candidate) => this.detailsService.fetch(candidate)),
-      );
-
-      for (const candidate of details) {
-        if (candidate !== null) result.push(candidate);
-      }
-    }
-
-    return result;
+    return titleDetails.filter(({ id, mediaType }) =>
+      candidateIds.has(`${mediaType}:${id}`),
+    );
   }
 
   private getTitleIdsToRecommendFrom(
-    inputs: readonly InputResult[],
+    inputs: InputResult[],
     mediaType: MediaType,
   ): number[] {
     const resultIds = new Set<number>(); // final output
@@ -176,5 +188,82 @@ export class OrchestratorService {
     }
 
     return [...resultIds].sort((a, b) => a - b);
+  }
+
+  private getAllInputTitles(
+    inputs: InputResult[],
+    mediaType: MediaType,
+  ): Candidate[] {
+    const titles: Candidate[] = [];
+
+    for (const input of inputs) {
+      switch (input.type) {
+        case 'taste':
+          titles.push(...input.titles.liked, ...input.titles.disliked);
+          break;
+        case 'library':
+          titles.push(...input.titles.saved, ...input.titles.seen);
+          break;
+      }
+    }
+
+    return titles.filter((title) => title.mediaType === mediaType);
+  }
+
+  private addContextToTitle(
+    inputs: InputResult[],
+    mediaType: MediaType,
+    titleDetails: CandidateDetails[],
+  ): TitleWithContext[] {
+    const detailsByTitle = new Map(
+      titleDetails.map((title) => [`${title.mediaType}:${title.id}`, title]),
+    );
+    const titles = new Map<string, TitleWithContext>();
+    const addContext = (title: Candidate, description: string) => {
+      if (title.mediaType !== mediaType) return;
+
+      const titleId = `${title.mediaType}:${title.id}`;
+      let titleForScoring = titles.get(titleId);
+
+      if (!titleForScoring) {
+        titleForScoring = {
+          id: title.id,
+          mediaType: title.mediaType,
+          details: detailsByTitle.get(titleId) ?? null,
+          context: [],
+        };
+        titles.set(titleId, titleForScoring);
+      }
+
+      titleForScoring.context.push({ description });
+    };
+
+    for (const input of inputs) {
+      switch (input.type) {
+        case 'taste':
+          for (const title of input.titles.liked) {
+            addContext(title, 'The user liked this title.');
+          }
+          for (const title of input.titles.disliked) {
+            addContext(title, 'The user disliked this title.');
+          }
+          break;
+        case 'library':
+          for (const title of input.titles.saved) {
+            addContext(title, 'The user saved this title to watch.');
+          }
+          for (const title of input.titles.seen) {
+            addContext(
+              title,
+              title.rating === null
+                ? 'The user has seen this title.'
+                : `The user has seen and rated this title ${title.rating} out of ${HIGHEST_RATING}.`,
+            );
+          }
+          break;
+      }
+    }
+
+    return [...titles.values()];
   }
 }
