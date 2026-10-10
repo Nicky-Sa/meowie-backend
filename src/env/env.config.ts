@@ -54,6 +54,9 @@ export const envConfig = z.object({
   APP_VERSION: z.string().default('1.0.0'),
   SENTRY_RELEASE: z.string().default('NO_SENTRY_RELEASE'),
   GEMINI_API_KEY: z.string().min(10, { message: 'GEMINI_API_KEY is required' }),
+  JEV_API_KEY: z.string().trim().min(1, { message: 'JEV_API_KEY is required' }),
+  JEV_MODEL: z.string().trim().min(1).default('jev-latest'),
+  JEV_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   ALLOWED_DOMAIN: z.string().min(5, { message: 'ALLOWED_DOMAIN is required' }),
   WHATSON_API_KEY: z
     .string()

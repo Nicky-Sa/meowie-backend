@@ -13,8 +13,8 @@ export type TitleWithContext = Title & {
   }[];
 };
 
-export type ScoringQuestion = Title & {
-  question: string;
+export type ScoringInstructions = Title & {
+  instructions: string;
   criteria: readonly string[];
 };
 

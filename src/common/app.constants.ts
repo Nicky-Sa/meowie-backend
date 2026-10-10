@@ -1,5 +1,6 @@
 export const TMDB_BASE_URL = 'https://api.themoviedb.org';
 export const WHATSON_BASE_URL = 'https://whatson-api.onrender.com';
+export const JEV_BASE_URL = 'https://api.typesafe.ai';
 export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original';
 export const MOVIE_POSTER_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/movie-poster-fallback.png';

@@ -20,6 +20,9 @@ import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { DetailsService } from '@/feed/engine/details/details.service';
 import { MarkedTitlesFilterService } from '@/feed/engine/filter/marked-titles/marked-titles.service';
 import { AvoidFilterService } from '@/feed/engine/filter/avoid/avoid.service';
+import { ScoringService } from '@/feed/engine/scoring/scoring.service';
+import { JevScoringService } from '@/feed/engine/scoring/jev/jev.service';
+import { OrchestratorService } from '@/feed/engine/orchestrator/orchestrator.service';
 
 const inputServices = [TasteInputService, LibraryInputService];
 const sourceServices = [RecommendationsSourceService, DiscoverSourceService];
@@ -32,6 +35,8 @@ const filterServices = [MarkedTitlesFilterService, AvoidFilterService];
     FeedService,
     ProgressService,
     DetailsService,
+    OrchestratorService,
+    { provide: ScoringService, useClass: JevScoringService },
     ...inputServices,
     {
       provide: FEED_INPUTS,
