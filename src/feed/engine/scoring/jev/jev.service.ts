@@ -34,15 +34,15 @@ export class JevScoringService extends ScoringService {
 
     const scoringInstructions = this.buildScoringInstructions(candidates);
     const candidateIds = new Set(
-      scoringInstructions.map(({ id, mediaType }) => `${mediaType}:${id}`),
+      scoringInstructions.map(({ id }) => String(id)),
     );
 
     const data = await this.send({
       model: this.env.get('JEV_MODEL'),
       state: this.buildScoringState(titlesWithContext),
       questions: Object.fromEntries(
-        scoringInstructions.map(({ id, mediaType, instructions, criteria }) => [
-          `${mediaType}:${id}`,
+        scoringInstructions.map(({ id, instructions, criteria }) => [
+          id,
           { type: 'score', instructions, criteria },
         ]),
       ),
@@ -66,7 +66,7 @@ export class JevScoringService extends ScoringService {
     return candidates.map(({ id, mediaType }) => ({
       id,
       mediaType,
-      score: answers[`${mediaType}:${id}`].score,
+      score: answers[id].score,
     }));
   }
 

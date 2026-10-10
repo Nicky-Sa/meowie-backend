@@ -4,7 +4,6 @@ import { Title } from '@/feed/engine/engine.types';
 import { TitleWithDetail } from '@/feed/engine/details/details.types';
 import { MIN_RATING_FOR_RECOMMENDATIONS } from '@/feed/constants/feed.constant';
 import { DetailsService } from '@/feed/engine/details/details.service';
-import { MediaType } from '@/types/media-type';
 import { FEED_FILTERS } from '@/feed/engine/filter/filter.service';
 import { FeedFilter } from '@/feed/engine/filter/filter.types';
 import { FEED_INPUTS } from '@/feed/engine/input/input.service';
@@ -43,7 +42,7 @@ export class OrchestratorService {
       this.inputServices.map((input) => input.read({ userId, mediaType })),
     );
 
-    const allInputTitles = this.getAllInputTitles(inputs, mediaType);
+    const allInputTitles = this.getAllInputTitles(inputs);
 
     // step 2: potential candidates from different sources
     const sourceData: Partial<SourceData> = {};
@@ -53,7 +52,7 @@ export class OrchestratorService {
         switch (source.name) {
           case 'recommendations':
             sourceData.recommendations = await source.fetch({
-              titleIds: this.getTitleIdsToRecommendFrom(inputs, mediaType),
+              titleIds: this.getTitleIdsToRecommendFrom(inputs),
               mediaType,
               cursor: cursors.recommendations,
             });
@@ -101,11 +100,7 @@ export class OrchestratorService {
     }
 
     // step 5: preparing scoring requirements, which would be inputs + context for state and candidates with details for questions
-    const titlesWithContext = this.addContextToTitle(
-      inputs,
-      mediaType,
-      titleDetails,
-    );
+    const titlesWithContext = this.addContextToTitle(inputs, titleDetails);
     const scores = await this.scoringService.score({
       titlesWithContext,
       candidates: filteredCandidates,
@@ -124,11 +119,11 @@ export class OrchestratorService {
   }
 
   private deduplicateTitles(titleLists: Title[][]): Title[] {
-    const uniqueTitles = new Map<string, Title>();
+    const uniqueTitles = new Map<number, Title>();
 
     for (const titles of titleLists) {
       for (const title of titles) {
-        uniqueTitles.set(`${title.mediaType}:${title.id}`, title);
+        uniqueTitles.set(title.id, title);
       }
     }
 
@@ -139,19 +134,12 @@ export class OrchestratorService {
     candidates: Title[],
     titleDetails: TitleWithDetail[],
   ): TitleWithDetail[] {
-    const candidateIds = new Set(
-      candidates.map(({ id, mediaType }) => `${mediaType}:${id}`),
-    );
+    const candidateIds = new Set(candidates.map(({ id }) => id));
 
-    return titleDetails.filter(({ id, mediaType }) =>
-      candidateIds.has(`${mediaType}:${id}`),
-    );
+    return titleDetails.filter(({ id }) => candidateIds.has(id));
   }
 
-  private getTitleIdsToRecommendFrom(
-    inputs: InputResult[],
-    mediaType: MediaType,
-  ): number[] {
+  private getTitleIdsToRecommendFrom(inputs: InputResult[]): number[] {
     const resultIds = new Set<number>(); // final output
     const dislikedIds: number[] = [];
     const ratings = new Map<number, number>();
@@ -160,18 +148,18 @@ export class OrchestratorService {
       switch (input.type) {
         case 'taste':
           for (const title of input.titles.liked) {
-            if (title.mediaType === mediaType) resultIds.add(title.id);
+            resultIds.add(title.id);
           }
           for (const title of input.titles.disliked) {
-            if (title.mediaType === mediaType) dislikedIds.push(title.id);
+            dislikedIds.push(title.id);
           }
           break;
         case 'library':
           for (const title of input.titles.saved) {
-            if (title.mediaType === mediaType) resultIds.add(title.id);
+            resultIds.add(title.id);
           }
           for (const title of input.titles.seen) {
-            if (title.mediaType === mediaType && title.rating !== null) {
+            if (title.rating !== null) {
               ratings.set(title.id, title.rating);
             }
           }
@@ -191,10 +179,7 @@ export class OrchestratorService {
     return [...resultIds].sort((a, b) => a - b);
   }
 
-  private getAllInputTitles(
-    inputs: InputResult[],
-    mediaType: MediaType,
-  ): Title[] {
+  private getAllInputTitles(inputs: InputResult[]): Title[] {
     const titles: Title[] = [];
 
     for (const input of inputs) {
@@ -208,32 +193,28 @@ export class OrchestratorService {
       }
     }
 
-    return titles.filter((title) => title.mediaType === mediaType);
+    return titles;
   }
 
   private addContextToTitle(
     inputs: InputResult[],
-    mediaType: MediaType,
     titleDetails: TitleWithDetail[],
   ): TitleWithContext[] {
     const detailsByTitle = new Map(
-      titleDetails.map((title) => [`${title.mediaType}:${title.id}`, title]),
+      titleDetails.map((title) => [title.id, title]),
     );
-    const titles = new Map<string, TitleWithContext>();
+    const titles = new Map<number, TitleWithContext>();
     const addContext = (title: Title, description: string) => {
-      if (title.mediaType !== mediaType) return;
-
-      const titleId = `${title.mediaType}:${title.id}`;
-      let titleForScoring = titles.get(titleId);
+      let titleForScoring = titles.get(title.id);
 
       if (!titleForScoring) {
         titleForScoring = {
           id: title.id,
           mediaType: title.mediaType,
-          details: detailsByTitle.get(titleId) ?? null,
+          details: detailsByTitle.get(title.id) ?? null,
           context: [],
         };
-        titles.set(titleId, titleForScoring);
+        titles.set(title.id, titleForScoring);
       }
 
       titleForScoring.context.push({ description });

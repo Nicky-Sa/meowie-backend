@@ -15,34 +15,29 @@ export const sortScoredCandidates = ({
   candidates,
   scores,
 }: ScoreSortingRequest): ScoreSortingResult => {
-  const candidateIds = new Set(
-    candidates.map(({ id, mediaType }) => `${mediaType}:${id}`),
-  );
-  const scoresByTitle = new Map<string, number>();
+  const candidateIds = new Set(candidates.map(({ id }) => id));
+  const scoresByTitle = new Map<number, number>();
 
-  for (const { id, mediaType, score } of scores) {
-    const titleId = `${mediaType}:${id}`;
-
-    if (!candidateIds.has(titleId)) {
-      throw new Error(`Score returned for an unknown title: ${titleId}.`);
+  for (const { id, score } of scores) {
+    if (!candidateIds.has(id)) {
+      throw new Error(`Score returned for an unknown title: ${id}.`);
     }
-    if (scoresByTitle.has(titleId)) {
-      throw new Error(`More than one score returned for title: ${titleId}.`);
+    if (scoresByTitle.has(id)) {
+      throw new Error(`More than one score returned for title: ${id}.`);
     }
     if (!Number.isFinite(score) || score < 0 || score > FIT_LEVELS.length - 1) {
-      throw new Error(`Invalid score returned for title: ${titleId}.`);
+      throw new Error(`Invalid score returned for title: ${id}.`);
     }
 
-    scoresByTitle.set(titleId, score);
+    scoresByTitle.set(id, score);
   }
 
   return candidates
     .map((candidate) => {
-      const titleId = `${candidate.mediaType}:${candidate.id}`;
-      const score = scoresByTitle.get(titleId);
+      const score = scoresByTitle.get(candidate.id);
 
       if (score === undefined) {
-        throw new Error(`No score returned for title: ${titleId}.`);
+        throw new Error(`No score returned for title: ${candidate.id}.`);
       }
 
       return { ...candidate, score };
