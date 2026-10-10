@@ -63,10 +63,9 @@ export class JevScoringService extends ScoringService {
       throw new Error('Jev must return exactly one score for each candidate.');
     }
 
-    return candidates.map(({ id, mediaType }) => ({
-      id,
-      mediaType,
-      score: answers[id].score,
+    return candidates.map((candidate) => ({
+      ...candidate,
+      score: answers[candidate.id].score,
     }));
   }
 

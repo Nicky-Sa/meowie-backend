@@ -18,17 +18,8 @@ export type ScoringInstructions = Title & {
   criteria: readonly string[];
 };
 
-export type CandidateScore = Title & {
+export type ScoredTitle = TitleWithDetail & {
   score: number;
 };
 
-export type ScoringResult = CandidateScore[];
-
-export type ScoredCandidate = TitleWithDetail & Pick<CandidateScore, 'score'>;
-
-export type ScoreSortingRequest = {
-  candidates: TitleWithDetail[];
-  scores: CandidateScore[];
-};
-
-export type ScoreSortingResult = ScoredCandidate[];
+export type ScoringResult = ScoredTitle[];

@@ -15,7 +15,7 @@ import {
 } from '@/feed/engine/orchestrator/orchestrator.types';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
-import { sortScoredCandidates } from '@/feed/engine/scoring/scoring.utils';
+import { sortScoredTitles } from '@/feed/engine/scoring/scoring.utils';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource } from '@/feed/engine/source/source.types';
 
@@ -101,16 +101,13 @@ export class OrchestratorService {
 
     // step 5: preparing scoring requirements, which would be inputs + context for state and candidates with details for questions
     const titlesWithContext = this.addContextToTitle(inputs, titleDetails);
-    const scores = await this.scoringService.score({
+    const scoredTitles = await this.scoringService.score({
       titlesWithContext,
       candidates: filteredCandidates,
     });
 
     return {
-      candidates: sortScoredCandidates({
-        candidates: filteredCandidates,
-        scores,
-      }),
+      scoredTitles: sortScoredTitles(scoredTitles),
       next: {
         recommendations: sourceData.recommendations.next,
         discover: sourceData.discover.next,
