@@ -18,6 +18,8 @@ import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
 import { sortScoredTitles } from '@/feed/engine/scoring/scoring.utils';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource } from '@/feed/engine/source/source.types';
+import { FeedStorageService } from '@/feed/engine/storage/storage.service';
+import { FeedState } from '@/feed/engine/storage/storage.types';
 
 @Injectable()
 export class OrchestratorService {
@@ -30,13 +32,22 @@ export class OrchestratorService {
     @Inject(FEED_FILTERS)
     private readonly filterServices: readonly FeedFilter[],
     private readonly scoringService: ScoringService,
+    private readonly storageService: FeedStorageService,
   ) {}
 
-  async run({
-    userId,
-    mediaType,
-    cursors,
-  }: OrchestratorRequest): Promise<OrchestratorResult> {
+  async run(request: OrchestratorRequest): Promise<OrchestratorResult> {
+    const { userId, mediaType } = request;
+
+    const state = await this.storageService.read(request);
+
+    // stop the run if all sources are exhausted
+    if (this.areSourcesExhausted(state.sources)) {
+      return {
+        scoredTitles: [],
+        next: state.sources,
+      };
+    }
+
     // step 1: initial titles to build the candidates from
     const inputs = await Promise.all(
       this.inputServices.map((input) => input.read({ userId, mediaType })),
@@ -50,19 +61,35 @@ export class OrchestratorService {
     await Promise.all(
       this.sourceServices.map(async (source) => {
         switch (source.name) {
-          case 'recommendations':
+          case 'recommendations': {
+            const progress = state.sources.recommendations;
+
+            if (progress?.status === 'exhausted') {
+              sourceData.recommendations = { candidates: [], next: progress };
+              break;
+            }
+
             sourceData.recommendations = await source.fetch({
               titleIds: this.getTitleIdsToRecommendFrom(inputs),
               mediaType,
-              cursor: cursors.recommendations,
+              cursor: progress?.cursor ?? null,
             });
             break;
-          case 'discover':
+          }
+          case 'discover': {
+            const progress = state.sources.discover;
+
+            if (progress?.status === 'exhausted') {
+              sourceData.discover = { candidates: [], next: progress };
+              break;
+            }
+
             sourceData.discover = await source.fetch({
               mediaType,
-              cursor: cursors.discover,
+              cursor: progress?.cursor ?? null,
             });
             break;
+          }
         }
       }),
     );
@@ -74,10 +101,11 @@ export class OrchestratorService {
     }
 
     // step 3: fetching the details for the unique set of candidates + inputs to avoid fetching duplicate titles
+    const processedTitleIds = new Set(state.processedTitleIds);
     const uniqueCandidates = this.deduplicateTitles([
       sourceData.recommendations.candidates,
       sourceData.discover.candidates,
-    ]);
+    ]).filter(({ id }) => !processedTitleIds.has(id));
     const uniqueTitlesToFetchDetails = this.deduplicateTitles([
       uniqueCandidates,
       allInputTitles,
@@ -101,18 +129,35 @@ export class OrchestratorService {
 
     // step 5: preparing scoring requirements, which would be inputs + context for state and candidates with details for questions
     const titlesWithContext = this.addContextToTitle(inputs, titleDetails);
-    const scoredTitles = await this.scoringService.score({
-      titlesWithContext,
+    const scores = await this.scoringService.score({
       candidates: filteredCandidates,
+      titlesWithContext,
+    });
+    const scoredTitles = sortScoredTitles(scores);
+    const next = {
+      recommendations: sourceData.recommendations.next,
+      discover: sourceData.discover.next,
+    };
+
+    await this.storageService.save(request, {
+      ...state,
+      sources: next,
+      processedTitleIds: [
+        ...state.processedTitleIds,
+        ...uniqueCandidates.map(({ id }) => id),
+      ],
+      waitingTitles: [...state.waitingTitles, ...scoredTitles],
     });
 
-    return {
-      scoredTitles: sortScoredTitles(scoredTitles),
-      next: {
-        recommendations: sourceData.recommendations.next,
-        discover: sourceData.discover.next,
-      },
-    };
+    return { scoredTitles, next };
+  }
+
+  private areSourcesExhausted(
+    sources: FeedState['sources'],
+  ): sources is OrchestratorResult['next'] {
+    return Object.values(sources).every(
+      (source) => source?.status === 'exhausted',
+    );
   }
 
   private deduplicateTitles(titleLists: Title[][]): Title[] {

@@ -23,6 +23,7 @@ import { AvoidFilterService } from '@/feed/engine/filter/avoid/avoid.service';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { JevScoringService } from '@/feed/engine/scoring/jev/jev.service';
 import { OrchestratorService } from '@/feed/engine/orchestrator/orchestrator.service';
+import { FeedStorageService } from '@/feed/engine/storage/storage.service';
 
 const inputServices = [TasteInputService, LibraryInputService];
 const sourceServices = [RecommendationsSourceService, DiscoverSourceService];
@@ -36,6 +37,7 @@ const filterServices = [MarkedTitlesFilterService, AvoidFilterService];
     ProgressService,
     DetailsService,
     OrchestratorService,
+    FeedStorageService,
     { provide: ScoringService, useClass: JevScoringService },
     ...inputServices,
     {
