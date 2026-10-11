@@ -2,7 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HIGHEST_RATING } from '@/library/constants/library.constants';
 import { Title } from '@/feed/engine/engine.types';
 import { TitleWithDetail } from '@/feed/engine/details/details.types';
-import { MIN_RATING_FOR_RECOMMENDATIONS } from '@/feed/constants/feed.constant';
+import {
+  MIN_FEED_SCORE,
+  MIN_RATING_FOR_RECOMMENDATIONS,
+} from '@/feed/constants/feed.constant';
 import { DetailsService } from '@/feed/engine/details/details.service';
 import { FEED_FILTERS } from '@/feed/engine/filter/filter.service';
 import { FeedFilter } from '@/feed/engine/filter/filter.types';
@@ -119,11 +122,16 @@ export class OrchestratorService {
       candidates: filteredCandidates,
       titlesWithContext,
     });
-    const scoredTitles = sortScoredTitles(scores);
+
+    // step 6: removing low-scored titles
+    const scoredTitles = sortScoredTitles(
+      scores.filter(({ score }) => score >= MIN_FEED_SCORE),
+    );
     const next = Object.fromEntries(
       sourceData.map(({ name, next }) => [name, next]),
     ) as SourceProgress;
 
+    // step 7: saving high-scored titles
     await this.storageService.save(request, {
       ...state,
       sources: next,
@@ -132,7 +140,7 @@ export class OrchestratorService {
         ...uniqueCandidates.map(({ id }) => id),
       ],
       waitingTitles: sortScoredTitles([
-        ...state.waitingTitles,
+        ...state.waitingTitles.filter(({ score }) => score >= MIN_FEED_SCORE),
         ...scoredTitles,
       ]),
     });

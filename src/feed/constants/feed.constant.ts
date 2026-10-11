@@ -5,6 +5,7 @@ export const MAX_BATCHES_PER_REFILL = 5;
 export const MAX_POOL_SIZE = 500;
 export const MAX_FEED_PAGE = MAX_POOL_SIZE / FEED_PAGE_SIZE;
 export const MIN_RATING_FOR_RECOMMENDATIONS = 8;
+export const MIN_FEED_SCORE = 3;
 export const MAX_DETAILS_AT_ONCE = 10;
 export const FEED_EXPIRY_SECONDS = 365 * 24 * 60 * 60; // 1 year
 
