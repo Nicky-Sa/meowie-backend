@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from '@/cache/cache.service';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
@@ -8,13 +8,17 @@ import { FeedResDto } from '@/feed/dto/feed.dto';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { MAX_FEED_PAGE } from '@/feed/constants/feed.constant';
+import { FeedQueueService } from '@/feed/queue/queue.service';
 
 @Injectable()
 export class FeedService {
+  private readonly logger = new Logger(FeedService.name);
+
   constructor(
     private readonly cacheService: CacheService,
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
+    private readonly feedQueueService: FeedQueueService,
   ) {}
 
   async getFeed(
@@ -23,6 +27,14 @@ export class FeedService {
     page: number,
     refresh: boolean,
   ): Promise<FeedResDto> {
+    if (userId !== null && !refresh) {
+      try {
+        await this.feedQueueService.replenish({ userId, mediaType });
+      } catch {
+        this.logger.error('Could not queue feed preparation.');
+      }
+    }
+
     return this.publicFeed(mediaType, page, refresh);
   }
 

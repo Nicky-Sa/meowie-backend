@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import { FEED_QUEUE } from '@/common/queue.constants';
 import { FeedController } from '@/feed/feed.controller';
 import { FeedService } from '@/feed/feed.service';
 import { MovieModule } from '@/movie/movie.module';
@@ -23,17 +25,28 @@ import { AvoidFilterService } from '@/feed/engine/filter/avoid/avoid.service';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { JevScoringService } from '@/feed/engine/scoring/jev/jev.service';
 import { OrchestratorService } from '@/feed/engine/orchestrator/orchestrator.service';
-import { FeedStorageService } from '@/feed/engine/storage/storage.service';
+import { FeedStorageService } from '@/feed/storage/storage.service';
+import { FeedQueueService } from '@/feed/queue/queue.service';
+import { FeedProcessor } from '@/feed/queue/queue.processor';
 
 const inputServices = [TasteInputService, LibraryInputService];
 const sourceServices = [RecommendationsSourceService, DiscoverSourceService];
 const filterServices = [MarkedTitlesFilterService, AvoidFilterService];
 
 @Module({
-  imports: [MovieModule, SeriesModule, TasteModule, LibraryModule, TmdbModule],
+  imports: [
+    BullModule.registerQueue({ name: FEED_QUEUE.name }),
+    MovieModule,
+    SeriesModule,
+    TasteModule,
+    LibraryModule,
+    TmdbModule,
+  ],
   controllers: [FeedController],
   providers: [
     FeedService,
+    FeedQueueService,
+    FeedProcessor,
     ProgressService,
     DetailsService,
     OrchestratorService,

@@ -17,8 +17,8 @@ import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
 import { sortScoredTitles } from '@/feed/engine/scoring/scoring.utils';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource, SourceProgress } from '@/feed/engine/source/source.types';
-import { FeedStorageService } from '@/feed/engine/storage/storage.service';
-import { FeedState } from '@/feed/engine/storage/storage.types';
+import { FeedStorageService } from '@/feed/storage/storage.service';
+import { FeedState } from '@/feed/storage/storage.types';
 
 @Injectable()
 export class OrchestratorService {
@@ -131,7 +131,10 @@ export class OrchestratorService {
         ...state.processedTitleIds,
         ...uniqueCandidates.map(({ id }) => id),
       ],
-      waitingTitles: [...state.waitingTitles, ...scoredTitles],
+      waitingTitles: sortScoredTitles([
+        ...state.waitingTitles,
+        ...scoredTitles,
+      ]),
     });
 
     return { scoredTitles, next };
