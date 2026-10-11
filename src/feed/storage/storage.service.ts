@@ -10,7 +10,7 @@ import {
   FeedState,
   FeedStorageRequest,
   FeedStorageResult,
-} from '@/feed/engine/storage/storage.types';
+} from '@/feed/storage/storage.types';
 
 @Injectable()
 export class FeedStorageService {
