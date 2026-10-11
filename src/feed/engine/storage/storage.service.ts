@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CacheService } from '@/cache/cache.service';
+import { FEED_SOURCES } from '@/feed/engine/source/source.service';
+import {
+  FeedSource,
+  StoredSourceProgress,
+} from '@/feed/engine/source/source.types';
 import { FEED_EXPIRY_SECONDS } from '@/feed/constants/feed.constant';
 import {
   FeedState,
@@ -9,12 +14,18 @@ import {
 
 @Injectable()
 export class FeedStorageService {
-  constructor(private readonly cache: CacheService) {}
+  constructor(
+    private readonly cache: CacheService,
+    @Inject(FEED_SOURCES)
+    private readonly sourceServices: readonly FeedSource[],
+  ) {}
 
   async read(request: FeedStorageRequest): Promise<FeedStorageResult> {
     const state = await this.cache.get<FeedState>(this.getStateKey(request));
     const emptyState: FeedState = {
-      sources: { recommendations: null, discover: null },
+      sources: Object.fromEntries(
+        this.sourceServices.map(({ name }) => [name, null]),
+      ) as StoredSourceProgress,
       processedTitleIds: [],
       waitingTitles: [],
       deliveredPages: {},

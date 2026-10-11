@@ -11,13 +11,12 @@ import { FeedInput, InputResult } from '@/feed/engine/input/input.types';
 import {
   OrchestratorRequest,
   OrchestratorResult,
-  SourceData,
 } from '@/feed/engine/orchestrator/orchestrator.types';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
 import { sortScoredTitles } from '@/feed/engine/scoring/scoring.utils';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
-import { FeedSource } from '@/feed/engine/source/source.types';
+import { FeedSource, SourceProgress } from '@/feed/engine/source/source.types';
 import { FeedStorageService } from '@/feed/engine/storage/storage.service';
 import { FeedState } from '@/feed/engine/storage/storage.types';
 
@@ -56,56 +55,43 @@ export class OrchestratorService {
     const allInputTitles = this.getAllInputTitles(inputs);
 
     // step 2: potential candidates from different sources
-    const sourceData: Partial<SourceData> = {};
-
-    await Promise.all(
+    const sourceData = await Promise.all(
       this.sourceServices.map(async (source) => {
+        const progress = state.sources[source.name];
+
+        if (progress?.status === 'exhausted') {
+          return { name: source.name, candidates: [], next: progress };
+        }
+
         switch (source.name) {
           case 'recommendations': {
-            const progress = state.sources.recommendations;
-
-            if (progress?.status === 'exhausted') {
-              sourceData.recommendations = { candidates: [], next: progress };
-              break;
-            }
-
-            sourceData.recommendations = await source.fetch({
+            const progress = state.sources[source.name];
+            const result = await source.fetch({
               titleIds: this.getTitleIdsToRecommendFrom(inputs),
               mediaType,
-              cursor: progress?.cursor ?? null,
+              cursor: progress?.status === 'more' ? progress.cursor : null,
             });
-            break;
+
+            return { name: source.name, ...result };
           }
           case 'discover': {
-            const progress = state.sources.discover;
-
-            if (progress?.status === 'exhausted') {
-              sourceData.discover = { candidates: [], next: progress };
-              break;
-            }
-
-            sourceData.discover = await source.fetch({
+            const progress = state.sources[source.name];
+            const result = await source.fetch({
               mediaType,
-              cursor: progress?.cursor ?? null,
+              cursor: progress?.status === 'more' ? progress.cursor : null,
             });
-            break;
+
+            return { name: source.name, ...result };
           }
         }
       }),
     );
 
-    if (!sourceData.recommendations || !sourceData.discover) {
-      throw new Error(
-        'Recommendations and Discover sources must be registered.',
-      );
-    }
-
     // step 3: fetching the details for the unique set of candidates + inputs to avoid fetching duplicate titles
     const processedTitleIds = new Set(state.processedTitleIds);
-    const uniqueCandidates = this.deduplicateTitles([
-      sourceData.recommendations.candidates,
-      sourceData.discover.candidates,
-    ]).filter(({ id }) => !processedTitleIds.has(id));
+    const uniqueCandidates = this.deduplicateTitles(
+      sourceData.map(({ candidates }) => candidates),
+    ).filter(({ id }) => !processedTitleIds.has(id));
     const uniqueTitlesToFetchDetails = this.deduplicateTitles([
       uniqueCandidates,
       allInputTitles,
@@ -134,10 +120,9 @@ export class OrchestratorService {
       titlesWithContext,
     });
     const scoredTitles = sortScoredTitles(scores);
-    const next = {
-      recommendations: sourceData.recommendations.next,
-      discover: sourceData.discover.next,
-    };
+    const next = Object.fromEntries(
+      sourceData.map(({ name, next }) => [name, next]),
+    ) as SourceProgress;
 
     await this.storageService.save(request, {
       ...state,
