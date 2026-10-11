@@ -8,7 +8,7 @@ import {
   ScoringInstructions,
   TitleWithContext,
 } from '@/feed/engine/scoring/scoring.types';
-import { FIT_LEVELS } from '@/feed/engine/scoring/scoring.utils';
+import { FIT_LEVELS } from '@/feed/engine/scoring/scoring.constants';
 import {
   HIGHEST_RATING,
   LOWEST_RATING,

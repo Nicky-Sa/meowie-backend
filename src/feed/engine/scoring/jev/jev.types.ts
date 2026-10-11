@@ -3,7 +3,7 @@ import {
   ScoringRequest,
   ScoringResult,
 } from '@/feed/engine/scoring/scoring.types';
-import { FIT_LEVELS } from '@/feed/engine/scoring/scoring.utils';
+import { FIT_LEVELS } from '@/feed/engine/scoring/scoring.constants';
 
 export type JevRequest = ScoringRequest;
 

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import _shuffle from 'lodash/shuffle';
 import { HIGHEST_RATING } from '@/library/constants/library.constants';
 import { Title } from '@/feed/engine/engine.types';
 import { TitleWithDetail } from '@/feed/engine/details/details.types';
@@ -17,7 +18,6 @@ import {
 } from '@/feed/engine/orchestrator/orchestrator.types';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
-import { sortScoredTitles } from '@/feed/engine/scoring/scoring.utils';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource, SourceProgress } from '@/feed/engine/source/source.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
@@ -124,14 +124,12 @@ export class OrchestratorService {
     });
 
     // step 6: removing low-scored titles
-    const scoredTitles = sortScoredTitles(
-      scores.filter(({ score }) => score >= MIN_FEED_SCORE),
-    );
+    const scoredTitles = scores.filter(({ score }) => score >= MIN_FEED_SCORE);
     const next = Object.fromEntries(
       sourceData.map(({ name, next }) => [name, next]),
     ) as SourceProgress;
 
-    // step 7: saving high-scored titles
+    // step 7: shuffling and saving high-scored titles
     await this.storageService.save(request, {
       ...state,
       sources: next,
@@ -139,7 +137,7 @@ export class OrchestratorService {
         ...state.processedTitleIds,
         ...uniqueCandidates.map(({ id }) => id),
       ],
-      waitingTitles: sortScoredTitles([
+      waitingTitles: _shuffle([
         ...state.waitingTitles.filter(({ score }) => score >= MIN_FEED_SCORE),
         ...scoredTitles,
       ]),
