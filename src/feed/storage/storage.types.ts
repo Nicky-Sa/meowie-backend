@@ -5,8 +5,7 @@ import { StoredSourceProgress } from '@/feed/engine/source/source.types';
 export type FeedState = {
   sources: StoredSourceProgress;
   processedTitleIds: number[];
-  /** Delivered titles stay here; delivery history determines which are unused. */
-  waitingTitles: ScoredTitle[];
+  allScoredTitles: ScoredTitle[];
 };
 
 export type FeedStateRequest = InputRequest;

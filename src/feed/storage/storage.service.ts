@@ -29,7 +29,7 @@ export class FeedStorageService {
         this.sourceServices.map(({ name }) => [name, null]),
       ) as StoredSourceProgress,
       processedTitleIds: [],
-      waitingTitles: [],
+      allScoredTitles: [],
     };
 
     if (!state) return emptyState;
@@ -37,7 +37,7 @@ export class FeedStorageService {
     return {
       sources: state.sources,
       processedTitleIds: state.processedTitleIds,
-      waitingTitles: state.waitingTitles,
+      allScoredTitles: state.allScoredTitles,
     };
   }
 
@@ -47,11 +47,7 @@ export class FeedStorageService {
   ): Promise<void> {
     await this.cache.set(
       this.getPreparedFeedKey(request),
-      {
-        sources: state.sources,
-        processedTitleIds: state.processedTitleIds,
-        waitingTitles: state.waitingTitles,
-      },
+      { ...state },
       FEED_EXPIRY_SECONDS,
     );
   }

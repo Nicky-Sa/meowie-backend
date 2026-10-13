@@ -136,7 +136,7 @@ export class OrchestratorService {
         ...state.processedTitleIds,
         ...uniqueCandidates.map(({ id }) => id),
       ],
-      waitingTitles: _shuffle([...state.waitingTitles, ...scoredTitles]),
+      allScoredTitles: _shuffle([...state.allScoredTitles, ...scoredTitles]),
     });
 
     return { scoredTitles, next };

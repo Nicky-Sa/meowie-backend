@@ -22,7 +22,7 @@ export class FeedQueueService {
       this.storageService.readFeedState(request),
       this.storageService.readDeliveredTitleIds(request),
     ]);
-    const undeliveredTitles = feedState.waitingTitles.filter(
+    const undeliveredTitles = feedState.allScoredTitles.filter(
       ({ id }) => !deliveredTitleIds.includes(id),
     );
 

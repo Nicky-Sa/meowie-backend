@@ -3,6 +3,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import _shuffle from 'lodash/shuffle';
 import { CacheService } from '@/cache/cache.service';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
@@ -53,7 +54,7 @@ export class FeedService {
       this.storageService.readDeliveredTitleIds(request),
     ]);
     const undeliveredTitles = this.getUndeliveredTitles(
-      feedState.waitingTitles,
+      feedState.allScoredTitles,
       deliveredTitleIds,
     );
     const sourcesExhausted = Object.values(feedState.sources).every(
@@ -61,7 +62,7 @@ export class FeedService {
     );
 
     if (
-      this.isBatchReady(
+      this.isThisBatchReady(
         undeliveredTitles.length,
         deliveredTitleIds.length,
         sourcesExhausted,
@@ -70,20 +71,27 @@ export class FeedService {
       return this.deliverTitles(request, undeliveredTitles, deliveredTitleIds);
     }
 
-    if (sourcesExhausted) return { results: [], status: 'ready' };
+    if (sourcesExhausted) return this.getFeedFromHistory(deliveredTitleIds);
 
     await this.requestMoreTitles(request);
     return { results: [], status: 'preparing' };
   }
 
   private getUndeliveredTitles(
-    waitingTitles: ScoredTitle[],
+    allScoredTitles: ScoredTitle[],
     deliveredTitleIds: DeliveredTitleIds,
   ): ScoredTitle[] {
-    return waitingTitles.filter(({ id }) => !deliveredTitleIds.includes(id));
+    return allScoredTitles.filter(({ id }) => !deliveredTitleIds.includes(id));
   }
 
-  private isBatchReady(
+  private getFeedFromHistory(deliveredTitleIds: DeliveredTitleIds): FeedResDto {
+    return {
+      results: _shuffle(deliveredTitleIds).slice(0, FEED_BATCH_SIZE),
+      status: 'ready',
+    };
+  }
+
+  private isThisBatchReady(
     undeliveredTitleCount: number,
     deliveredTitleCount: number,
     sourcesExhausted: boolean,
