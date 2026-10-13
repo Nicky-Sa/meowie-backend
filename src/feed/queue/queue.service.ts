@@ -6,7 +6,6 @@ import { OrchestratorRequest } from '@/feed/engine/orchestrator/orchestrator.typ
 import {
   MAX_BATCHES_PER_REFILL,
   MIN_WAITING_TITLES,
-  TARGET_WAITING_TITLES,
 } from '@/feed/constants/feed.constant';
 import { PrepareBatchJobData } from '@/feed/queue/queue.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
@@ -35,7 +34,6 @@ export class FeedQueueService {
     const state = await this.storageService.read(request);
 
     if (
-      state.waitingTitles.length >= TARGET_WAITING_TITLES ||
       Object.values(state.sources).every(
         (source) => source?.status === 'exhausted',
       )
