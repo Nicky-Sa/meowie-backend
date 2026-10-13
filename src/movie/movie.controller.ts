@@ -7,7 +7,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { MovieService } from '@/movie/movie.service';
-import { MovieInfoResDto, QueryParamsDto } from '@/movie/dto/movie.dto';
+import { MovieDetailsResDto, QueryParamsDto } from '@/movie/dto/movie.dto';
 import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { ClsService } from '@/common/cls/cls.service';
@@ -33,8 +33,10 @@ export class MovieController {
 
   @Get(':id')
   @Header('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`)
-  async getMovieInfo(@Param('id') id: number): Promise<MovieInfoResDto> {
-    return this.movieService.getMovieInfo(id, this.cls.countryCode);
+  async getProcessedMovieDetails(
+    @Param('id') id: number,
+  ): Promise<MovieDetailsResDto> {
+    return this.movieService.getProcessedMovieDetails(id, this.cls.countryCode);
   }
 
   @Get(':id/recommendations/posters')

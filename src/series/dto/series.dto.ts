@@ -23,7 +23,7 @@ export class SeriesCredits {
   creator: CreditInfo;
 }
 
-export class SeriesInfoResDto {
+export class SeriesDetailsResDto {
   title: string;
   airingYears: string;
   seasonsText: string;

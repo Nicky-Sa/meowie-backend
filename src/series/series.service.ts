@@ -14,7 +14,7 @@ import {
   InterestingSeriesIdsResDto,
   QueryParamsDto,
   SeriesCredits,
-  SeriesInfoResDto,
+  SeriesDetailsResDto,
 } from '@/series/dto/series.dto';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { getImageFullUrl, getImageWithFallback } from '@/images/images.utils';
@@ -91,7 +91,7 @@ export class SeriesService extends BaseMediaService {
     );
   }
 
-  async getBasicSeriesInfo<K extends keyof TMDB_SeriesAppendsOptions = never>(
+  async getSeriesDetails<K extends keyof TMDB_SeriesAppendsOptions = never>(
     id: number,
     append_to_response?: K[],
   ): Promise<TMDB_SeriesDetailsWithAppends<K>> {
@@ -102,8 +102,11 @@ export class SeriesService extends BaseMediaService {
     key: (id: number, country: string) => `series-info-${id}-${country}`,
     ttl: Duration.ONE_DAY,
   })
-  async getSeriesInfo(id: number, country: string): Promise<SeriesInfoResDto> {
-    const item = await this.getBasicSeriesInfo(id, [
+  async getProcessedSeriesDetails(
+    id: number,
+    country: string,
+  ): Promise<SeriesDetailsResDto> {
+    const item = await this.getSeriesDetails(id, [
       'videos',
       'content_ratings',
       'credits',
@@ -123,7 +126,7 @@ export class SeriesService extends BaseMediaService {
       item.vote_average,
     );
 
-    const data: SeriesInfoResDto = {
+    const data: SeriesDetailsResDto = {
       title: item.name,
       airingYears: this.constructAiringYears(
         item.first_air_date,

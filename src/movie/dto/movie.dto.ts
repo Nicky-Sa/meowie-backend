@@ -23,7 +23,7 @@ export class MovieCredits {
   director: CreditInfo;
 }
 
-export class MovieInfoResDto {
+export class MovieDetailsResDto {
   title: string;
   screeningStatus: string;
   duration: string;

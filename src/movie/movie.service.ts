@@ -11,7 +11,7 @@ import {
 } from '@/tmdb/tmdb.type';
 import { getImageFullUrl, getImageWithFallback } from '@/images/images.utils';
 import {
-  MovieInfoResDto,
+  MovieDetailsResDto,
   InterestingMovieIdsResDto,
   QueryParamsDto,
   MovieCredits,
@@ -80,7 +80,7 @@ export class MovieService extends BaseMediaService {
     );
   }
 
-  async getBasicMovieInfo<K extends keyof TMDB_MovieAppendsOptions = never>(
+  async getMovieDetails<K extends keyof TMDB_MovieAppendsOptions = never>(
     id: number,
     append_to_response?: K[],
   ): Promise<TMDB_MovieDetailsWithAppends<K>> {
@@ -91,8 +91,11 @@ export class MovieService extends BaseMediaService {
     key: (id: number, country: string) => `movie-info-${id}-${country}`,
     ttl: Duration.ONE_DAY,
   })
-  async getMovieInfo(id: number, country: string): Promise<MovieInfoResDto> {
-    const item = await this.getBasicMovieInfo(id, [
+  async getProcessedMovieDetails(
+    id: number,
+    country: string,
+  ): Promise<MovieDetailsResDto> {
+    const item = await this.getMovieDetails(id, [
       'videos',
       'release_dates',
       'credits',
@@ -119,7 +122,7 @@ export class MovieService extends BaseMediaService {
       country,
     );
 
-    const data: MovieInfoResDto = {
+    const data: MovieDetailsResDto = {
       title: item.title,
       screeningStatus,
       overview: item.overview || 'N/A',

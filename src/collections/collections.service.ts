@@ -152,8 +152,8 @@ export class CollectionsService {
     const results = await Promise.all(
       items.map(async (item) => {
         const details = await (mediaType === 'movie'
-          ? this.movieService.getBasicMovieInfo(item.tmdbId)
-          : this.seriesService.getBasicSeriesInfo(item.tmdbId));
+          ? this.movieService.getMovieDetails(item.tmdbId)
+          : this.seriesService.getSeriesDetails(item.tmdbId));
 
         const title = 'title' in details ? details.title : details.name;
 

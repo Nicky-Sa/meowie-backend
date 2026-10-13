@@ -191,8 +191,8 @@ export class LibraryService {
     const results = await Promise.all(
       items.map(async (item) => {
         const details = await (item.mediaType === 'movie'
-          ? this.movieService.getBasicMovieInfo(item.tmdbId)
-          : this.seriesService.getBasicSeriesInfo(item.tmdbId));
+          ? this.movieService.getMovieDetails(item.tmdbId)
+          : this.seriesService.getSeriesDetails(item.tmdbId));
         const posterPath = getImageWithFallback(
           details.poster_path,
           `${item.mediaType}_poster`,
