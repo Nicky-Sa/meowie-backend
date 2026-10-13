@@ -18,7 +18,7 @@ export class FeedQueueService {
   ) {}
 
   async replenish(request: OrchestratorRequest): Promise<void> {
-    const state = await this.storageService.read(request);
+    const state = await this.storageService.readFeedState(request);
 
     if (state.waitingTitles.length >= MIN_WAITING_TITLES) return;
 
@@ -31,7 +31,7 @@ export class FeedQueueService {
   ): Promise<void> {
     if (remainingBatches <= 0) return;
 
-    const state = await this.storageService.read(request);
+    const state = await this.storageService.readFeedState(request);
 
     if (
       Object.values(state.sources).every(

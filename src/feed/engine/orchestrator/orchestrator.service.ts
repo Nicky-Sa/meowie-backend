@@ -40,7 +40,7 @@ export class OrchestratorService {
   async run(request: OrchestratorRequest): Promise<OrchestratorResult> {
     const { userId, mediaType } = request;
 
-    const state = await this.storageService.read(request);
+    const state = await this.storageService.readFeedState(request);
 
     // stop the run if all sources are exhausted
     if (this.areSourcesExhausted(state.sources)) {
@@ -130,8 +130,7 @@ export class OrchestratorService {
     ) as SourceProgress;
 
     // step 7: shuffling and saving high-scored titles
-    await this.storageService.save(request, {
-      ...state,
+    await this.storageService.saveFeedState(request, {
       sources: next,
       processedTitleIds: [
         ...state.processedTitleIds,

@@ -7,9 +7,9 @@ import {
 } from '@/feed/engine/source/source.types';
 import { FEED_EXPIRY_SECONDS } from '@/feed/constants/feed.constant';
 import {
+  DeliveredTitleIds,
   FeedState,
-  FeedStorageRequest,
-  FeedStorageResult,
+  FeedStateRequest,
 } from '@/feed/storage/storage.types';
 
 @Injectable()
@@ -20,25 +20,67 @@ export class FeedStorageService {
     private readonly sourceServices: readonly FeedSource[],
   ) {}
 
-  async read(request: FeedStorageRequest): Promise<FeedStorageResult> {
-    const state = await this.cache.get<FeedState>(this.getStateKey(request));
+  async readFeedState(request: FeedStateRequest): Promise<FeedState> {
+    const state = await this.cache.get<FeedState>(
+      this.getPreparedFeedKey(request),
+    );
     const emptyState: FeedState = {
       sources: Object.fromEntries(
         this.sourceServices.map(({ name }) => [name, null]),
       ) as StoredSourceProgress,
       processedTitleIds: [],
       waitingTitles: [],
-      deliveredPages: {},
     };
 
-    return state ?? emptyState;
+    if (!state) return emptyState;
+
+    return {
+      sources: state.sources,
+      processedTitleIds: state.processedTitleIds,
+      waitingTitles: state.waitingTitles,
+    };
   }
 
-  async save(request: FeedStorageRequest, state: FeedState): Promise<void> {
-    await this.cache.set(this.getStateKey(request), state, FEED_EXPIRY_SECONDS);
+  async saveFeedState(
+    request: FeedStateRequest,
+    state: FeedState,
+  ): Promise<void> {
+    await this.cache.set(
+      this.getPreparedFeedKey(request),
+      {
+        sources: state.sources,
+        processedTitleIds: state.processedTitleIds,
+        waitingTitles: state.waitingTitles,
+      },
+      FEED_EXPIRY_SECONDS,
+    );
   }
 
-  private getStateKey({ userId, mediaType }: FeedStorageRequest): string {
+  async readDeliveredTitleIds(
+    request: FeedStateRequest,
+  ): Promise<DeliveredTitleIds> {
+    return (
+      (await this.cache.get<DeliveredTitleIds>(this.getDeliveryKey(request))) ??
+      []
+    );
+  }
+
+  async saveDeliveredTitleIds(
+    request: FeedStateRequest,
+    titleIds: DeliveredTitleIds,
+  ): Promise<void> {
+    await this.cache.set(
+      this.getDeliveryKey(request),
+      [...new Set(titleIds)],
+      FEED_EXPIRY_SECONDS,
+    );
+  }
+
+  private getDeliveryKey({ userId, mediaType }: FeedStateRequest): string {
+    return `feed-delivered-${userId}-${mediaType}`;
+  }
+
+  private getPreparedFeedKey({ userId, mediaType }: FeedStateRequest): string {
     return `feed-state-${userId}-${mediaType}`;
   }
 }
