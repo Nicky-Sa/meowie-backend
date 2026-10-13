@@ -5,7 +5,7 @@ import { FEED_QUEUE } from '@/common/queue.constants';
 import { OrchestratorRequest } from '@/feed/engine/orchestrator/orchestrator.types';
 import {
   MAX_BATCHES_PER_REFILL,
-  MIN_WAITING_TITLES,
+  MIN_UNDELIVERED_TITLES,
 } from '@/feed/constants/feed.constant';
 import { PrepareBatchJobData } from '@/feed/queue/queue.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
@@ -17,10 +17,16 @@ export class FeedQueueService {
     private readonly storageService: FeedStorageService,
   ) {}
 
-  async replenish(request: OrchestratorRequest): Promise<void> {
-    const state = await this.storageService.readFeedState(request);
+  async requestMoreTitles(request: OrchestratorRequest): Promise<void> {
+    const [feedState, deliveredTitleIds] = await Promise.all([
+      this.storageService.readFeedState(request),
+      this.storageService.readDeliveredTitleIds(request),
+    ]);
+    const undeliveredTitles = feedState.waitingTitles.filter(
+      ({ id }) => !deliveredTitleIds.includes(id),
+    );
 
-    if (state.waitingTitles.length >= MIN_WAITING_TITLES) return;
+    if (undeliveredTitles.length >= MIN_UNDELIVERED_TITLES) return;
 
     await this.enqueueBatch(request, MAX_BATCHES_PER_REFILL);
   }

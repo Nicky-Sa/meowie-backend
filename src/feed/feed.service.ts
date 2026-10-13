@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { CacheService } from '@/cache/cache.service';
 import { MovieService } from '@/movie/movie.service';
 import { SeriesService } from '@/series/series.service';
@@ -7,8 +11,17 @@ import { SortOption } from '@/common/types/media-query';
 import { FeedResDto } from '@/feed/dto/feed.dto';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
-import { MAX_FEED_PAGE } from '@/feed/constants/feed.constant';
+import {
+  FEED_BATCH_SIZE,
+  MAX_GUEST_FEED_PAGE,
+} from '@/feed/constants/feed.constant';
 import { FeedQueueService } from '@/feed/queue/queue.service';
+import { FeedStorageService } from '@/feed/storage/storage.service';
+import {
+  DeliveredTitleIds,
+  FeedStateRequest,
+} from '@/feed/storage/storage.types';
+import { ScoredTitle } from '@/feed/engine/scoring/scoring.types';
 
 @Injectable()
 export class FeedService {
@@ -19,67 +32,120 @@ export class FeedService {
     private readonly movieService: MovieService,
     private readonly seriesService: SeriesService,
     private readonly feedQueueService: FeedQueueService,
+    private readonly storageService: FeedStorageService,
   ) {}
 
   async getFeed(
     userId: number | null,
     mediaType: MediaType,
-    page: number,
-    refresh: boolean,
   ): Promise<FeedResDto> {
-    if (userId !== null && !refresh) {
-      try {
-        await this.feedQueueService.replenish({ userId, mediaType });
-      } catch {
-        this.logger.error('Could not queue feed preparation.');
-      }
+    if (userId === null) {
+      const page = 1 + Math.floor(Math.random() * MAX_GUEST_FEED_PAGE);
+      return this.getGuestFeed(mediaType, page);
     }
 
-    return this.publicFeed(mediaType, page, refresh);
+    return this.getUserFeed({ userId, mediaType });
   }
 
-  /**
-   * A refresh of page 2 answers with some other page of the popular list, so the
-   * titles are new. The response still says `page: 2` — the app counts on it.
-   */
-  private async publicFeed(
-    mediaType: MediaType,
-    page: number,
-    refresh: boolean,
-  ): Promise<FeedResDto> {
-    const feed = await this.guestFeed(
-      mediaType,
-      refresh ? this.otherPublicPage(page) : page,
+  private async getUserFeed(request: FeedStateRequest): Promise<FeedResDto> {
+    const [feedState, deliveredTitleIds] = await Promise.all([
+      this.storageService.readFeedState(request),
+      this.storageService.readDeliveredTitleIds(request),
+    ]);
+    const undeliveredTitles = this.getUndeliveredTitles(
+      feedState.waitingTitles,
+      deliveredTitleIds,
     );
-    return { ...feed, page };
+    const sourcesExhausted = Object.values(feedState.sources).every(
+      (source) => source?.status === 'exhausted',
+    );
+
+    if (
+      this.isBatchReady(
+        undeliveredTitles.length,
+        deliveredTitleIds.length,
+        sourcesExhausted,
+      )
+    ) {
+      return this.deliverTitles(request, undeliveredTitles, deliveredTitleIds);
+    }
+
+    if (sourcesExhausted) return { results: [], status: 'ready' };
+
+    await this.requestMoreTitles(request);
+    return { results: [], status: 'preparing' };
   }
 
-  private otherPublicPage(page: number): number {
-    const offset = 1 + Math.floor(Math.random() * (MAX_FEED_PAGE - 1));
-    return ((page - 1 + offset) % MAX_FEED_PAGE) + 1;
+  private getUndeliveredTitles(
+    waitingTitles: ScoredTitle[],
+    deliveredTitleIds: DeliveredTitleIds,
+  ): ScoredTitle[] {
+    return waitingTitles.filter(({ id }) => !deliveredTitleIds.includes(id));
+  }
+
+  private isBatchReady(
+    undeliveredTitleCount: number,
+    deliveredTitleCount: number,
+    sourcesExhausted: boolean,
+  ): boolean {
+    return (
+      undeliveredTitleCount > 0 &&
+      (deliveredTitleCount > 0 ||
+        undeliveredTitleCount >= FEED_BATCH_SIZE ||
+        sourcesExhausted)
+    );
+  }
+
+  private async deliverTitles(
+    request: FeedStateRequest,
+    undeliveredTitles: ScoredTitle[],
+    deliveredTitleIds: DeliveredTitleIds,
+  ): Promise<FeedResDto> {
+    const results = undeliveredTitles
+      .slice(0, FEED_BATCH_SIZE)
+      .map(({ id }) => id);
+    await this.storageService.saveDeliveredTitleIds(request, [
+      ...deliveredTitleIds,
+      ...results,
+    ]);
+    await this.requestMoreTitles(request, { throwOnFailure: false });
+    return { results, status: 'ready' };
+  }
+
+  private async requestMoreTitles(
+    request: FeedStateRequest,
+    { throwOnFailure = true }: { throwOnFailure?: boolean } = {},
+  ): Promise<void> {
+    try {
+      await this.feedQueueService.requestMoreTitles(request);
+    } catch (error) {
+      this.logger.error('Could not queue feed preparation.', error);
+      if (throwOnFailure) {
+        throw new ServiceUnavailableException(
+          'Could not prepare your feed. Please try again.',
+        );
+      }
+    }
   }
 
   @Cacheable({
     key: (mediaType: MediaType, page: number) =>
-      `feed-guest-${mediaType}-p${page}`,
+      `feed-guest-${mediaType}-p${page}-batch`,
     ttl: Duration.ONE_HOUR,
   })
-  private async guestFeed(
+  private async getGuestFeed(
     mediaType: MediaType,
     page: number,
   ): Promise<FeedResDto> {
     const query = { page, sort: SortOption.POPULARITY };
-    const res =
+    const response =
       mediaType === 'movie'
         ? await this.movieService.getInterestingMovieIds(query)
         : await this.seriesService.getInterestingSeriesIds(query);
 
     return {
-      page: res.page,
-      results: res.results,
-      // Capped: the DTO rejects pages past MAX_FEED_PAGE, so never promise one.
-      total_pages: Math.min(res.total_pages, MAX_FEED_PAGE),
-      total_results: res.total_results,
+      results: response.results.slice(0, FEED_BATCH_SIZE),
+      status: 'ready',
     };
   }
 }

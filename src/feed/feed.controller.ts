@@ -1,18 +1,9 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Req,
-  Res,
-  UseInterceptors,
-} from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Req, UseInterceptors } from '@nestjs/common';
 import { FeedService } from '@/feed/feed.service';
-import { FeedQueryDto, FeedResDto } from '@/feed/dto/feed.dto';
+import { FeedResDto } from '@/feed/dto/feed.dto';
 import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
 import { OptionallyAuthenticatedRequest } from '@/auth/types/authenticated-request.type';
 import { TMDBErrorInterceptor } from '@/common/interceptors/tmdb-error.interceptor';
-import { Duration } from '@/common/app.constants';
 
 @Controller('feed')
 @UseInterceptors(TMDBErrorInterceptor)
@@ -23,49 +14,15 @@ export class FeedController {
   @Get('movie')
   async getMovieFeed(
     @Req() req: OptionallyAuthenticatedRequest,
-    @Query() query: FeedQueryDto,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<FeedResDto> {
-    const feed = await this.feedService.getFeed(
-      req.user.id,
-      'movie',
-      query.page,
-      query.refresh,
-    );
-    this.setCacheHeaders(res, req.user.id, query.refresh);
-    return feed;
+    return this.feedService.getFeed(req.user.id, 'movie');
   }
 
   @OptionalAccessGuard()
   @Get('series')
   async getSeriesFeed(
     @Req() req: OptionallyAuthenticatedRequest,
-    @Query() query: FeedQueryDto,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<FeedResDto> {
-    const feed = await this.feedService.getFeed(
-      req.user.id,
-      'series',
-      query.page,
-      query.refresh,
-    );
-    this.setCacheHeaders(res, req.user.id, query.refresh);
-    return feed;
-  }
-
-  /**
-   * CloudFront ignores Authorization, so the client marks guest calls with
-   * `audience=guest`. Runs after a result: errors and refreshes stay uncached.
-   */
-  private setCacheHeaders(
-    res: Response,
-    userId: number | null,
-    refresh: boolean,
-  ): void {
-    if (userId === null && !refresh) {
-      res.setHeader('Cache-Control', `public, max-age=${Duration.ONE_HOUR}`);
-    } else {
-      res.setHeader('Cache-Control', 'private, no-store');
-    }
+    return this.feedService.getFeed(req.user.id, 'series');
   }
 }

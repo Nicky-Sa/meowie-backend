@@ -136,10 +136,7 @@ export class OrchestratorService {
         ...state.processedTitleIds,
         ...uniqueCandidates.map(({ id }) => id),
       ],
-      waitingTitles: _shuffle([
-        ...state.waitingTitles.filter(({ score }) => score >= MIN_FEED_SCORE),
-        ...scoredTitles,
-      ]),
+      waitingTitles: _shuffle([...state.waitingTitles, ...scoredTitles]),
     });
 
     return { scoredTitles, next };
