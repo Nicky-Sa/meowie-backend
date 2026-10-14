@@ -23,7 +23,6 @@ import {
   TitleAnswer,
   TitleRatings,
 } from '@/taste/constants/journey.constant';
-import { Personality } from '@/taste/constants/personality.constant';
 import { MOVIE_IDS, SERIES_IDS } from '@/taste/constants/pools.constant';
 import { titleIdsMarkedAs } from '@/taste/utils/taste.utils';
 
@@ -95,10 +94,3 @@ export class SaveTasteReqDto {
   @Max(EXPLORE_LEVELS.length - 1)
   exploreLevel: number;
 }
-
-// The cat is the only thing a client reads back. The answers themselves are
-// never sent out again: the journey always starts blank, and the feed reads
-// them on the server.
-export type TasteResDto = {
-  personality: Personality;
-};

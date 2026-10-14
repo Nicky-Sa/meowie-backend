@@ -1,6 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
 import { MOVIES, SERIES, Title } from '@/taste/constants/pools.constant';
-import { CATS } from '@/taste/constants/personality.constant';
 
 const MIN_TITLES_PER_GENRE = 4;
 
@@ -33,15 +32,4 @@ describe.each([
 
     expect(missing.map((title) => title.title)).toEqual([]);
   });
-});
-
-it('gives every cat genre a title to be liked', () => {
-  const inDeck = new Set(
-    [...MOVIES, ...SERIES].map((title) => title.mainGenreId),
-  );
-  const orphans = CATS.filter((cat) =>
-    cat.genres.every((genreId) => !inDeck.has(genreId)),
-  );
-
-  expect(orphans.map((cat) => cat.name)).toEqual([]);
 });

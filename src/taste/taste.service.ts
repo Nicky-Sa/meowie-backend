@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Taste } from '@/taste/entities/taste.entity';
-import { SaveTasteReqDto, TasteResDto } from '@/taste/dto/save-taste.dto';
+import { SaveTasteReqDto } from '@/taste/dto/save-taste.dto';
 import { CacheService } from '@/cache/cache.service';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
-import { personalityFor } from '@/taste/utils/personality';
 import { TasteForFeed } from '@/taste/types/taste.type';
 import {
   BOTH,
@@ -23,7 +22,7 @@ export class TasteService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async save(userId: number, dto: SaveTasteReqDto): Promise<TasteResDto> {
+  async save(userId: number, dto: SaveTasteReqDto): Promise<void> {
     // The global pipe strips unknown fields, so the DTO holds columns only.
     await this.tasteRepository.upsert(
       { userId, ...dto },
@@ -31,22 +30,10 @@ export class TasteService {
     );
 
     await this.cacheService.del(tasteForFeedCacheKey(userId));
-
-    return { personality: personalityFor(dto) };
   }
 
   async hasFilledIn(userId: number): Promise<boolean> {
     return this.tasteRepository.existsBy({ userId });
-  }
-
-  async findByUserId(userId: number): Promise<TasteResDto | null> {
-    const taste = await this.tasteRepository.findOneBy({ userId });
-
-    if (!taste) {
-      return null;
-    }
-
-    return { personality: personalityFor(taste) };
   }
 
   /**

@@ -1,4 +1,3 @@
-import { GenreId } from '@/taste/constants/pools.constant';
 import { Option } from '@/types/option';
 
 export type TasteAxis = 'era' | 'authority';
@@ -126,26 +125,3 @@ export const EXPLORE_LEVELS: string[] = [
   'Lean into new',
   'Surprise me',
 ];
-
-// Roughly inverse to how common each genre is, so a rare pick beats a common
-// one when both are picked equally often.
-export const RARITY_WEIGHTS: Record<GenreId, number> = {
-  18: 0.5, // Drama
-  35: 0.6, // Comedy
-  28: 0.7, // Action
-  53: 0.7, // Thriller
-  12: 0.8, // Adventure
-  10749: 0.8, // Romance
-  80: 0.9, // Crime
-  10751: 0.9, // Family
-  9648: 1.0, // Mystery
-  878: 1.1, // Science Fiction
-  27: 1.1, // Horror
-  14: 1.2, // Fantasy
-  16: 1.3, // Animation
-  99: 1.3, // Documentary
-  10752: 1.4, // War
-  10402: 1.5, // Music
-  36: 1.6, // History
-  37: 1.8, // Western
-};
