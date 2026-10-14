@@ -2,22 +2,15 @@ import {
   ArrayMaxSize,
   IsArray,
   IsIn,
-  IsInt,
   IsString,
-  Max,
-  Min,
   Validate,
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
 import {
-  ANSWER_VALUES,
   AVOID_IDS,
-  AuthorityAnswer,
   AvoidId,
-  EraAnswer,
-  EXPLORE_LEVELS,
   MIN_MOVIES_TO_LIKE,
   TITLE_ANSWERS,
   TitleAnswer,
@@ -75,22 +68,9 @@ export class SaveTasteReqDto {
   @Validate(AreTitleRatings, [SERIES_IDS])
   seriesRatings: TitleRatings;
 
-  @IsString()
-  @IsIn([...ANSWER_VALUES.era])
-  era: EraAnswer;
-
-  @IsString()
-  @IsIn([...ANSWER_VALUES.authority])
-  authority: AuthorityAnswer;
-
   @IsArray()
   @IsString({ each: true })
   @IsIn(AVOID_IDS, { each: true, message: 'avoid contains an unknown chip' })
   @ArrayMaxSize(AVOID_IDS.length)
   avoid: AvoidId[];
-
-  @IsInt()
-  @Min(0)
-  @Max(EXPLORE_LEVELS.length - 1)
-  exploreLevel: number;
 }

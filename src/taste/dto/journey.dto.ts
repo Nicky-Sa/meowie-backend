@@ -1,4 +1,4 @@
-import { AvoidChip, TasteQuestion } from '@/taste/constants/journey.constant';
+import { AvoidChip } from '@/taste/constants/journey.constant';
 import { Title } from '@/taste/constants/pools.constant';
 
 // Genres stay on the server to spread the deck across different genres.
@@ -8,8 +8,6 @@ export type JourneyTitle = Omit<Title, 'mainGenreId'>;
 export type TasteJourneyResDto = {
   movies: JourneyTitle[];
   series: JourneyTitle[];
-  questions: readonly TasteQuestion[];
   avoidChips: readonly AvoidChip[];
-  exploreLevels: readonly string[];
   minMoviesToLike: number;
 };

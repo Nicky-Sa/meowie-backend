@@ -7,10 +7,6 @@ import { CacheService } from '@/cache/cache.service';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { TasteForFeed } from '@/taste/types/taste.type';
-import {
-  BOTH,
-  DEFAULT_EXPLORE_LEVEL,
-} from '@/taste/constants/journey.constant';
 
 const tasteForFeedCacheKey = (userId: number) => `taste-for-feed-${userId}`;
 
@@ -48,9 +44,6 @@ export class TasteService {
       movieRatings: taste?.movieRatings ?? {},
       seriesRatings: taste?.seriesRatings ?? {},
       avoid: taste?.avoid ?? [],
-      exploreLevel: taste?.exploreLevel ?? DEFAULT_EXPLORE_LEVEL,
-      era: taste?.era ?? BOTH,
-      authority: taste?.authority ?? BOTH,
     };
   }
 }

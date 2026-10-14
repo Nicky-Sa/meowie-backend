@@ -1,43 +1,5 @@
 import { Option } from '@/types/option';
 
-export type TasteAxis = 'era' | 'authority';
-
-// The one place the answer values are written. Everything else reads its
-// types from here, so changing a value is caught at compile time.
-export const BOTH = 'both' as const;
-
-export const ERA = {
-  CLASSIC: 'classic',
-  NEW_RELEASE: 'new-release',
-  BOTH,
-} as const;
-
-export const AUTHORITY = {
-  POPULAR: 'popular',
-  CRITICS_CHOICE: 'critics-choice',
-  BOTH,
-} as const;
-
-export const ANSWER_VALUES = {
-  era: [ERA.CLASSIC, ERA.NEW_RELEASE, ERA.BOTH],
-  authority: [AUTHORITY.POPULAR, AUTHORITY.CRITICS_CHOICE, AUTHORITY.BOTH],
-} as const;
-
-export type AnswerFor<TAxis extends TasteAxis> =
-  (typeof ANSWER_VALUES)[TAxis][number];
-
-export type EraAnswer = AnswerFor<'era'>;
-export type AuthorityAnswer = AnswerFor<'authority'>;
-
-export type TasteQuestion<TAxis extends TasteAxis = TasteAxis> = {
-  id: TAxis;
-  axis: string;
-  prompt: string;
-  sideA: Option<Exclude<AnswerFor<TAxis>, typeof BOTH>>;
-  sideB: Option<Exclude<AnswerFor<TAxis>, typeof BOTH>>;
-  both: Option<Extract<AnswerFor<TAxis>, typeof BOTH>>;
-};
-
 // What the user can say about one poster. "not-seen" is kept so the deck can
 // show their answer again, but it says nothing about their taste.
 export const TITLE_ANSWERS = ['like', 'dislike', 'not-seen'] as const;
@@ -47,52 +9,6 @@ export type TitleAnswer = (typeof TITLE_ANSWERS)[number];
 // TMDB id → what the user said about it. JSON object keys are strings, so the
 // ids come back as strings and are turned into numbers where they are read.
 export type TitleRatings = Record<number, TitleAnswer>;
-
-export const TASTE_QUESTIONS: [
-  TasteQuestion<'era'>,
-  TasteQuestion<'authority'>,
-] = [
-  {
-    id: 'era',
-    axis: 'Era',
-    prompt: 'Which one do you prefer?',
-    sideA: {
-      label: 'Classics',
-      description: 'Release year before 2000',
-      id: ERA.CLASSIC,
-    },
-    sideB: {
-      label: 'New releases',
-      description: 'Release year after 2000',
-      id: ERA.NEW_RELEASE,
-    },
-    both: {
-      label: 'No preference',
-      description: 'I like both',
-      id: BOTH,
-    },
-  },
-  {
-    id: 'authority',
-    axis: 'Taste',
-    prompt: 'Which one do you prefer?',
-    sideA: {
-      label: 'Most Popular',
-      description: "What everyone's watching",
-      id: AUTHORITY.POPULAR,
-    },
-    sideB: {
-      label: "Critics' Choice",
-      description: 'Highly rated, award winning',
-      id: AUTHORITY.CRITICS_CHOICE,
-    },
-    both: {
-      label: 'No preference',
-      description: 'I like both',
-      id: BOTH,
-    },
-  },
-];
 
 // Stored rows hold the id, never the label, so a label can be reworded
 // without orphaning what users already picked.
@@ -111,17 +27,3 @@ export type AvoidChip = Option<string>;
 export const AVOID_IDS: AvoidId[] = AVOID_CHIPS.map((chip) => chip.id);
 
 export const MIN_MOVIES_TO_LIKE = 5;
-
-// What "classic" and "new release" mean in years, product-wide.
-export const CLASSIC_MAX_YEAR = 1999;
-export const MODERN_MIN_YEAR = 2000;
-
-export const DEFAULT_EXPLORE_LEVEL = 2; // "Balanced"
-
-export const EXPLORE_LEVELS: string[] = [
-  'Stick to what I love',
-  'Mostly familiar',
-  'Balanced',
-  'Lean into new',
-  'Surprise me',
-];

@@ -9,9 +9,7 @@ import { shuffledPool } from '@/taste/utils/shuffle-pool';
 import { MOVIES, SERIES } from '@/taste/constants/pools.constant';
 import {
   AVOID_CHIPS,
-  EXPLORE_LEVELS,
   MIN_MOVIES_TO_LIKE,
-  TASTE_QUESTIONS,
 } from '@/taste/constants/journey.constant';
 
 @Controller('taste')
@@ -23,9 +21,7 @@ export class TasteController {
     return {
       movies: shuffledPool(MOVIES).map(toJourneyTitle),
       series: shuffledPool(SERIES).map(toJourneyTitle),
-      questions: TASTE_QUESTIONS,
       avoidChips: AVOID_CHIPS,
-      exploreLevels: EXPLORE_LEVELS,
       minMoviesToLike: MIN_MOVIES_TO_LIKE,
     };
   }
