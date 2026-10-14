@@ -74,3 +74,7 @@ export class SaveTasteReqDto {
   @ArrayMaxSize(AVOID_IDS.length)
   avoid: AvoidId[];
 }
+
+export class SaveTasteResDto {
+  successful: boolean;
+}

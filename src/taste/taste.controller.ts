@@ -1,8 +1,17 @@
-import { Controller, Get, Put, Req, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Req,
+  Body,
+  Res,
+  HttpStatus,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { TasteService } from '@/taste/taste.service';
 import { AuthenticatedRequest } from '@/auth/types/authenticated-request.type';
 import { AccessGuard } from '@/auth/guards/access.guard';
-import { SaveTasteReqDto } from '@/taste/dto/save-taste.dto';
+import { SaveTasteReqDto, SaveTasteResDto } from '@/taste/dto/save-taste.dto';
 import { TasteJourneyResDto } from '@/taste/dto/journey.dto';
 import { toJourneyTitle } from '@/taste/utils/journey-title';
 import { shuffledPool } from '@/taste/utils/shuffle-pool';
@@ -27,11 +36,14 @@ export class TasteController {
   }
 
   @AccessGuard()
-  @Put()
+  @Post()
   async saveTaste(
     @Req() req: AuthenticatedRequest,
     @Body() dto: SaveTasteReqDto,
-  ): Promise<void> {
-    return this.tasteService.save(req.user.id, dto);
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<SaveTasteResDto> {
+    const isNewTaste = await this.tasteService.save(req.user.id, dto);
+    response.status(isNewTaste ? HttpStatus.CREATED : HttpStatus.NO_CONTENT);
+    return { successful: isNewTaste };
   }
 }

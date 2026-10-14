@@ -7,6 +7,7 @@ import { CacheService } from '@/cache/cache.service';
 import { Cacheable } from '@/cache/cacheable.decorator';
 import { Duration } from '@/common/app.constants';
 import { TasteForFeed } from '@/taste/types/taste.type';
+import { isUniqueConstraintViolation } from '@/database/db-errors.util';
 
 const tasteForFeedCacheKey = (userId: number) => `taste-for-feed-${userId}`;
 
@@ -18,25 +19,24 @@ export class TasteService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async save(userId: number, dto: SaveTasteReqDto): Promise<void> {
+  async save(userId: number, dto: SaveTasteReqDto): Promise<boolean> {
     // The global pipe strips unknown fields, so the DTO holds columns only.
-    await this.tasteRepository.upsert(
-      { userId, ...dto },
-      { conflictPaths: ['userId'] },
-    );
+    try {
+      await this.tasteRepository.insert({ userId, ...dto });
+    } catch (error) {
+      if (isUniqueConstraintViolation(error)) return false; // no overwrite for taste
+      throw error;
+    }
 
     await this.cacheService.del(tasteForFeedCacheKey(userId));
+    return true;
   }
 
   async hasFilledIn(userId: number): Promise<boolean> {
     return this.tasteRepository.existsBy({ userId });
   }
 
-  /**
-   * Stored taste reduced to what the feed personalizes on. A user with no
-   * taste yet reads as "no preference" everywhere.
-   */
-  @Cacheable({ key: tasteForFeedCacheKey, ttl: Duration.ONE_DAY })
+  @Cacheable({ key: tasteForFeedCacheKey, ttl: Duration.ONE_WEEK })
   async getTasteForFeed(userId: number): Promise<TasteForFeed> {
     const taste = await this.tasteRepository.findOneBy({ userId });
 
