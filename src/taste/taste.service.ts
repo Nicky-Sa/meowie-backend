@@ -19,7 +19,10 @@ export class TasteService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async save(userId: number, dto: SaveTasteReqDto): Promise<boolean> {
+  async saveAccountTaste(
+    userId: number,
+    dto: SaveTasteReqDto,
+  ): Promise<boolean> {
     // The global pipe strips unknown fields, so the DTO holds columns only.
     try {
       await this.tasteRepository.insert({ userId, ...dto });
@@ -34,6 +37,18 @@ export class TasteService {
 
   async hasFilledIn(userId: number): Promise<boolean> {
     return this.tasteRepository.existsBy({ userId });
+  }
+
+  async saveGuestTaste(
+    deviceCode: string,
+    dto: SaveTasteReqDto,
+  ): Promise<boolean> {
+    return this.cacheService.set(
+      `taste-guest-${deviceCode}`,
+      dto,
+      Duration.ONE_YEAR,
+      { onlyIfAbsent: true },
+    );
   }
 
   @Cacheable({ key: tasteForFeedCacheKey, ttl: Duration.ONE_WEEK })

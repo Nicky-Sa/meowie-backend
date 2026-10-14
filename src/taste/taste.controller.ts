@@ -6,11 +6,14 @@ import {
   Body,
   Res,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { isUUID } from 'class-validator';
+import { ClsService } from '@/common/cls/cls.service';
 import { TasteService } from '@/taste/taste.service';
-import { AuthenticatedRequest } from '@/auth/types/authenticated-request.type';
-import { AccessGuard } from '@/auth/guards/access.guard';
+import { OptionallyAuthenticatedRequest } from '@/auth/types/authenticated-request.type';
+import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
 import { SaveTasteReqDto, SaveTasteResDto } from '@/taste/dto/save-taste.dto';
 import { TasteJourneyResDto } from '@/taste/dto/journey.dto';
 import { toJourneyTitle } from '@/taste/utils/journey-title';
@@ -23,7 +26,10 @@ import {
 
 @Controller('taste')
 export class TasteController {
-  constructor(private readonly tasteService: TasteService) {}
+  constructor(
+    private readonly tasteService: TasteService,
+    private readonly cls: ClsService,
+  ) {}
 
   @Get('journey')
   getJourney(): TasteJourneyResDto {
@@ -35,14 +41,23 @@ export class TasteController {
     };
   }
 
-  @AccessGuard()
+  @OptionalAccessGuard()
   @Post()
   async saveTaste(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: OptionallyAuthenticatedRequest,
     @Body() dto: SaveTasteReqDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<SaveTasteResDto> {
-    const isNewTaste = await this.tasteService.save(req.user.id, dto);
+    let isNewTaste: boolean;
+    if (req.user.id === null) {
+      const deviceCode = this.cls.deviceCode;
+      if (!deviceCode || !isUUID(deviceCode)) {
+        throw new BadRequestException('x-device-code must be a UUID');
+      }
+      isNewTaste = await this.tasteService.saveGuestTaste(deviceCode, dto);
+    } else {
+      isNewTaste = await this.tasteService.saveAccountTaste(req.user.id, dto);
+    }
     response.status(isNewTaste ? HttpStatus.CREATED : HttpStatus.NO_CONTENT);
     return { successful: isNewTaste };
   }

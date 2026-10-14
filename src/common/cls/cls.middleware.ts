@@ -9,8 +9,9 @@ export class ClsMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const headerId = req.headers['x-correlation-id'] as string;
     const countryCode = req.headers['x-user-country'] as string;
+    const deviceCode = req.get('x-device-code');
 
-    this.cls.run(headerId, countryCode, () => {
+    this.cls.run({ correlationId: headerId, countryCode, deviceCode }, () => {
       res.setHeader('x-correlation-id', this.cls.correlationId);
       next();
     });
