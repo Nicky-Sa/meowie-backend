@@ -1,7 +1,6 @@
 export const FEED_BATCH_SIZE = 20;
 export const MIN_UNDELIVERED_TITLES = FEED_BATCH_SIZE * 2;
 export const MAX_BATCHES_PER_REFILL = 5;
-export const MAX_GUEST_FEED_PAGE = 25;
 export const MIN_RATING_FOR_RECOMMENDATIONS = 8;
 export const MIN_FEED_SCORE = 3;
 export const MAX_DETAILS_AT_ONCE = 10;

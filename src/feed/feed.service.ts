@@ -1,21 +1,13 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import _shuffle from 'lodash/shuffle';
-import { CacheService } from '@/cache/cache.service';
-import { MovieService } from '@/movie/movie.service';
-import { SeriesService } from '@/series/series.service';
-import { MediaType } from '@/types/media-type';
-import { SortOption } from '@/common/types/media-query';
 import { FeedResDto } from '@/feed/dto/feed.dto';
-import { Cacheable } from '@/cache/cacheable.decorator';
-import { Duration } from '@/common/app.constants';
-import {
-  FEED_BATCH_SIZE,
-  MAX_GUEST_FEED_PAGE,
-} from '@/feed/constants/feed.constant';
+import { FEED_BATCH_SIZE } from '@/feed/constants/feed.constant';
 import { FeedQueueService } from '@/feed/queue/queue.service';
 import { FeedStorageService } from '@/feed/storage/storage.service';
 import {
@@ -23,32 +15,24 @@ import {
   FeedStateRequest,
 } from '@/feed/storage/storage.types';
 import { ScoredTitle } from '@/feed/engine/scoring/scoring.types';
+import { ClsService } from '@/common/cls/cls.service';
+import { MediaType } from '@/types/media-type';
 
 @Injectable()
 export class FeedService {
   private readonly logger = new Logger(FeedService.name);
 
   constructor(
-    private readonly cacheService: CacheService,
-    private readonly movieService: MovieService,
-    private readonly seriesService: SeriesService,
     private readonly feedQueueService: FeedQueueService,
     private readonly storageService: FeedStorageService,
+    private readonly cls: ClsService,
   ) {}
 
   async getFeed(
     userId: number | null,
     mediaType: MediaType,
   ): Promise<FeedResDto> {
-    if (userId === null) {
-      const page = 1 + Math.floor(Math.random() * MAX_GUEST_FEED_PAGE);
-      return this.getGuestFeed(mediaType, page);
-    }
-
-    return this.getUserFeed({ type: 'account', userId, mediaType });
-  }
-
-  private async getUserFeed(request: FeedStateRequest): Promise<FeedResDto> {
+    const request = this.getFeedStateRequest(userId, mediaType);
     const [feedState, deliveredTitleIds] = await Promise.all([
       this.storageService.readFeedState(request),
       this.storageService.readDeliveredTitleIds(request),
@@ -75,6 +59,20 @@ export class FeedService {
 
     await this.requestMoreTitles(request);
     return { results: [], status: 'preparing' };
+  }
+
+  private getFeedStateRequest(
+    userId: number | null,
+    mediaType: MediaType,
+  ): FeedStateRequest {
+    if (userId !== null) return { type: 'account', userId, mediaType };
+
+    const deviceCode = this.cls.deviceCode;
+    if (!deviceCode || !isUUID(deviceCode)) {
+      throw new BadRequestException('Device code must be a UUID');
+    }
+
+    return { type: 'guest', deviceCode, mediaType };
   }
 
   private getUndeliveredTitles(
@@ -134,26 +132,5 @@ export class FeedService {
         );
       }
     }
-  }
-
-  @Cacheable({
-    key: (mediaType: MediaType, page: number) =>
-      `feed-guest-${mediaType}-p${page}-batch`,
-    ttl: Duration.ONE_HOUR,
-  })
-  private async getGuestFeed(
-    mediaType: MediaType,
-    page: number,
-  ): Promise<FeedResDto> {
-    const query = { page, sort: SortOption.POPULARITY };
-    const response =
-      mediaType === 'movie'
-        ? await this.movieService.getInterestingMovieIds(query)
-        : await this.seriesService.getInterestingSeriesIds(query);
-
-    return {
-      results: response.results.slice(0, FEED_BATCH_SIZE),
-      status: 'ready',
-    };
   }
 }
