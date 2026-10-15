@@ -117,14 +117,20 @@ export class OrchestratorService {
     }
 
     // step 5: preparing scoring requirements, which would be inputs + context for state and candidates with details for questions
+    // and skipping scoring if there is no user data
     const titlesWithContext = this.addContextToTitle(inputs, titleDetails);
-    const scores = await this.scoringService.score({
-      candidates: filteredCandidates,
-      titlesWithContext,
-    });
+    const hasUserData = titlesWithContext.length > 0;
+    const scores = hasUserData
+      ? await this.scoringService.score({
+          candidates: filteredCandidates,
+          titlesWithContext,
+        })
+      : filteredCandidates.map((candidate) => ({ ...candidate, score: null }));
 
     // step 6: removing low-scored titles
-    const scoredTitles = scores.filter(({ score }) => score >= MIN_FEED_SCORE);
+    const scoredTitles = scores.filter(
+      ({ score }) => score === null || score >= MIN_FEED_SCORE,
+    );
     const next = Object.fromEntries(
       sourceData.map(({ name, next }) => [name, next]),
     ) as SourceProgress;

@@ -19,7 +19,7 @@ export type ScoringInstructions = Title & {
 };
 
 export type ScoredTitle = TitleWithDetail & {
-  score: number;
+  score: number | null;
 };
 
 export type ScoringResult = ScoredTitle[];
