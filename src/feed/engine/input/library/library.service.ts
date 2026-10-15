@@ -12,8 +12,12 @@ export class LibraryInputService extends InputService<LibraryInputResult> {
     super();
   }
 
-  async read({ userId, mediaType }: InputRequest): Promise<LibraryInputResult> {
-    const items = await this.libraryService.getItemsForUser(userId, mediaType);
+  async read(request: InputRequest): Promise<LibraryInputResult> {
+    const { mediaType } = request;
+    const items =
+      request.type === 'guest'
+        ? []
+        : await this.libraryService.getItemsForUser(request.userId, mediaType);
 
     return {
       type: 'library',

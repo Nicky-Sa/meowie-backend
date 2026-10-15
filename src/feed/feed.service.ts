@@ -45,7 +45,7 @@ export class FeedService {
       return this.getGuestFeed(mediaType, page);
     }
 
-    return this.getUserFeed({ userId, mediaType });
+    return this.getUserFeed({ type: 'account', userId, mediaType });
   }
 
   private async getUserFeed(request: FeedStateRequest): Promise<FeedResDto> {

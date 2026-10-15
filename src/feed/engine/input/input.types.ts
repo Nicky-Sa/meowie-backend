@@ -6,9 +6,18 @@ import type { LibraryInputService } from '@/feed/engine/input/library/library.se
 
 export type FeedInput = TasteInputService | LibraryInputService;
 
-export type InputRequest = {
+export type AccountInputRequest = {
+  type: 'account';
   userId: number;
   mediaType: MediaType;
 };
+
+export type GuestInputRequest = {
+  type: 'guest';
+  deviceCode: string;
+  mediaType: MediaType;
+};
+
+export type InputRequest = AccountInputRequest | GuestInputRequest;
 
 export type InputResult = TasteInputResult | LibraryInputResult;

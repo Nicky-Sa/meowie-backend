@@ -18,11 +18,9 @@ export class FeedProcessor extends WorkerHost implements OnModuleDestroy {
   }
 
   async process(job: Job<PrepareBatchJobData>): Promise<void> {
-    const { userId, mediaType } = job.data;
-
     switch (job.name) {
       case FEED_QUEUE.jobs.prepareBatch:
-        await this.orchestratorService.run({ userId, mediaType });
+        await this.orchestratorService.run(job.data);
         break;
       default:
         throw new Error('Unknown feed job.');
@@ -31,13 +29,10 @@ export class FeedProcessor extends WorkerHost implements OnModuleDestroy {
 
   @OnWorkerEvent('completed')
   async onCompleted(job: Job<PrepareBatchJobData>): Promise<void> {
-    const { userId, mediaType, remainingBatches } = job.data;
+    const { remainingBatches } = job.data;
 
     try {
-      await this.feedQueueService.enqueueBatch(
-        { userId, mediaType },
-        remainingBatches - 1,
-      );
+      await this.feedQueueService.enqueueBatch(job.data, remainingBatches - 1);
     } catch {
       this.logger.error(
         `Could not continue feed preparation after job ${job.id}.`,

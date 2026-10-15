@@ -20,17 +20,18 @@ export class MarkedTitlesFilterService extends FilterService {
     super();
   }
 
-  async filter({
-    userId,
-    title,
-  }: MarkedTitlesRequest): Promise<MarkedTitlesResult> {
+  async filter(request: MarkedTitlesRequest): Promise<MarkedTitlesResult> {
     const [taste, items] = await Promise.all([
-      this.tasteService.getAccountTasteForFeed(userId),
-      this.libraryService.getItemsForUser(userId),
+      request.type === 'guest'
+        ? this.tasteService.getGuestTasteForFeed(request.deviceCode)
+        : this.tasteService.getAccountTasteForFeed(request.userId),
+      request.type === 'guest'
+        ? []
+        : this.libraryService.getItemsForUser(request.userId),
     ]);
     const markedTitles = this.getMarkedTitles(taste, items);
 
-    return title.filter(
+    return request.title.filter(
       ({ id, mediaType }) => !markedTitles.has(`${mediaType}:${id}`),
     );
   }

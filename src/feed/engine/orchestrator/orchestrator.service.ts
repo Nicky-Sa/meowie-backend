@@ -38,7 +38,7 @@ export class OrchestratorService {
   ) {}
 
   async run(request: OrchestratorRequest): Promise<OrchestratorResult> {
-    const { userId, mediaType } = request;
+    const { mediaType } = request;
 
     const state = await this.storageService.readFeedState(request);
 
@@ -52,7 +52,7 @@ export class OrchestratorService {
 
     // step 1: initial titles to build the candidates from
     const inputs = await Promise.all(
-      this.inputServices.map((input) => input.read({ userId, mediaType })),
+      this.inputServices.map((input) => input.read(request)),
     );
 
     const allInputTitles = this.getAllInputTitles(inputs);
@@ -111,7 +111,7 @@ export class OrchestratorService {
 
     for (const filterService of this.filterServices) {
       filteredCandidates = await filterService.filter({
-        userId,
+        ...request,
         title: filteredCandidates,
       });
     }

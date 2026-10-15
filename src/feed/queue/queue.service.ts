@@ -8,7 +8,10 @@ import {
   MIN_UNDELIVERED_TITLES,
 } from '@/feed/constants/feed.constant';
 import { PrepareBatchJobData } from '@/feed/queue/queue.types';
-import { FeedStorageService } from '@/feed/storage/storage.service';
+import {
+  FeedStorageService,
+  getOwnerKey,
+} from '@/feed/storage/storage.service';
 
 @Injectable()
 export class FeedQueueService {
@@ -47,11 +50,12 @@ export class FeedQueueService {
       return;
     }
 
-    const { userId, mediaType } = request;
     const data: PrepareBatchJobData = { ...request, remainingBatches };
 
     await this.feedQueue.add(FEED_QUEUE.jobs.prepareBatch, data, {
-      deduplication: { id: `feed-${userId}-${mediaType}` },
+      deduplication: {
+        id: `feed-${getOwnerKey(request)}-${request.mediaType}`,
+      },
     });
   }
 }

@@ -12,6 +12,17 @@ import {
   FeedStateRequest,
 } from '@/feed/storage/storage.types';
 
+export const getOwnerKey = (request: FeedStateRequest): string =>
+  request.type === 'guest'
+    ? `guest-${request.deviceCode}`
+    : `account-${request.userId}`;
+
+const getDeliveryKey = (request: FeedStateRequest): string =>
+  `feed-delivered-${getOwnerKey(request)}-${request.mediaType}`;
+
+const getPreparedFeedKey = (request: FeedStateRequest): string =>
+  `feed-state-${getOwnerKey(request)}-${request.mediaType}`;
+
 @Injectable()
 export class FeedStorageService {
   constructor(
@@ -21,9 +32,7 @@ export class FeedStorageService {
   ) {}
 
   async readFeedState(request: FeedStateRequest): Promise<FeedState> {
-    const state = await this.cache.get<FeedState>(
-      this.getPreparedFeedKey(request),
-    );
+    const state = await this.cache.get<FeedState>(getPreparedFeedKey(request));
     const emptyState: FeedState = {
       sources: Object.fromEntries(
         this.sourceServices.map(({ name }) => [name, null]),
@@ -46,7 +55,7 @@ export class FeedStorageService {
     state: FeedState,
   ): Promise<void> {
     await this.cache.set(
-      this.getPreparedFeedKey(request),
+      getPreparedFeedKey(request),
       { ...state },
       FEED_EXPIRY_SECONDS,
     );
@@ -56,8 +65,7 @@ export class FeedStorageService {
     request: FeedStateRequest,
   ): Promise<DeliveredTitleIds> {
     return (
-      (await this.cache.get<DeliveredTitleIds>(this.getDeliveryKey(request))) ??
-      []
+      (await this.cache.get<DeliveredTitleIds>(getDeliveryKey(request))) ?? []
     );
   }
 
@@ -66,17 +74,9 @@ export class FeedStorageService {
     titleIds: DeliveredTitleIds,
   ): Promise<void> {
     await this.cache.set(
-      this.getDeliveryKey(request),
+      getDeliveryKey(request),
       [...new Set(titleIds)],
       FEED_EXPIRY_SECONDS,
     );
-  }
-
-  private getDeliveryKey({ userId, mediaType }: FeedStateRequest): string {
-    return `feed-delivered-${userId}-${mediaType}`;
-  }
-
-  private getPreparedFeedKey({ userId, mediaType }: FeedStateRequest): string {
-    return `feed-state-${userId}-${mediaType}`;
   }
 }
