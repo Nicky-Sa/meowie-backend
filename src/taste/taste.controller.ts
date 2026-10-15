@@ -6,11 +6,8 @@ import {
   Body,
   Res,
   HttpStatus,
-  BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { isUUID } from 'class-validator';
-import { ClsService } from '@/common/cls/cls.service';
 import { TasteService } from '@/taste/taste.service';
 import { OptionallyAuthenticatedRequest } from '@/auth/types/authenticated-request.type';
 import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
@@ -26,10 +23,7 @@ import {
 
 @Controller('taste')
 export class TasteController {
-  constructor(
-    private readonly tasteService: TasteService,
-    private readonly cls: ClsService,
-  ) {}
+  constructor(private readonly tasteService: TasteService) {}
 
   @Get('journey')
   getJourney(): TasteJourneyResDto {
@@ -48,16 +42,7 @@ export class TasteController {
     @Body() dto: SaveTasteReqDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<SaveTasteResDto> {
-    let isNewTaste: boolean;
-    if (req.user.id === null) {
-      const deviceCode = this.cls.deviceCode;
-      if (!deviceCode || !isUUID(deviceCode)) {
-        throw new BadRequestException('x-device-code must be a UUID');
-      }
-      isNewTaste = await this.tasteService.saveGuestTaste(deviceCode, dto);
-    } else {
-      isNewTaste = await this.tasteService.saveAccountTaste(req.user.id, dto);
-    }
+    const isNewTaste = await this.tasteService.saveTaste(req.user.id, dto);
     response.status(isNewTaste ? HttpStatus.CREATED : HttpStatus.NO_CONTENT);
     return { successful: isNewTaste };
   }

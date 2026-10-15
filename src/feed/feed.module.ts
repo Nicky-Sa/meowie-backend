@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { FEED_QUEUE } from '@/common/queue.constants';
 import { FeedController } from '@/feed/feed.controller';
@@ -38,11 +38,12 @@ const filterServices = [MarkedTitlesFilterService, AvoidFilterService];
     BullModule.registerQueue({ name: FEED_QUEUE.name }),
     MovieModule,
     SeriesModule,
-    TasteModule,
+    forwardRef(() => TasteModule),
     LibraryModule,
     TmdbModule,
   ],
   controllers: [FeedController],
+  exports: [FeedService],
   providers: [
     FeedService,
     FeedQueueService,

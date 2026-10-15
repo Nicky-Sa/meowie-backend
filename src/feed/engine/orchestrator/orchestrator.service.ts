@@ -137,6 +137,7 @@ export class OrchestratorService {
 
     // step 7: shuffling and saving high-scored titles
     await this.storageService.saveFeedState(request, {
+      inputId: state.inputId,
       sources: next,
       processedTitleIds: [
         ...state.processedTitleIds,

@@ -61,6 +61,16 @@ export class FeedService {
     return { results: [], status: 'preparing' };
   }
 
+  async rebuildFeed(userId: number | null): Promise<void> {
+    await Promise.all(
+      (['movie', 'series'] as const).map((mediaType) =>
+        this.storageService.resetFeed(
+          this.getFeedStateRequest(userId, mediaType),
+        ),
+      ),
+    );
+  }
+
   private getFeedStateRequest(
     userId: number | null,
     mediaType: MediaType,

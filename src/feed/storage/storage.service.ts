@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { CacheService } from '@/cache/cache.service';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import {
@@ -20,7 +21,7 @@ export const getOwnerKey = (request: FeedStateRequest): string =>
 const getDeliveryKey = (request: FeedStateRequest): string =>
   `feed-delivered-${getOwnerKey(request)}-${request.mediaType}`;
 
-const getPreparedFeedKey = (request: FeedStateRequest): string =>
+const getFeedStateKey = (request: FeedStateRequest): string =>
   `feed-state-${getOwnerKey(request)}-${request.mediaType}`;
 
 @Injectable()
@@ -31,33 +32,40 @@ export class FeedStorageService {
     private readonly sourceServices: readonly FeedSource[],
   ) {}
 
+  async resetFeed(request: FeedStateRequest): Promise<void> {
+    await Promise.all([
+      this.cache.set(
+        getFeedStateKey(request),
+        this.createEmptyFeedState(),
+        FEED_EXPIRY_SECONDS,
+      ),
+      this.cache.del(getDeliveryKey(request)),
+    ]);
+  }
+
   async readFeedState(request: FeedStateRequest): Promise<FeedState> {
-    const state = await this.cache.get<FeedState>(getPreparedFeedKey(request));
-    const emptyState: FeedState = {
-      sources: Object.fromEntries(
-        this.sourceServices.map(({ name }) => [name, null]),
-      ) as StoredSourceProgress,
-      processedTitleIds: [],
-      allScoredTitles: [],
-    };
+    const key = getFeedStateKey(request);
+    const state = await this.cache.get<FeedState>(key);
+    if (state) return state;
 
-    if (!state) return emptyState;
+    const emptyState = this.createEmptyFeedState();
+    const created = await this.cache.set(key, emptyState, FEED_EXPIRY_SECONDS, {
+      onlyIfAbsent: true,
+    });
 
-    return {
-      sources: state.sources,
-      processedTitleIds: state.processedTitleIds,
-      allScoredTitles: state.allScoredTitles,
-    };
+    // if created == false, it means something else has already stored this instance
+    return created ? emptyState : this.readFeedState(request);
   }
 
   async saveFeedState(
     request: FeedStateRequest,
     state: FeedState,
-  ): Promise<void> {
-    await this.cache.set(
-      getPreparedFeedKey(request),
-      { ...state },
+  ): Promise<boolean> {
+    return this.cache.setIfIdMatches(
+      getFeedStateKey(request),
+      state,
       FEED_EXPIRY_SECONDS,
+      { field: 'inputId', expected: state.inputId },
     );
   }
 
@@ -78,5 +86,16 @@ export class FeedStorageService {
       [...new Set(titleIds)],
       FEED_EXPIRY_SECONDS,
     );
+  }
+
+  private createEmptyFeedState(): FeedState {
+    return {
+      inputId: randomUUID(),
+      sources: Object.fromEntries(
+        this.sourceServices.map(({ name }) => [name, null]),
+      ) as StoredSourceProgress,
+      processedTitleIds: [],
+      allScoredTitles: [],
+    };
   }
 }

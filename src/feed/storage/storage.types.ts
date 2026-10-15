@@ -3,6 +3,7 @@ import { ScoredTitle } from '@/feed/engine/scoring/scoring.types';
 import { StoredSourceProgress } from '@/feed/engine/source/source.types';
 
 export type FeedState = {
+  inputId: string;
   sources: StoredSourceProgress;
   processedTitleIds: number[];
   allScoredTitles: ScoredTitle[];
