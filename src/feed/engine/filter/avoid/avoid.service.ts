@@ -16,7 +16,7 @@ export class AvoidFilterService extends FilterService {
   }
 
   async filter({ userId, title }: AvoidRequest): Promise<AvoidResult> {
-    const { avoid } = await this.tasteService.getTasteForFeed(userId);
+    const { avoid } = await this.tasteService.getAccountTasteForFeed(userId);
     const { blockedGenreIds, blockedKeywordIds } = buildAvoidRules(avoid);
 
     return title.filter(

@@ -25,7 +25,7 @@ export class MarkedTitlesFilterService extends FilterService {
     title,
   }: MarkedTitlesRequest): Promise<MarkedTitlesResult> {
     const [taste, items] = await Promise.all([
-      this.tasteService.getTasteForFeed(userId),
+      this.tasteService.getAccountTasteForFeed(userId),
       this.libraryService.getItemsForUser(userId),
     ]);
     const markedTitles = this.getMarkedTitles(taste, items);

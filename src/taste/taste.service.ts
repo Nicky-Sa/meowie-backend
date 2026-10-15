@@ -9,7 +9,8 @@ import { Duration } from '@/common/app.constants';
 import { TasteForFeed } from '@/taste/types/taste.type';
 import { isUniqueConstraintViolation } from '@/database/db-errors.util';
 
-const tasteForFeedCacheKey = (userId: number) => `taste-for-feed-${userId}`;
+const accountTasteCacheKey = (userId: number) => `taste-account-${userId}`;
+const guestTasteCacheKey = (deviceCode: string) => `taste-guest-${deviceCode}`;
 
 @Injectable()
 export class TasteService {
@@ -18,6 +19,10 @@ export class TasteService {
     private readonly tasteRepository: Repository<Taste>,
     private readonly cacheService: CacheService,
   ) {}
+
+  async hasFilledIn(userId: number): Promise<boolean> {
+    return this.tasteRepository.existsBy({ userId });
+  }
 
   async saveAccountTaste(
     userId: number,
@@ -31,28 +36,12 @@ export class TasteService {
       throw error;
     }
 
-    await this.cacheService.del(tasteForFeedCacheKey(userId));
+    await this.cacheService.del(accountTasteCacheKey(userId));
     return true;
   }
 
-  async hasFilledIn(userId: number): Promise<boolean> {
-    return this.tasteRepository.existsBy({ userId });
-  }
-
-  async saveGuestTaste(
-    deviceCode: string,
-    dto: SaveTasteReqDto,
-  ): Promise<boolean> {
-    return this.cacheService.set(
-      `taste-guest-${deviceCode}`,
-      dto,
-      Duration.ONE_YEAR,
-      { onlyIfAbsent: true },
-    );
-  }
-
-  @Cacheable({ key: tasteForFeedCacheKey, ttl: Duration.ONE_WEEK })
-  async getTasteForFeed(userId: number): Promise<TasteForFeed> {
+  @Cacheable({ key: accountTasteCacheKey, ttl: Duration.ONE_WEEK })
+  async getAccountTasteForFeed(userId: number): Promise<TasteForFeed> {
     const taste = await this.tasteRepository.findOneBy({ userId });
 
     return {
@@ -60,5 +49,25 @@ export class TasteService {
       seriesRatings: taste?.seriesRatings ?? {},
       avoid: taste?.avoid ?? [],
     };
+  }
+
+  async saveGuestTaste(
+    deviceCode: string,
+    dto: SaveTasteReqDto,
+  ): Promise<boolean> {
+    return this.cacheService.set(
+      guestTasteCacheKey(deviceCode),
+      dto,
+      Duration.ONE_YEAR,
+      { onlyIfAbsent: true },
+    );
+  }
+
+  async getGuestTasteForFeed(deviceCode: string): Promise<TasteForFeed> {
+    const taste = await this.cacheService.get<TasteForFeed>(
+      guestTasteCacheKey(deviceCode),
+    );
+
+    return taste ?? { movieRatings: {}, seriesRatings: {}, avoid: [] };
   }
 }

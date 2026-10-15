@@ -14,7 +14,7 @@ export class TasteInputService extends InputService<TasteInputResult> {
   }
 
   async read({ userId, mediaType }: InputRequest): Promise<TasteInputResult> {
-    const taste = await this.tasteService.getTasteForFeed(userId);
+    const taste = await this.tasteService.getAccountTasteForFeed(userId);
     const ratings =
       mediaType === 'movie' ? taste.movieRatings : taste.seriesRatings;
 
