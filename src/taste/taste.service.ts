@@ -39,7 +39,7 @@ export class TasteService {
       isNewTaste = await this.saveGuestTaste(deviceCode, dto);
     }
 
-    if (isNewTaste) await this.feedService.rebuildFeed(userId);
+    if (isNewTaste) await this.feedService.restartFeedPreparation(userId);
     return isNewTaste;
   }
 

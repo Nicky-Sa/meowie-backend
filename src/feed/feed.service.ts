@@ -57,17 +57,19 @@ export class FeedService {
 
     if (sourcesExhausted) return this.getFeedFromHistory(deliveredTitleIds);
 
-    await this.requestMoreTitles(request);
+    await this.prepareTitlesForFeed(request);
     return { results: [], status: 'preparing' };
   }
 
-  async rebuildFeed(userId: number | null): Promise<void> {
+  async restartFeedPreparation(userId: number | null): Promise<void> {
+    const requests = (['movie', 'series'] as const).map((mediaType) =>
+      this.getFeedStateRequest(userId, mediaType),
+    );
     await Promise.all(
-      (['movie', 'series'] as const).map((mediaType) =>
-        this.storageService.resetFeed(
-          this.getFeedStateRequest(userId, mediaType),
-        ),
-      ),
+      requests.map((request) => this.storageService.resetFeed(request)),
+    );
+    await Promise.all(
+      requests.map((request) => this.prepareTitlesForFeed(request)),
     );
   }
 
@@ -124,16 +126,16 @@ export class FeedService {
       ...deliveredTitleIds,
       ...results,
     ]);
-    await this.requestMoreTitles(request, { throwOnFailure: false });
+    await this.prepareTitlesForFeed(request, { throwOnFailure: false });
     return { results, status: 'ready' };
   }
 
-  private async requestMoreTitles(
+  private async prepareTitlesForFeed(
     request: FeedStateRequest,
     { throwOnFailure = true }: { throwOnFailure?: boolean } = {},
   ): Promise<void> {
     try {
-      await this.feedQueueService.requestMoreTitles(request);
+      await this.feedQueueService.queueFeedPreparation(request);
     } catch (error) {
       this.logger.error('Could not queue feed preparation.', error);
       if (throwOnFailure) {

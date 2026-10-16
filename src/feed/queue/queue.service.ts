@@ -20,7 +20,7 @@ export class FeedQueueService {
     private readonly storageService: FeedStorageService,
   ) {}
 
-  async requestMoreTitles(request: OrchestratorRequest): Promise<void> {
+  async queueFeedPreparation(request: OrchestratorRequest): Promise<void> {
     const [feedState, deliveredTitleIds] = await Promise.all([
       this.storageService.readFeedState(request),
       this.storageService.readDeliveredTitleIds(request),
