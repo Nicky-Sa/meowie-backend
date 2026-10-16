@@ -49,12 +49,22 @@ export class FeedStorageService {
     if (state) return state;
 
     const emptyState = this.createEmptyFeedState();
-    const created = await this.cache.set(key, emptyState, FEED_EXPIRY_SECONDS, {
-      onlyIfAbsent: true,
-    });
+    const createdEmptyState = await this.cache.set(
+      key,
+      emptyState,
+      FEED_EXPIRY_SECONDS,
+      {
+        onlyIfAbsent: true,
+      },
+    );
+
+    if (createdEmptyState) {
+      await this.cache.del(getDeliveryKey(request)); // deleting the history when the feed state is fresh
+      return emptyState;
+    }
 
     // if created == false, it means something else has already stored this instance
-    return created ? emptyState : this.readFeedState(request);
+    return this.readFeedState(request);
   }
 
   async saveFeedState(
