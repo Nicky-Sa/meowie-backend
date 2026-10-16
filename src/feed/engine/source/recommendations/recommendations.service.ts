@@ -4,6 +4,7 @@ import { SourceService } from '@/feed/engine/source/source.service';
 import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { PageFetchResult } from '@/feed/engine/progress/progress.types';
 import {
+  RecommendationInput,
   recommendationsPageSchema,
   RecommendationsPageRequest,
   RecommendationsRequest,
@@ -27,19 +28,84 @@ export class RecommendationsSourceService extends SourceService<
     super();
   }
 
-  async fetch({
-    titleIds,
-    mediaType,
-    cursor,
-  }: RecommendationsRequest): Promise<RecommendationsResult> {
+  async fetch(request: RecommendationsRequest): Promise<RecommendationsResult> {
+    const pendingRequests = this.getPendingRequests(request);
+    const chosenInput = this.chooseInputByWeight(
+      request.inputs,
+      pendingRequests,
+      Math.random(),
+    );
+    const requests = this.putNextRequestFirst(pendingRequests, chosenInput);
     const { results, next } = await this.progressService.fetch({
-      cursor,
-      firstPageRequests: titleIds.map((id) => ({ id, page: 1 })),
+      cursor: requests,
+      firstPageRequests: [],
       pageRequestSchema: recommendationsPageSchema,
-      fetchPage: (request) => this.fetchPage(request, mediaType),
+      fetchPage: (pageRequest) =>
+        this.fetchPage(pageRequest, request.mediaType),
     });
 
     return { candidates: results, next };
+  }
+
+  private getPendingRequests({
+    inputs,
+    cursor,
+  }: RecommendationsRequest): RecommendationsPageRequest[] {
+    if (cursor !== null) {
+      return recommendationsPageSchema.array().parse(cursor);
+    }
+
+    // first request
+    return inputs.flatMap(({ titleIds }) =>
+      titleIds.map((id) => ({ id, page: 1 })),
+    );
+  }
+
+  private chooseInputByWeight(
+    inputs: readonly RecommendationInput[],
+    pendingRequests: readonly RecommendationsPageRequest[],
+    randomValue: number,
+  ): RecommendationInput | null {
+    const pendingIds = new Set(pendingRequests.map(({ id }) => id));
+
+    // Only choose inputs that still have a recommendation page left to fetch.
+    const availableInputs = inputs.filter(
+      ({ titleIds, weight }) =>
+        weight > 0 && titleIds.some((id) => pendingIds.has(id)),
+    );
+    const totalWeight = availableInputs.reduce(
+      (sum, input) => sum + input.weight,
+      0,
+    );
+    // a random selection of each input, but weighted based on their weight
+    let remainingWeight = randomValue * totalWeight;
+
+    for (const input of availableInputs) {
+      remainingWeight -= input.weight; // keeps shrinking remainingWeight
+
+      if (remainingWeight < 0) return input;
+    }
+
+    return null;
+  }
+
+  private putNextRequestFirst(
+    pendingRequests: RecommendationsPageRequest[],
+    input: RecommendationInput | null,
+  ): RecommendationsPageRequest[] {
+    if (input === null) return pendingRequests;
+
+    const titleIds = new Set(input.titleIds);
+    // find the index of the first pending request whose titleId belongs to the chosen input.
+    const nextIndex = pendingRequests.findIndex(({ id }) => titleIds.has(id));
+
+    if (nextIndex <= 0) return pendingRequests;
+
+    return [
+      pendingRequests[nextIndex], // move it to be the first request and fetched next
+      ...pendingRequests.slice(0, nextIndex),
+      ...pendingRequests.slice(nextIndex + 1),
+    ];
   }
 
   private async fetchPage(

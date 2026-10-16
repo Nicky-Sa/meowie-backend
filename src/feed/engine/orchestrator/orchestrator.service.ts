@@ -20,6 +20,7 @@ import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource, SourceProgress } from '@/feed/engine/source/source.types';
+import { RecommendationsRequest } from '@/feed/engine/source/recommendations/recommendations.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
 import { FeedState } from '@/feed/storage/storage.types';
 
@@ -70,7 +71,7 @@ export class OrchestratorService {
           case 'recommendations': {
             const progress = state.sources[source.name];
             const result = await source.fetch({
-              titleIds: this.getTitleIdsToRecommendFrom(inputs),
+              inputs: this.getRecommendationInputs(inputs),
               mediaType,
               cursor: progress?.status === 'more' ? progress.cursor : null,
             });
@@ -178,8 +179,11 @@ export class OrchestratorService {
     return titleDetails.filter(({ id }) => candidateIds.has(id));
   }
 
-  private getTitleIdsToRecommendFrom(inputs: InputResult[]): number[] {
-    const resultIds = new Set<number>(); // final output
+  private getRecommendationInputs(
+    inputs: InputResult[],
+  ): RecommendationsRequest['inputs'] {
+    const tasteIds = new Set<number>();
+    const libraryIds = new Set<number>();
     const dislikedIds: number[] = [];
     const ratings = new Map<number, number>();
 
@@ -187,7 +191,7 @@ export class OrchestratorService {
       switch (input.type) {
         case 'taste':
           for (const title of input.titles.liked) {
-            resultIds.add(title.id);
+            tasteIds.add(title.id);
           }
           for (const title of input.titles.disliked) {
             dislikedIds.push(title.id);
@@ -195,7 +199,7 @@ export class OrchestratorService {
           break;
         case 'library':
           for (const title of input.titles.saved) {
-            resultIds.add(title.id);
+            libraryIds.add(title.id);
           }
           for (const title of input.titles.seen) {
             if (title.rating !== null) {
@@ -206,16 +210,27 @@ export class OrchestratorService {
       }
     }
 
-    for (const id of dislikedIds) resultIds.delete(id);
+    for (const id of dislikedIds) {
+      tasteIds.delete(id);
+      libraryIds.delete(id);
+    }
     for (const [id, rating] of ratings) {
+      tasteIds.delete(id);
       if (rating >= MIN_RATING_FOR_RECOMMENDATIONS) {
-        resultIds.add(id);
+        libraryIds.add(id);
       } else {
-        resultIds.delete(id);
+        libraryIds.delete(id);
       }
     }
 
-    return [...resultIds].sort((a, b) => a - b);
+    for (const id of libraryIds) tasteIds.delete(id);
+
+    const titleIdsByInput = { taste: tasteIds, library: libraryIds };
+
+    return inputs.map((input) => ({
+      titleIds: [...titleIdsByInput[input.type]],
+      weight: input.weight,
+    }));
   }
 
   private getAllInputTitles(inputs: InputResult[]): Title[] {

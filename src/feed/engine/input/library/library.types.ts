@@ -5,6 +5,7 @@ export type LibraryTitle = Title & Pick<LibraryItem, 'rating'>;
 
 export type LibraryInputResult = {
   type: 'library';
+  weight: number;
   titles: {
     saved: Title[];
     seen: LibraryTitle[];

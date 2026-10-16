@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { TASTE_WEIGHT } from '@/feed/constants/feed.constant';
 import { InputService } from '@/feed/engine/input/input.service';
 import { InputRequest } from '@/feed/engine/input/input.types';
 import { TasteInputResult } from '@/feed/engine/input/taste/taste.types';
@@ -33,6 +34,7 @@ export class TasteInputService extends InputService<TasteInputResult> {
 
     return {
       type: 'taste',
+      weight: TASTE_WEIGHT,
       titles: {
         liked: titleIdsMarkedAs(ratings, 'like').map((id) => ({
           id,

@@ -1,10 +1,15 @@
 import { z } from 'zod';
 import { SourceRequest, SourceResult } from '@/feed/engine/source/source.types';
 
+export type RecommendationInput = {
+  titleIds: readonly number[];
+  weight: number;
+};
+
 export type RecommendationsRequest = SourceRequest<
   readonly RecommendationsPageRequest[]
 > & {
-  titleIds: readonly number[];
+  inputs: readonly RecommendationInput[];
 };
 
 export type RecommendationsResult = SourceResult<
