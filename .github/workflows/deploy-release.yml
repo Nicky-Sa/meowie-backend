@@ -150,7 +150,6 @@ jobs:
           JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
           JWT_REFRESH_EXPIRY=${{ vars.JWT_REFRESH_EXPIRY }}
           APP_VERSION=${{ env.APP_VERSION }}
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           ALLOWED_DOMAIN=${{ vars.ALLOWED_DOMAIN }}
           WHATSON_API_KEY=${{ secrets.WHATSON_API_KEY }}
           CRON_SECRET=${{ secrets.CRON_SECRET }}

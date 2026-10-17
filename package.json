@@ -27,7 +27,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.135",
     "@aws-sdk/client-ses": "^3.1152.0",
     "@nest-lab/throttler-storage-redis": "^1.2.0",
     "@nestjs/bullmq": "^11.0.5",
@@ -44,7 +43,6 @@
     "@nestjs/typeorm": "^11.0.3",
     "@sentry/cli": "^3.8.0",
     "@sentry/nestjs": "^10.76.2",
-    "ai": "^6.0.309",
     "apple-signin-auth": "^2.1.0",
     "axios": "1.20.0",
     "bcrypt": "^6.0.0",

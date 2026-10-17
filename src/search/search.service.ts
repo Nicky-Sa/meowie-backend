@@ -6,21 +6,18 @@ import { extractYearFromDate } from '@/utils/dates';
 import { MultiSearchResults } from '@/search/models/search-results.model';
 import { TmdbService } from '@/tmdb/tmdb.service';
 import { ConstantsService } from '@/constants/constants.service';
-import { AiService } from '@/ai/ai.service';
 
 @Injectable()
 export class SearchService {
   constructor(
     private readonly tmdbService: TmdbService,
     private readonly constantsService: ConstantsService,
-    private readonly aiService: AiService,
   ) {}
 
   async multiSearch(query: string): Promise<MultiSearchResDto> {
     if (!query) {
       return { results: [] };
     }
-    // const correctedQuery = await this.aiService.textAutoCorrect(query);
 
     const [response, genresRes] = await Promise.all([
       this.tmdbService.multiSearch(query),

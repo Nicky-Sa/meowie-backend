@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Meowie's backend: a NestJS REST API for a movie/TV discovery app. Wraps TMDB, adds
-auth, a personal library, ratings, collections, and AI-assisted search/taste. Postgres
+auth, a personal library, ratings, collections, and AI-assisted taste. Postgres
 (Supabase) via TypeORM, Redis for cache/queues/rate-limiting, AWS SES for email.
 
 Do not add test files unless the user explicitly asks for them.
@@ -47,8 +47,8 @@ for what's required; the app fails fast on boot if anything is missing or malfor
   subdomains) via a generated regex.
 - Two env schemas: `envConfig` (the full app) and `dbMigratorEnvConfig` (just the
   migrator DB creds, so migrations can run in CI without the full app env).
-- Notable secrets: `TMDB_API_KEY`, `WHATSON_API_KEY` (collections data), `GEMINI_API_KEY`
-  (AI), `CRON_SECRET` (protects the sync endpoint), `JWT_SECRET` / `JWT_REFRESH_SECRET`
+- Notable secrets: `TMDB_API_KEY`, `WHATSON_API_KEY` (collections data),
+  `CRON_SECRET` (protects the sync endpoint), `JWT_SECRET` / `JWT_REFRESH_SECRET`
   (≥100 chars), `GOOGLE_CLIENT_ID` / `APPLE_BUNDLE_ID` (social sign-in), AWS creds (SES),
   `REDIS_ENDPOINT`.
 
@@ -93,8 +93,6 @@ Cross-cutting / infrastructure:
 - `env` — see above.
 - `tmdb` — single client for the TMDB API; the content modules call it rather than
   hitting TMDB directly.
-- `ai` — Vercel AI SDK + Google Gemini (`gemini-2.5-flash`). `AiService.textAutoCorrect`
-  cleans up messy search queries before they hit TMDB; failures fall back to the raw input.
 - `cache` — abstract `CacheService` implemented by Redis. Cache responses with the
   `@Cacheable({ key, ttl })` decorator (`src/cache/cacheable.decorator.ts`); it reads
   `this.cacheService` off the service instance, so a `@Cacheable` method's class **must**
