@@ -45,6 +45,7 @@ import { ClsMiddleware } from '@/common/cls/cls.middleware';
       imports: [EnvModule],
       inject: [EnvService],
       useFactory: (env: EnvService) => ({
+        prefix: env.get('BUILD_ENV'),
         connection: {
           url: env.get('REDIS_ENDPOINT'),
         },
