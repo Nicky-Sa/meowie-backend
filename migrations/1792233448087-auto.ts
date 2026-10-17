@@ -10,7 +10,7 @@ export class Auto1792233448087 implements MigrationInterface {
                 "userId" integer,
                 "deviceCode" uuid,
                 "mediaType" character varying NOT NULL,
-                "inputId" uuid NOT NULL DEFAULT uuid_generate_v4(),
+                "inputId" uuid NOT NULL DEFAULT gen_random_uuid(),
                 "sources" jsonb NOT NULL,
                 CONSTRAINT "UQ_33cd2d4f2e2fd8d910d939a3966" UNIQUE ("deviceCode", "mediaType"),
                 CONSTRAINT "UQ_6127ca2d184bd0b139735208c7a" UNIQUE ("userId", "mediaType"),

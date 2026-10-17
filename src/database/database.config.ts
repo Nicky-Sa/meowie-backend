@@ -12,6 +12,7 @@ export const getDataSourceOptions = (
     const env = loadDbMigratorEnv();
     return {
       type: 'postgres',
+      uuidExtension: 'pgcrypto',
       host: env.DB_HOST_MIGRATOR,
       port: env.DB_PORT,
       database: env.DB_NAME,
@@ -39,6 +40,7 @@ export const getDataSourceOptions = (
   const env = loadEnv();
   return {
     type: 'postgres',
+    uuidExtension: 'pgcrypto',
     host: env.DB_HOST_POOLING,
     port: env.DB_PORT,
     database: env.DB_NAME,
