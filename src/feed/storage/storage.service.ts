@@ -123,7 +123,7 @@ export class FeedStorageService {
         manager,
       );
 
-      if (await this.isDeliveryReady(feed, titleIdsToDeliver.length, manager)) {
+      if (this.isDeliveryReady(feed, titleIdsToDeliver.length)) {
         await this.markTitlesDelivered(feed.id, titleIdsToDeliver, manager);
         return {
           titleIds: titleIdsToDeliver,
@@ -152,24 +152,12 @@ export class FeedStorageService {
     );
   }
 
-  private async isDeliveryReady(
-    feed: Feed,
-    titleCount: number,
-    manager: EntityManager,
-  ): Promise<boolean> {
-    if (titleCount === 0) return false;
-    if (
-      titleCount >= FEED_BATCH_SIZE ||
-      this.areAllSourcesExhausted(feed.sources)
-    ) {
-      return true;
-    }
-
-    return manager.existsBy(FeedProcessedTitle, {
-      feedId: feed.id,
-      isAccepted: true,
-      isDelivered: true,
-    });
+  private isDeliveryReady(feed: Feed, titleCount: number): boolean {
+    return (
+      titleCount > 0 &&
+      (titleCount >= FEED_BATCH_SIZE ||
+        this.areAllSourcesExhausted(feed.sources))
+    );
   }
 
   private async markTitlesDelivered(
@@ -188,6 +176,7 @@ export class FeedStorageService {
     feedId: number,
     isDelivered: boolean,
     manager: EntityManager,
+    limit: number = FEED_BATCH_SIZE,
   ): Promise<number[]> {
     const titles = await manager
       .getRepository(FeedProcessedTitle)
@@ -195,7 +184,7 @@ export class FeedStorageService {
       .select('title.tmdbId')
       .where({ feedId, isAccepted: true, isDelivered })
       .orderBy('RANDOM()')
-      .limit(FEED_BATCH_SIZE)
+      .limit(limit)
       .getMany();
     return titles.map(({ tmdbId }) => tmdbId);
   }
