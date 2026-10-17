@@ -154,7 +154,7 @@ Google and Apple sign-in are also supported (`google-auth-library`, `apple-signi
 ## DTO convention
 
 Request DTOs are **classes** (class-validator decorators, validated by the global pipe).
-Response DTOs are plain **types**.
+Response DTOs are **classes**. The Swagger plugin adds property information automatically; use `@ApiProperty()` only for extra details or overrides.
 
 ## Deployment
 
