@@ -118,13 +118,13 @@ export class FeedStorageService {
       const feed = await this.findOrCreateFeed(request, manager);
       const sourcesExhausted = this.areAllSourcesExhausted(feed.sources);
       const titleIdsToDeliver = await this.findRandomTitleIds(
+        manager,
         feed.id,
         false,
-        manager,
       );
 
       if (this.isDeliveryReady(feed, titleIdsToDeliver.length)) {
-        await this.markTitlesDelivered(feed.id, titleIdsToDeliver, manager);
+        await this.markTitlesDelivered(manager, feed.id, titleIdsToDeliver);
         return {
           titleIds: titleIdsToDeliver,
           status: 'ready',
@@ -134,7 +134,7 @@ export class FeedStorageService {
 
       if (sourcesExhausted) {
         return {
-          titleIds: await this.findRandomTitleIds(feed.id, true, manager),
+          titleIds: await this.findRandomTitleIds(manager, feed.id, true),
           status: 'ready',
           sourcesExhausted,
         };
@@ -161,9 +161,9 @@ export class FeedStorageService {
   }
 
   private async markTitlesDelivered(
+    manager: EntityManager,
     feedId: number,
     titleIdsToDeliver: number[],
-    manager: EntityManager,
   ): Promise<void> {
     await manager.update(
       FeedProcessedTitle,
@@ -173,9 +173,9 @@ export class FeedStorageService {
   }
 
   private async findRandomTitleIds(
+    manager: EntityManager,
     feedId: number,
     isDelivered: boolean,
-    manager: EntityManager,
     limit: number = FEED_BATCH_SIZE,
   ): Promise<number[]> {
     const titles = await manager
