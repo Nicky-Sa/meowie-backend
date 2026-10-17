@@ -5,15 +5,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
-import _shuffle from 'lodash/shuffle';
 import { FeedResDto } from '@/feed/dto/feed.dto';
-import { FEED_BATCH_SIZE } from '@/feed/constants/feed.constant';
 import { FeedQueueService } from '@/feed/queue/queue.service';
 import { FeedStorageService } from '@/feed/storage/storage.service';
-import {
-  DeliveredTitleIds,
-  FeedStateRequest,
-} from '@/feed/storage/storage.types';
+import { FeedStateRequest } from '@/feed/storage/storage.types';
 import { ClsService } from '@/common/cls/cls.service';
 import { MediaType } from '@/types/media-type';
 
@@ -32,36 +27,15 @@ export class FeedService {
     mediaType: MediaType,
   ): Promise<FeedResDto> {
     const request = this.getFeedStateRequest(userId, mediaType);
-    const [feedState, deliveredTitleIds] = await Promise.all([
-      this.storageService.readFeedState(request),
-      this.storageService.readDeliveredTitleIds(request),
-    ]);
-    const undeliveredTitleIds = this.getUndeliveredTitleIds(
-      feedState.scoredTitleIds,
-      deliveredTitleIds,
-    );
-    const sourcesExhausted = Object.values(feedState.sources).every(
-      (source) => source?.status === 'exhausted',
-    );
+    const delivery = await this.storageService.deliverTitleIds(request);
 
-    if (
-      this.isThisBatchReady(
-        undeliveredTitleIds.length,
-        deliveredTitleIds.length,
-        sourcesExhausted,
-      )
-    ) {
-      return this.deliverTitles(
-        request,
-        undeliveredTitleIds,
-        deliveredTitleIds,
-      );
+    if (!delivery.sourcesExhausted) {
+      await this.prepareMoreTitlesForFeed(request, {
+        throwOnFailure: delivery.status === 'preparing',
+      });
     }
 
-    if (sourcesExhausted) return this.getFeedFromHistory(deliveredTitleIds);
-
-    await this.prepareTitlesForFeed(request);
-    return { results: [], status: 'preparing' };
+    return { results: delivery.titleIds, status: delivery.status };
   }
 
   async restartFeedPreparation(userId: number | null): Promise<void> {
@@ -72,7 +46,7 @@ export class FeedService {
       requests.map((request) => this.storageService.resetFeed(request)),
     );
     await Promise.all(
-      requests.map((request) => this.prepareTitlesForFeed(request)),
+      requests.map((request) => this.prepareMoreTitlesForFeed(request)),
     );
   }
 
@@ -90,53 +64,12 @@ export class FeedService {
     return { type: 'guest', deviceCode, mediaType };
   }
 
-  private getUndeliveredTitleIds(
-    scoredTitleIds: number[],
-    deliveredTitleIds: DeliveredTitleIds,
-  ): number[] {
-    return scoredTitleIds.filter((id) => !deliveredTitleIds.includes(id));
-  }
-
-  private getFeedFromHistory(deliveredTitleIds: DeliveredTitleIds): FeedResDto {
-    return {
-      results: _shuffle(deliveredTitleIds).slice(0, FEED_BATCH_SIZE),
-      status: 'ready',
-    };
-  }
-
-  private isThisBatchReady(
-    undeliveredTitleCount: number,
-    deliveredTitleCount: number,
-    sourcesExhausted: boolean,
-  ): boolean {
-    return (
-      undeliveredTitleCount > 0 &&
-      (deliveredTitleCount > 0 ||
-        undeliveredTitleCount >= FEED_BATCH_SIZE ||
-        sourcesExhausted)
-    );
-  }
-
-  private async deliverTitles(
-    request: FeedStateRequest,
-    undeliveredTitleIds: number[],
-    deliveredTitleIds: DeliveredTitleIds,
-  ): Promise<FeedResDto> {
-    const results = undeliveredTitleIds.slice(0, FEED_BATCH_SIZE);
-    await this.storageService.saveDeliveredTitleIds(request, [
-      ...deliveredTitleIds,
-      ...results,
-    ]);
-    await this.prepareTitlesForFeed(request, { throwOnFailure: false });
-    return { results, status: 'ready' };
-  }
-
-  private async prepareTitlesForFeed(
+  private async prepareMoreTitlesForFeed(
     request: FeedStateRequest,
     { throwOnFailure = true }: { throwOnFailure?: boolean } = {},
   ): Promise<void> {
     try {
-      await this.feedQueueService.queueFeedPreparation(request);
+      await this.feedQueueService.queueFeedPreparationIfNeeded(request);
     } catch (error) {
       this.logger.error('Could not queue feed preparation.', error);
       if (throwOnFailure) {

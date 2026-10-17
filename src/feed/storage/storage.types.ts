@@ -4,10 +4,17 @@ import { StoredSourceProgress } from '@/feed/engine/source/source.types';
 export type FeedState = {
   inputId: string;
   sources: StoredSourceProgress;
-  processedTitleIds: number[];
-  scoredTitleIds: number[];
+};
+
+export type FeedStateToSave = FeedState & {
+  newProcessedTitleIds: number[];
+  newAcceptedTitleIds: number[];
+};
+
+export type FeedDelivery = {
+  titleIds: number[];
+  status: 'ready' | 'preparing';
+  sourcesExhausted: boolean;
 };
 
 export type FeedStateRequest = InputRequest;
-
-export type DeliveredTitleIds = number[];

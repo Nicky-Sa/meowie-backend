@@ -31,18 +31,18 @@ export class Auto1792233448087 implements MigrationInterface {
             CREATE TABLE "feed_processed_titles" (
                 "feedId" integer NOT NULL,
                 "tmdbId" integer NOT NULL,
-                "position" integer,
+                "isAccepted" boolean NOT NULL DEFAULT false,
                 "isDelivered" boolean NOT NULL DEFAULT false,
-                CONSTRAINT "CHK_43401425807e18e880b076cd48" CHECK (
-                    "position" IS NOT NULL
+                CONSTRAINT "CHK_4fb7aee6ab8c036c52dccdb5f5" CHECK (
+                    "isAccepted" = true
                     OR "isDelivered" = false
                 ),
                 CONSTRAINT "PK_e654fc15f7762f165ddb986e073" PRIMARY KEY ("feedId", "tmdbId")
             )
         `);
     await queryRunner.query(`
-            CREATE INDEX "IDX_e9e19dc88b07c4c7b7665e38a1" ON "feed_processed_titles" ("feedId", "isDelivered", "position")
-            WHERE "position" IS NOT NULL
+            CREATE INDEX "IDX_4092de5cb07e7a929fb9612321" ON "feed_processed_titles" ("feedId", "isDelivered")
+            WHERE "isAccepted" = true
         `);
     await queryRunner.query(`
             ALTER TABLE "feeds"
@@ -62,7 +62,7 @@ export class Auto1792233448087 implements MigrationInterface {
             ALTER TABLE "feeds" DROP CONSTRAINT "FK_1dc57d1b6372d3089fce2848191"
         `);
     await queryRunner.query(`
-            DROP INDEX "meowie"."IDX_e9e19dc88b07c4c7b7665e38a1"
+            DROP INDEX "meowie"."IDX_4092de5cb07e7a929fb9612321"
         `);
     await queryRunner.query(`
             DROP TABLE "feed_processed_titles"

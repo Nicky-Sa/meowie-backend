@@ -20,16 +20,13 @@ export class FeedQueueService {
     private readonly storageService: FeedStorageService,
   ) {}
 
-  async queueFeedPreparation(request: OrchestratorRequest): Promise<void> {
-    const [feedState, deliveredTitleIds] = await Promise.all([
-      this.storageService.readFeedState(request),
-      this.storageService.readDeliveredTitleIds(request),
-    ]);
-    const undeliveredTitleIds = feedState.scoredTitleIds.filter(
-      (id) => !deliveredTitleIds.includes(id),
-    );
+  async queueFeedPreparationIfNeeded(
+    request: OrchestratorRequest,
+  ): Promise<void> {
+    const undeliveredTitleCount =
+      await this.storageService.countUndeliveredTitles(request);
 
-    if (undeliveredTitleIds.length >= MIN_UNDELIVERED_TITLES) return;
+    if (undeliveredTitleCount >= MIN_UNDELIVERED_TITLES) return;
 
     await this.enqueueBatch(request, MAX_BATCHES_PER_REFILL);
   }

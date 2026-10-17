@@ -1,11 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  DataSource,
   EntityManager,
   FindOptionsWhere,
   In,
-  IsNull,
-  Not,
   Repository,
 } from 'typeorm';
 import { Feed } from '@/feed/entities/feed.entity';
@@ -13,13 +12,16 @@ import { FeedProcessedTitle } from '@/feed/entities/feed-processed-title.entity'
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import {
   FeedSource,
+  SourceProgress,
   StoredSourceProgress,
 } from '@/feed/engine/source/source.types';
 import {
-  DeliveredTitleIds,
+  FeedDelivery,
   FeedState,
   FeedStateRequest,
+  FeedStateToSave,
 } from '@/feed/storage/storage.types';
+import { FEED_BATCH_SIZE } from '@/feed/constants/feed.constant';
 
 export const getOwnerKey = (request: FeedStateRequest): string =>
   request.type === 'guest'
@@ -29,14 +31,15 @@ export const getOwnerKey = (request: FeedStateRequest): string =>
 @Injectable()
 export class FeedStorageService {
   constructor(
-    @InjectRepository(Feed)
-    private readonly feedRepository: Repository<Feed>,
+    private readonly dataSource: DataSource,
+    @InjectRepository(FeedProcessedTitle)
+    private readonly feedProcessedTitleRepository: Repository<FeedProcessedTitle>,
     @Inject(FEED_SOURCES)
     private readonly sourceServices: readonly FeedSource[],
   ) {}
 
   async resetFeed(request: FeedStateRequest): Promise<void> {
-    await this.feedRepository.manager.transaction(async (manager) => {
+    await this.dataSource.transaction(async (manager) => {
       const feed = await this.findOrCreateFeed(request, manager);
       await manager.delete(FeedProcessedTitle, { feedId: feed.id });
       await manager.update(Feed, feed.id, {
@@ -47,42 +50,44 @@ export class FeedStorageService {
   }
 
   async readFeedState(request: FeedStateRequest): Promise<FeedState> {
-    return this.feedRepository.manager.transaction(async (manager) => {
+    return this.dataSource.transaction(async (manager) => {
       const feed = await this.findOrCreateFeed(request, manager);
-      const processedTitles = await manager.find(FeedProcessedTitle, {
-        where: { feedId: feed.id },
-        order: { position: 'ASC' },
-      });
-
       return {
         inputId: feed.inputId,
         sources: feed.sources,
-        processedTitleIds: processedTitles.map(({ tmdbId }) => tmdbId),
-        scoredTitleIds: processedTitles
-          .filter(({ position }) => position !== null)
-          .map(({ tmdbId }) => tmdbId),
       };
     });
   }
 
+  async findProcessedTitleIds(
+    request: FeedStateRequest,
+    titleIds: number[],
+  ): Promise<number[]> {
+    const processedTitles = await this.feedProcessedTitleRepository.find({
+      select: { tmdbId: true },
+      where: {
+        feed: this.getFeedOwnerWhereClause(request),
+        tmdbId: In(titleIds),
+      },
+    });
+    return processedTitles.map(({ tmdbId }) => tmdbId);
+  }
+
   async saveFeedState(
     request: FeedStateRequest,
-    state: FeedState,
+    state: FeedStateToSave,
   ): Promise<boolean> {
-    return this.feedRepository.manager.transaction(async (manager) => {
+    return this.dataSource.transaction(async (manager) => {
       const feed = await manager.findOne(Feed, {
         where: this.getFeedOwnerWhereClause(request),
         lock: { mode: 'pessimistic_write' },
       });
       if (!feed || feed.inputId !== state.inputId) return false;
 
-      const positions = new Map(
-        state.scoredTitleIds.map((id, position) => [id, position]),
-      );
-      const processedTitles = state.processedTitleIds.map((tmdbId) => ({
+      const processedTitles = state.newProcessedTitleIds.map((tmdbId) => ({
         feedId: feed.id,
         tmdbId,
-        position: positions.get(tmdbId) ?? null,
+        isAccepted: state.newAcceptedTitleIds.includes(tmdbId),
       }));
 
       // upsert FeedProcessedTitle table with processed values
@@ -100,37 +105,99 @@ export class FeedStorageService {
     });
   }
 
-  async readDeliveredTitleIds(
-    request: FeedStateRequest,
-  ): Promise<DeliveredTitleIds> {
-    const titles = await this.feedRepository.manager.find(FeedProcessedTitle, {
-      select: { tmdbId: true },
-      where: { feed: this.getFeedOwnerWhereClause(request), isDelivered: true },
+  async countUndeliveredTitles(request: FeedStateRequest): Promise<number> {
+    return this.feedProcessedTitleRepository.countBy({
+      feed: this.getFeedOwnerWhereClause(request),
+      isAccepted: true,
+      isDelivered: false,
     });
-    return titles.map(({ tmdbId }) => tmdbId);
   }
 
-  async saveDeliveredTitleIds(
-    request: FeedStateRequest,
-    toBeDeliveredTitleIds: DeliveredTitleIds,
-  ): Promise<void> {
-    await this.feedRepository.manager.transaction(async (manager) => {
-      const feed = await manager.findOne(Feed, {
-        where: this.getFeedOwnerWhereClause(request),
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!feed) return;
-
-      await manager.update(
-        FeedProcessedTitle,
-        {
-          feedId: feed.id,
-          tmdbId: In(toBeDeliveredTitleIds),
-          position: Not(IsNull()),
-        },
-        { isDelivered: true },
+  async deliverTitleIds(request: FeedStateRequest): Promise<FeedDelivery> {
+    return this.dataSource.transaction(async (manager) => {
+      const feed = await this.findOrCreateFeed(request, manager);
+      const sourcesExhausted = this.areAllSourcesExhausted(feed.sources);
+      const titleIdsToDeliver = await this.findRandomTitleIds(
+        feed.id,
+        false,
+        manager,
       );
+
+      if (await this.isDeliveryReady(feed, titleIdsToDeliver.length, manager)) {
+        await this.markTitlesDelivered(feed.id, titleIdsToDeliver, manager);
+        return {
+          titleIds: titleIdsToDeliver,
+          status: 'ready',
+          sourcesExhausted,
+        };
+      }
+
+      if (sourcesExhausted) {
+        return {
+          titleIds: await this.findRandomTitleIds(feed.id, true, manager),
+          status: 'ready',
+          sourcesExhausted,
+        };
+      }
+
+      return { titleIds: [], status: 'preparing', sourcesExhausted };
     });
+  }
+
+  areAllSourcesExhausted(
+    sources: StoredSourceProgress,
+  ): sources is SourceProgress {
+    return Object.values(sources).every(
+      (source) => source?.status === 'exhausted',
+    );
+  }
+
+  private async isDeliveryReady(
+    feed: Feed,
+    titleCount: number,
+    manager: EntityManager,
+  ): Promise<boolean> {
+    if (titleCount === 0) return false;
+    if (
+      titleCount >= FEED_BATCH_SIZE ||
+      this.areAllSourcesExhausted(feed.sources)
+    ) {
+      return true;
+    }
+
+    return manager.existsBy(FeedProcessedTitle, {
+      feedId: feed.id,
+      isAccepted: true,
+      isDelivered: true,
+    });
+  }
+
+  private async markTitlesDelivered(
+    feedId: number,
+    titleIdsToDeliver: number[],
+    manager: EntityManager,
+  ): Promise<void> {
+    await manager.update(
+      FeedProcessedTitle,
+      { feedId, tmdbId: In(titleIdsToDeliver) },
+      { isDelivered: true },
+    );
+  }
+
+  private async findRandomTitleIds(
+    feedId: number,
+    isDelivered: boolean,
+    manager: EntityManager,
+  ): Promise<number[]> {
+    const titles = await manager
+      .getRepository(FeedProcessedTitle)
+      .createQueryBuilder('title')
+      .select('title.tmdbId')
+      .where({ feedId, isAccepted: true, isDelivered })
+      .orderBy('RANDOM()')
+      .limit(FEED_BATCH_SIZE)
+      .getMany();
+    return titles.map(({ tmdbId }) => tmdbId);
   }
 
   private async findOrCreateFeed(

@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import _shuffle from 'lodash/shuffle';
 import { HIGHEST_RATING } from '@/library/constants/library.constants';
 import { Title } from '@/feed/engine/engine.types';
 import { TitleWithDetail } from '@/feed/engine/details/details.types';
@@ -22,7 +21,6 @@ import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import { FeedSource, SourceProgress } from '@/feed/engine/source/source.types';
 import { RecommendationsRequest } from '@/feed/engine/source/recommendations/recommendations.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
-import { FeedState } from '@/feed/storage/storage.types';
 
 @Injectable()
 export class OrchestratorService {
@@ -44,7 +42,7 @@ export class OrchestratorService {
     const state = await this.storageService.readFeedState(request);
 
     // stop the run if all sources are exhausted
-    if (this.areSourcesExhausted(state.sources)) {
+    if (this.storageService.areAllSourcesExhausted(state.sources)) {
       return {
         scoredTitles: [],
         next: state.sources,
@@ -92,12 +90,20 @@ export class OrchestratorService {
     );
 
     // step 3: fetching the details for the unique set of candidates + inputs to avoid fetching duplicate titles
-    const processedTitleIds = new Set(state.processedTitleIds);
-    const uniqueCandidates = this.deduplicateTitles(
+    const candidates = this.deduplicateTitles(
       sourceData.map(({ candidates }) => candidates),
-    ).filter(({ id }) => !processedTitleIds.has(id));
+    );
+    const processedTitleIds = new Set(
+      await this.storageService.findProcessedTitleIds(
+        request,
+        candidates.map(({ id }) => id),
+      ),
+    );
+    const uniqueUnprocessedCandidates = candidates.filter(
+      ({ id }) => !processedTitleIds.has(id),
+    );
     const uniqueTitlesToFetchDetails = this.deduplicateTitles([
-      uniqueCandidates,
+      uniqueUnprocessedCandidates,
       allInputTitles,
     ]);
     const titleDetails = await this.detailsService.fetchBatch(
@@ -106,7 +112,7 @@ export class OrchestratorService {
 
     // step 4: filtering out invaluable/unwanted candidates
     let filteredCandidates = this.extractCandidates(
-      uniqueCandidates,
+      uniqueUnprocessedCandidates,
       titleDetails,
     ); // extracting candidates and leaving inputs out
 
@@ -136,29 +142,14 @@ export class OrchestratorService {
       sourceData.map(({ name, next }) => [name, next]),
     ) as SourceProgress;
 
-    // step 7: shuffling and saving high-scored titles
     await this.storageService.saveFeedState(request, {
       inputId: state.inputId,
       sources: next,
-      processedTitleIds: [
-        ...state.processedTitleIds,
-        ...uniqueCandidates.map(({ id }) => id),
-      ],
-      scoredTitleIds: _shuffle([
-        ...state.scoredTitleIds,
-        ...scoredTitles.map(({ id }) => id),
-      ]),
+      newProcessedTitleIds: uniqueUnprocessedCandidates.map(({ id }) => id),
+      newAcceptedTitleIds: scoredTitles.map(({ id }) => id),
     });
 
     return { scoredTitles, next };
-  }
-
-  private areSourcesExhausted(
-    sources: FeedState['sources'],
-  ): sources is OrchestratorResult['next'] {
-    return Object.values(sources).every(
-      (source) => source?.status === 'exhausted',
-    );
   }
 
   private deduplicateTitles(titleLists: Title[][]): Title[] {
