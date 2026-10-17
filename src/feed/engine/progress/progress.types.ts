@@ -14,6 +14,7 @@ export type PageFetchResult<TRequest, TResult> = {
 
 export type ProgressResult<TRequest, TResult> = {
   results: TResult[];
-  next: // per caller's status
+  next:
+    // per caller's status
     { status: 'more'; cursor: readonly TRequest[] } | { status: 'exhausted' };
 };

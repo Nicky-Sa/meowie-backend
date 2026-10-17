@@ -635,9 +635,7 @@ type SearchResultSeries = {
 };
 
 export type TMDB_MultiSearchDetail =
-  | SearchResultPerson
-  | SearchResultMovie
-  | SearchResultSeries;
+  SearchResultPerson | SearchResultMovie | SearchResultSeries;
 
 export class TMDB_MultiSearch extends PaginatedResponse<TMDB_MultiSearchDetail> {
   declare results: TMDB_MultiSearchDetail[];

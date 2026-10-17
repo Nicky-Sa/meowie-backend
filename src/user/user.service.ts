@@ -14,8 +14,7 @@ import { DataSource } from 'typeorm';
 import { TasteService } from '@/taste/taste.service';
 
 type FindOneBy =
-  | { key: 'email'; value: string | null }
-  | { key: 'id'; value: number | null };
+  { key: 'email'; value: string | null } | { key: 'id'; value: number | null };
 
 type FindOneOptions = Partial<{
   withRefreshToken: boolean;
