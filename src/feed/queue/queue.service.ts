@@ -25,11 +25,11 @@ export class FeedQueueService {
       this.storageService.readFeedState(request),
       this.storageService.readDeliveredTitleIds(request),
     ]);
-    const undeliveredTitles = feedState.allScoredTitles.filter(
-      ({ id }) => !deliveredTitleIds.includes(id),
+    const undeliveredTitleIds = feedState.scoredTitleIds.filter(
+      (id) => !deliveredTitleIds.includes(id),
     );
 
-    if (undeliveredTitles.length >= MIN_UNDELIVERED_TITLES) return;
+    if (undeliveredTitleIds.length >= MIN_UNDELIVERED_TITLES) return;
 
     await this.enqueueBatch(request, MAX_BATCHES_PER_REFILL);
   }

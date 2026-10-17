@@ -105,7 +105,7 @@ export class FeedStorageService {
         this.sourceServices.map(({ name }) => [name, null]),
       ) as StoredSourceProgress,
       processedTitleIds: [],
-      allScoredTitles: [],
+      scoredTitleIds: [],
     };
   }
 }

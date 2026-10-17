@@ -14,7 +14,6 @@ import {
   DeliveredTitleIds,
   FeedStateRequest,
 } from '@/feed/storage/storage.types';
-import { ScoredTitle } from '@/feed/engine/scoring/scoring.types';
 import { ClsService } from '@/common/cls/cls.service';
 import { MediaType } from '@/types/media-type';
 
@@ -37,8 +36,8 @@ export class FeedService {
       this.storageService.readFeedState(request),
       this.storageService.readDeliveredTitleIds(request),
     ]);
-    const undeliveredTitles = this.getUndeliveredTitles(
-      feedState.allScoredTitles,
+    const undeliveredTitleIds = this.getUndeliveredTitleIds(
+      feedState.scoredTitleIds,
       deliveredTitleIds,
     );
     const sourcesExhausted = Object.values(feedState.sources).every(
@@ -47,12 +46,16 @@ export class FeedService {
 
     if (
       this.isThisBatchReady(
-        undeliveredTitles.length,
+        undeliveredTitleIds.length,
         deliveredTitleIds.length,
         sourcesExhausted,
       )
     ) {
-      return this.deliverTitles(request, undeliveredTitles, deliveredTitleIds);
+      return this.deliverTitles(
+        request,
+        undeliveredTitleIds,
+        deliveredTitleIds,
+      );
     }
 
     if (sourcesExhausted) return this.getFeedFromHistory(deliveredTitleIds);
@@ -87,11 +90,11 @@ export class FeedService {
     return { type: 'guest', deviceCode, mediaType };
   }
 
-  private getUndeliveredTitles(
-    allScoredTitles: ScoredTitle[],
+  private getUndeliveredTitleIds(
+    scoredTitleIds: number[],
     deliveredTitleIds: DeliveredTitleIds,
-  ): ScoredTitle[] {
-    return allScoredTitles.filter(({ id }) => !deliveredTitleIds.includes(id));
+  ): number[] {
+    return scoredTitleIds.filter((id) => !deliveredTitleIds.includes(id));
   }
 
   private getFeedFromHistory(deliveredTitleIds: DeliveredTitleIds): FeedResDto {
@@ -116,12 +119,10 @@ export class FeedService {
 
   private async deliverTitles(
     request: FeedStateRequest,
-    undeliveredTitles: ScoredTitle[],
+    undeliveredTitleIds: number[],
     deliveredTitleIds: DeliveredTitleIds,
   ): Promise<FeedResDto> {
-    const results = undeliveredTitles
-      .slice(0, FEED_BATCH_SIZE)
-      .map(({ id }) => id);
+    const results = undeliveredTitleIds.slice(0, FEED_BATCH_SIZE);
     await this.storageService.saveDeliveredTitleIds(request, [
       ...deliveredTitleIds,
       ...results,
