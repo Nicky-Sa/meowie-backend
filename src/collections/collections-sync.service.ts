@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Collection } from '@/collections/entities/collection.entity';
 import { CollectionItem } from '@/collections/entities/collection-item.entity';
 import { TmdbService } from '@/tmdb/tmdb.service';
@@ -15,6 +15,7 @@ export class CollectionsSyncService {
   private readonly logger = new Logger(CollectionsSyncService.name);
 
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Collection)
     private readonly collectionRepository: Repository<Collection>,
     @InjectRepository(CollectionItem)
@@ -255,24 +256,22 @@ export class CollectionsSyncService {
     items: { tmdbId: number; rank: number }[],
   ) {
     if (items.length > 0) {
-      await this.collectionItemRepository.manager.transaction(
-        async (transactionalEntityManager) => {
-          // Clear existing items for this collection settings
-          await transactionalEntityManager.delete(CollectionItem, {
+      await this.dataSource.transaction(async (transactionalEntityManager) => {
+        // Clear existing items for this collection settings
+        await transactionalEntityManager.delete(CollectionItem, {
+          collectionId: collection.id,
+        });
+
+        const itemsToSave = items.map((item) => {
+          return this.collectionItemRepository.create({
             collectionId: collection.id,
+            tmdbId: item.tmdbId,
+            position: item.rank,
           });
+        });
 
-          const itemsToSave = items.map((item) => {
-            return this.collectionItemRepository.create({
-              collectionId: collection.id,
-              tmdbId: item.tmdbId,
-              position: item.rank,
-            });
-          });
-
-          await transactionalEntityManager.save(CollectionItem, itemsToSave);
-        },
-      );
+        await transactionalEntityManager.save(CollectionItem, itemsToSave);
+      });
     }
   }
 }

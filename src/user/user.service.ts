@@ -35,7 +35,7 @@ export class UserService {
     { withRefreshToken }: FindOneOptions = {},
   ): Promise<User | null> {
     // 1. Get the list of ALL property names from the entity metadata
-    const metadata = this.usersRepository.manager.connection.getMetadata(User);
+    const metadata = this.usersRepository.metadata;
 
     // 2. Select every column, omitting hashedRefreshToken unless requested.
     const columnNames = metadata.columns
