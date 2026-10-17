@@ -52,35 +52,6 @@ export class RedisService
     }
   }
 
-  async setIfIdMatches(
-    key: string,
-    value: unknown,
-    ttlSeconds: number,
-    id: { field: string; expected: string },
-  ): Promise<boolean> {
-    const result = await this.client.eval(
-      `
-        local current = redis.call('GET', KEYS[1])
-        if not current then return 0 end
-
-        local cached = cjson.decode(current)
-        if type(cached) ~= 'table' or cached[ARGV[1]] ~= ARGV[2] then
-          return 0
-        end
-
-        redis.call('SET', KEYS[1], ARGV[3], 'EX', ARGV[4])
-        return 1
-      `,
-      1,
-      key,
-      id.field,
-      id.expected,
-      JSON.stringify(value),
-      ttlSeconds,
-    );
-    return result === 1;
-  }
-
   async del(key: string) {
     await this.client.del(key);
   }

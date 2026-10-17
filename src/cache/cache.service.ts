@@ -11,14 +11,6 @@ export abstract class CacheService {
     options?: { onlyIfAbsent?: boolean },
   ): Promise<boolean>;
 
-  /** Checks the cached ID and saves in one operation. Missing values are not saved. */
-  abstract setIfIdMatches(
-    key: string,
-    value: unknown,
-    ttl: number,
-    id: { field: string; expected: string },
-  ): Promise<boolean>;
-
   abstract get<T>(key: string): Promise<T | null>;
 
   abstract del(key: string): Promise<void>;
