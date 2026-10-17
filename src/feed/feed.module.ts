@@ -1,5 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Feed } from '@/feed/entities/feed.entity';
+import { FeedProcessedTitle } from '@/feed/entities/feed-processed-title.entity';
 import { FEED_QUEUE } from '@/common/queue.constants';
 import { FeedController } from '@/feed/feed.controller';
 import { FeedService } from '@/feed/feed.service';
@@ -35,6 +38,7 @@ const filterServices = [MarkedTitlesFilterService, AvoidFilterService];
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Feed, FeedProcessedTitle]),
     BullModule.registerQueue({ name: FEED_QUEUE.name }),
     MovieModule,
     SeriesModule,
