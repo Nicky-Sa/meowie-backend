@@ -15,7 +15,7 @@ export abstract class CacheService {
 
   abstract del(key: string): Promise<void>;
 
-  abstract sadd(key: string, value: string): Promise<void>;
+  abstract sadd(key: string, value: string, ttl: number): Promise<void>;
 
   abstract smembers(key: string): Promise<string[]>;
 

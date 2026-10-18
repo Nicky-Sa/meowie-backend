@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { CacheService } from '@/cache/cache.service';
+import { Cacheable } from '@/cache/cacheable.decorator';
+import { Duration } from '@/common/app.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { GENRES } from '@/constants/items/genres.constant';
 import {
@@ -15,11 +18,24 @@ import {
 } from '@/tmdb/tmdb.type';
 import { isMovie } from '@/utils/media';
 
+const getSourceCacheKey = (
+  endpoint: string,
+  params: Record<string, string>,
+): string => {
+  const sourceValues = { ...params };
+  delete sourceValues.page;
+  const sourceParams = new URLSearchParams(sourceValues);
+  sourceParams.sort();
+
+  return `explore-source-${endpoint}?${sourceParams}`;
+};
+
 @Injectable()
 export class ExploreSourceService {
   constructor(
     private readonly tmdbService: TmdbService,
     private readonly imagesService: ImagesService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getSourcePage(
@@ -28,6 +44,30 @@ export class ExploreSourceService {
     values: Omit<SourcePlaceholderValues, 'today'>,
   ): Promise<PosterResDto> {
     const { endpoint, params } = parseSource(source, page, values);
+
+    return this.fetchSourcePage(endpoint, params);
+  }
+
+  async getAlreadyCachedSourcePages(
+    source: string,
+    values: Omit<SourcePlaceholderValues, 'today'>,
+  ): Promise<number[]> {
+    const { endpoint, params } = parseSource(source, 1, values);
+    const sourceKey = getSourceCacheKey(endpoint, params);
+    const pages = await this.cacheService.smembers(`${sourceKey}-pages`);
+
+    return pages.map(Number);
+  }
+
+  @Cacheable({
+    key: (endpoint: string, params: Record<string, string>) =>
+      `${getSourceCacheKey(endpoint, params)}-page=${params.page}`,
+    ttl: Duration.ONE_WEEK,
+  })
+  private async fetchSourcePage(
+    endpoint: string,
+    params: Record<string, string>,
+  ): Promise<PosterResDto> {
     const response = await this.tmdbService.getList<
       TMDB_DiscoveredMovieDetail | TMDB_DiscoveredSeriesDetail
     >(endpoint, params);
@@ -57,12 +97,19 @@ export class ExploreSourceService {
       };
     });
 
-    return {
+    const sourcePage: PosterResDto = {
       page: response.page,
       results,
       total_pages: response.total_pages,
       total_results: response.total_results,
     };
+    await this.cacheService.sadd(
+      `${getSourceCacheKey(endpoint, params)}-pages`,
+      params.page,
+      Duration.ONE_WEEK,
+    );
+
+    return sourcePage;
   }
 
   private filterLowQualityTitles(

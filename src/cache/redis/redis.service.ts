@@ -56,8 +56,8 @@ export class RedisService
     await this.client.del(key);
   }
 
-  async sadd(key: string, value: string) {
-    await this.client.sadd(key, value);
+  async sadd(key: string, value: string, ttlSeconds: number) {
+    await this.client.multi().sadd(key, value).expire(key, ttlSeconds).exec();
   }
 
   async smembers(key: string): Promise<string[]> {

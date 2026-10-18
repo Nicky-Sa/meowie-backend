@@ -56,6 +56,6 @@ export const parseSource = (
 
   return {
     endpoint,
-    params: { ...Object.fromEntries(url.searchParams), page },
+    params: { ...Object.fromEntries(url.searchParams), page: String(page) },
   };
 };
