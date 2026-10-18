@@ -4,6 +4,8 @@ import {
   TMDB_Videos,
   TMDB_Cast,
   TMDB_Crew,
+  TMDB_DiscoveredMovieDetail,
+  TMDB_DiscoveredSeriesDetail,
 } from '@/tmdb/tmdb.type';
 import { CreditInfo } from '@/types/credit';
 import { PERSON_FALLBACK_URL } from '@/common/app.constants';
@@ -103,3 +105,7 @@ export const tmdbMediaTypeToAppMediaType = (
       return tmdbMediaType;
   }
 };
+
+export const isMovie = (
+  details: TMDB_DiscoveredMovieDetail | TMDB_DiscoveredSeriesDetail,
+): details is TMDB_DiscoveredMovieDetail => 'title' in details;
