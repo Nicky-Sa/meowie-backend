@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import _shuffle from 'lodash/shuffle';
+import _uniqBy from 'lodash/uniqBy';
+import { TMDB_MAX_PAGE } from '@/common/app.constants';
+import { PosterResDto } from '@/common/dto/poster.dto';
 import { ExploreTab } from '@/explore/entities/explore-tab.entity';
 import { ExploreTabResDto } from '@/explore/dto/explore-tab.dto';
 import { ExploreTabPage } from '@/explore/explore.types';
@@ -32,10 +36,6 @@ export class ExploreService {
     page: number | undefined,
     sourcePlaceholderValues: SourcePlaceholderValues,
   ): Promise<ExploreTabPage> {
-    if (page !== undefined && (!Number.isInteger(page) || page < 1)) {
-      throw new BadRequestException('Page must be a positive integer');
-    }
-
     const tab = await this.exploreTabRepository.findOneBy({
       slug,
       isActive: true,
@@ -87,6 +87,52 @@ export class ExploreService {
     return {
       tab,
       page: this.choosePage(cachedPages, Math.random()),
+    };
+  }
+
+  async getTabTitles(
+    slug: string,
+    requestedPage: number | undefined,
+    sourcePlaceholderValues: SourcePlaceholderValues,
+  ): Promise<PosterResDto> {
+    const { tab, page } = await this.chooseTabPage(
+      slug,
+      requestedPage,
+      sourcePlaceholderValues,
+    );
+    const sourcesData: PosterResDto[] = [];
+
+    // process 2 sources at a time and fetch data on chooseTabPage's "page"
+    for (let i = 0; i < tab.sources.length; i += 2) {
+      const pages = await Promise.all(
+        tab.sources
+          .slice(i, i + 2)
+          .map((source) =>
+            this.exploreSourceService.getSourcePage(
+              source,
+              page,
+              sourcePlaceholderValues,
+            ),
+          ),
+      );
+      sourcesData.push(...pages);
+    }
+
+    const results = _uniqBy(
+      sourcesData.flatMap((sourcePage) => sourcePage.results),
+      (title) => `${title.mediaType}-${title.id}`,
+    );
+    return {
+      results: _shuffle(results),
+      page,
+      total_pages: Math.min(
+        TMDB_MAX_PAGE,
+        Math.max(...sourcesData.map((sourcePage) => sourcePage.total_pages)),
+      ),
+      total_results: sourcesData.reduce(
+        (total, sourcePage) => total + sourcePage.total_results,
+        0,
+      ),
     };
   }
 

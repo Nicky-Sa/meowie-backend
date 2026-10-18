@@ -1,4 +1,5 @@
 export const TMDB_BASE_URL = 'https://api.themoviedb.org';
+export const TMDB_MAX_PAGE = 500;
 export const WHATSON_BASE_URL = 'https://whatson-api.onrender.com';
 export const JEV_BASE_URL = 'https://api.typesafe.ai';
 export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original';
