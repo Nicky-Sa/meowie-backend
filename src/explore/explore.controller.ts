@@ -8,6 +8,7 @@ import {
   ExploreTabPageQueryDto,
   ExploreTabResDto,
 } from '@/explore/dto/explore-tab.dto';
+import { MediaType } from '@/types/media-type';
 
 @Controller('explore')
 export class ExploreController {
@@ -16,18 +17,21 @@ export class ExploreController {
     private readonly cls: ClsService,
   ) {}
 
-  @Get('tabs')
-  async getTabs(): Promise<ExploreTabResDto[]> {
-    return this.exploreService.getTabs();
+  @Get(':mediaType/tabs')
+  async getTabs(
+    @Param('mediaType') mediaType: MediaType,
+  ): Promise<ExploreTabResDto[]> {
+    return this.exploreService.getActiveTabs(mediaType);
   }
 
-  @Get('tabs/:slug')
+  @Get(':mediaType/tabs/:slug')
   @UseInterceptors(TMDBErrorInterceptor)
   async getTabTitles(
+    @Param('mediaType') mediaType: MediaType,
     @Param('slug') slug: string,
     @Query() query: ExploreTabPageQueryDto,
   ): Promise<PosterResDto> {
-    return this.exploreService.getTabTitles(slug, query.page, {
+    return this.exploreService.getTabTitles(slug, mediaType, query.page, {
       today: DateTime.utc(),
       country: this.cls.countryCode,
       language: 'en-US',

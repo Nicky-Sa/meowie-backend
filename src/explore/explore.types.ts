@@ -1,6 +1,8 @@
-import { ExploreTab } from '@/explore/entities/explore-tab.entity';
+import { MediaType } from '@/types/media-type';
+
+export type ExploreTabSources = Record<MediaType, string[]>;
 
 export type ExploreTabPage = {
-  tab: ExploreTab;
+  sources: string[];
   page: number;
 };

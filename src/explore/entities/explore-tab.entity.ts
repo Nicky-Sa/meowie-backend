@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { ExploreTabSources } from '@/explore/explore.types';
 
 @Entity('explore_tabs')
 export class ExploreTab {
@@ -18,5 +19,5 @@ export class ExploreTab {
   isActive: boolean;
 
   @Column({ type: 'jsonb' })
-  sources: string[];
+  sources: ExploreTabSources;
 }

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import _shuffle from 'lodash/shuffle';
 import _uniqBy from 'lodash/uniqBy';
 import { TMDB_MAX_PAGE } from '@/common/app.constants';
@@ -14,6 +14,7 @@ import { ExploreTabResDto } from '@/explore/dto/explore-tab.dto';
 import { ExploreTabPage } from '@/explore/explore.types';
 import { ExploreSourceService } from '@/explore/sources/source.service';
 import { SourcePlaceholderValues } from '@/explore/sources/source.utils';
+import { MediaType } from '@/types/media-type';
 
 @Injectable()
 export class ExploreService {
@@ -23,16 +24,23 @@ export class ExploreService {
     private readonly exploreSourceService: ExploreSourceService,
   ) {}
 
-  async getTabs(): Promise<ExploreTabResDto[]> {
+  async getActiveTabs(mediaType: MediaType): Promise<ExploreTabResDto[]> {
     return this.exploreTabRepository.find({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        sources: Raw(
+          (column) => `jsonb_array_length(${column} -> :mediaType) > 0`,
+          { mediaType },
+        ),
+      },
       order: { position: 'ASC', id: 'ASC' },
       select: { id: true, slug: true, title: true },
     });
   }
 
-  async chooseTabPage(
+  async prepareTabPage(
     slug: string,
+    mediaType: MediaType,
     page: number | undefined,
     sourcePlaceholderValues: SourcePlaceholderValues,
   ): Promise<ExploreTabPage> {
@@ -45,33 +53,40 @@ export class ExploreService {
       throw new NotFoundException(`Active tab "${slug}" not found`);
     }
 
-    if (tab.sources.length === 0) {
-      throw new BadRequestException(`Tab "${slug}" has no sources`);
+    const sources = tab.sources[mediaType];
+
+    if (!sources?.length) {
+      throw new BadRequestException(
+        `Tab "${slug}" has no ${mediaType} sources`,
+      );
     }
 
-    // if page is supplied, respect it and return the tab with the page
+    // if page is supplied, respect it and return the selected sources with the page
     if (page !== undefined) {
-      return { tab, page };
+      return { sources, page };
     }
 
     // if page is not supplied, pick a random one from cached pages of the source with least number of pages
     let cachedPages: number[] = [];
 
-    for (const source of tab.sources) {
+    for (const source of sources) {
       let sourcePages =
         await this.exploreSourceService.getAlreadyCachedSourcePages(
           source,
+          mediaType,
           sourcePlaceholderValues,
         );
 
       if (sourcePages.length === 0) {
         await this.exploreSourceService.prepareSourcePages(
           source,
+          mediaType,
           sourcePlaceholderValues,
         );
         sourcePages =
           await this.exploreSourceService.getAlreadyCachedSourcePages(
             source,
+            mediaType,
             sourcePlaceholderValues,
           );
       }
@@ -85,31 +100,34 @@ export class ExploreService {
     }
 
     return {
-      tab,
-      page: this.choosePage(cachedPages, Math.random()),
+      sources,
+      page: this.chooseRandomPage(cachedPages, Math.random()),
     };
   }
 
   async getTabTitles(
     slug: string,
+    mediaType: MediaType,
     requestedPage: number | undefined,
     sourcePlaceholderValues: SourcePlaceholderValues,
   ): Promise<PosterResDto> {
-    const { tab, page } = await this.chooseTabPage(
+    const { sources, page } = await this.prepareTabPage(
       slug,
+      mediaType,
       requestedPage,
       sourcePlaceholderValues,
     );
     const sourcesData: PosterResDto[] = [];
 
-    // process 2 sources at a time and fetch data on chooseTabPage's "page"
-    for (let i = 0; i < tab.sources.length; i += 2) {
+    // process 2 sources at a time and fetch data on prepareTabPage's "page"
+    for (let i = 0; i < sources.length; i += 2) {
       const pages = await Promise.all(
-        tab.sources
+        sources
           .slice(i, i + 2)
           .map((source) =>
             this.exploreSourceService.getSourcePage(
               source,
+              mediaType,
               page,
               sourcePlaceholderValues,
             ),
@@ -136,7 +154,7 @@ export class ExploreService {
     };
   }
 
-  private choosePage(pages: number[], randomValue: number): number {
+  private chooseRandomPage(pages: number[], randomValue: number): number {
     return pages[Math.floor(randomValue * pages.length)];
   }
 }
