@@ -41,7 +41,7 @@ export class ExploreSourceService {
   async getSourcePage(
     source: string,
     page: number,
-    values: Omit<SourcePlaceholderValues, 'today'>,
+    values: SourcePlaceholderValues,
   ): Promise<PosterResDto> {
     const { endpoint, params } = parseSource(source, page, values);
 
@@ -50,13 +50,41 @@ export class ExploreSourceService {
 
   async getAlreadyCachedSourcePages(
     source: string,
-    values: Omit<SourcePlaceholderValues, 'today'>,
+    values: SourcePlaceholderValues,
   ): Promise<number[]> {
     const { endpoint, params } = parseSource(source, 1, values);
     const sourceKey = getSourceCacheKey(endpoint, params);
     const pages = await this.cacheService.smembers(`${sourceKey}-pages`);
 
     return pages.map(Number);
+  }
+
+  // fetches the first 5 pages of the sources, or less if there aren't 5 pages in total
+  async prepareSourcePages(
+    source: string,
+    values: SourcePlaceholderValues,
+  ): Promise<number[]> {
+    const cachedPages = await this.getAlreadyCachedSourcePages(source, values);
+
+    if (cachedPages.length > 0) {
+      return cachedPages;
+    }
+
+    const firstPageData = await this.getSourcePage(source, 1, values);
+    const pages = [2, 3, 4, 5].filter(
+      (page) => page <= firstPageData.total_pages,
+    );
+
+    // fetching 2 pages at a time
+    for (let i = 0; i < pages.length; i += 2) {
+      await Promise.all(
+        pages
+          .slice(i, i + 2)
+          .map((page) => this.getSourcePage(source, page, values)),
+      );
+    }
+
+    return this.getAlreadyCachedSourcePages(source, values);
   }
 
   @Cacheable({

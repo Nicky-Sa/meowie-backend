@@ -34,12 +34,9 @@ export const fillSourcePlaceholders = (
 export const parseSource = (
   source: string,
   page: number,
-  values: Omit<SourcePlaceholderValues, 'today'>,
+  values: SourcePlaceholderValues,
 ) => {
-  const filledSource = fillSourcePlaceholders(source, {
-    ...values,
-    today: DateTime.utc(),
-  });
+  const filledSource = fillSourcePlaceholders(source, values);
 
   if (!filledSource.startsWith('/') || filledSource.startsWith('//')) {
     throw new BadRequestException(
