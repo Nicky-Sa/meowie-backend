@@ -63,13 +63,7 @@ export class ExploreSourceService {
   async prepareSourcePages(
     source: string,
     values: SourcePlaceholderValues,
-  ): Promise<number[]> {
-    const cachedPages = await this.getAlreadyCachedSourcePages(source, values);
-
-    if (cachedPages.length > 0) {
-      return cachedPages;
-    }
-
+  ): Promise<void> {
     const firstPageData = await this.getSourcePage(source, 1, values);
     const pages = [2, 3, 4, 5].filter(
       (page) => page <= firstPageData.total_pages,
@@ -83,8 +77,6 @@ export class ExploreSourceService {
           .map((page) => this.getSourcePage(source, page, values)),
       );
     }
-
-    return this.getAlreadyCachedSourcePages(source, values);
   }
 
   @Cacheable({
