@@ -25,7 +25,17 @@ export type SourceRequest<TCursor> = {
   cursor: TCursor | null; // null starts the source; subsequent values come from its previous batch
 };
 
+// why a source suggested a title, kept so a feed title can be traced back
+export type TitleOrigin = {
+  source: FeedSource['name'];
+  titleId?: number;
+};
+
+export type Candidate = Title & {
+  origins: TitleOrigin[];
+};
+
 export type SourceResult<TCursor> = {
-  candidates: Title[];
+  candidates: Candidate[];
   next: { status: 'more'; cursor: TCursor } | { status: 'exhausted' };
 };

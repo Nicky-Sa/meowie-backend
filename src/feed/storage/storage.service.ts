@@ -84,11 +84,14 @@ export class FeedStorageService {
       });
       if (!feed || feed.inputId !== state.inputId) return false;
 
-      const processedTitles = state.newProcessedTitleIds.map((tmdbId) => ({
-        feedId: feed.id,
-        tmdbId,
-        isAccepted: state.newAcceptedTitleIds.includes(tmdbId),
-      }));
+      const processedTitles = state.newProcessedTitles.map(
+        ({ id: tmdbId, origins }) => ({
+          feedId: feed.id,
+          tmdbId,
+          isAccepted: state.newAcceptedTitleIds.includes(tmdbId),
+          origins,
+        }),
+      );
 
       // upsert FeedProcessedTitle table with processed values
       for (let start = 0; start < processedTitles.length; start += 1000) {

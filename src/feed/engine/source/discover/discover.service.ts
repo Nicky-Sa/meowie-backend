@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Title } from '@/feed/engine/engine.types';
 import { SourceService } from '@/feed/engine/source/source.service';
+import { Candidate } from '@/feed/engine/source/source.types';
 import { ProgressService } from '@/feed/engine/progress/progress.service';
 import { PageFetchResult } from '@/feed/engine/progress/progress.types';
 import {
@@ -51,12 +51,16 @@ export class DiscoverSourceService extends SourceService<
   private async fetchPage(
     { page }: DiscoverPageRequest,
     mediaType: MediaType,
-  ): Promise<PageFetchResult<DiscoverPageRequest, Title>> {
+  ): Promise<PageFetchResult<DiscoverPageRequest, Candidate>> {
     const response = await this.discover(mediaType, page);
     const lastPage = Math.min(response.total_pages, TMDB_MAX_PAGE);
 
     return {
-      results: response.results.map(({ id }) => ({ id, mediaType })),
+      results: response.results.map(({ id }) => ({
+        id,
+        mediaType,
+        origins: [{ source: this.name }],
+      })),
       nextRequest:
         response.results.length > 0 && page < lastPage
           ? { page: page + 1 }

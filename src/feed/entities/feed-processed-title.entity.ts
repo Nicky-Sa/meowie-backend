@@ -7,6 +7,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { Feed } from '@/feed/entities/feed.entity';
+import { TitleOrigin } from '@/feed/engine/source/source.types';
 
 @Entity('feed_processed_titles')
 @Index(['feedId', 'isDelivered'], {
@@ -25,6 +26,9 @@ export class FeedProcessedTitle {
 
   @Column({ default: false })
   isDelivered: boolean;
+
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  origins: TitleOrigin[];
 
   @ManyToOne(() => Feed, { onDelete: 'CASCADE' })
   feed: Feed;

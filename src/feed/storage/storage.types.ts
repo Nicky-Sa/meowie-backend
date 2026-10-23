@@ -1,5 +1,8 @@
 import { InputRequest } from '@/feed/engine/input/input.types';
-import { StoredSourceProgress } from '@/feed/engine/source/source.types';
+import {
+  Candidate,
+  StoredSourceProgress,
+} from '@/feed/engine/source/source.types';
 
 export type FeedState = {
   inputId: string;
@@ -7,7 +10,7 @@ export type FeedState = {
 };
 
 export type FeedStateToSave = FeedState & {
-  newProcessedTitleIds: number[];
+  newProcessedTitles: Candidate[];
   newAcceptedTitleIds: number[];
 };
 

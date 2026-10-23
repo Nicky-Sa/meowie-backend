@@ -18,7 +18,11 @@ import {
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
 import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
-import { FeedSource, SourceProgress } from '@/feed/engine/source/source.types';
+import {
+  Candidate,
+  FeedSource,
+  SourceProgress,
+} from '@/feed/engine/source/source.types';
 import { RecommendationsRequest } from '@/feed/engine/source/recommendations/recommendations.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
 
@@ -90,7 +94,7 @@ export class OrchestratorService {
     );
 
     // step 3: fetching the details for the unique set of candidates + inputs to avoid fetching duplicate titles
-    const candidates = this.deduplicateTitles(
+    const candidates = this.mergeCandidates(
       sourceData.map(({ candidates }) => candidates),
     );
     const processedTitleIds = new Set(
@@ -145,7 +149,7 @@ export class OrchestratorService {
     await this.storageService.saveFeedState(request, {
       inputId: state.inputId,
       sources: next,
-      newProcessedTitleIds: uniqueUnprocessedCandidates.map(({ id }) => id),
+      newProcessedTitles: uniqueUnprocessedCandidates,
       newAcceptedTitleIds: scoredTitles.map(({ id }) => id),
     });
 
@@ -162,6 +166,24 @@ export class OrchestratorService {
     }
 
     return [...uniqueTitles.values()];
+  }
+
+  // merges candidate's origins and deduplicates them
+  private mergeCandidates(candidateLists: Candidate[][]): Candidate[] {
+    const uniqueCandidates = new Map<number, Candidate>();
+
+    for (const candidates of candidateLists) {
+      for (const candidate of candidates) {
+        const candidateFromMap = uniqueCandidates.get(candidate.id);
+
+        uniqueCandidates.set(candidate.id, {
+          ...candidate,
+          origins: [...(candidateFromMap?.origins ?? []), ...candidate.origins], // adding all origins of a candidate
+        });
+      }
+    }
+
+    return [...uniqueCandidates.values()];
   }
 
   private extractCandidates(
