@@ -102,8 +102,12 @@ export class MovieService extends BaseMediaService {
       'watch/providers',
     ]);
 
-    const posterPath = getImageWithFallback(item.poster_path, 'movie_poster');
-    const backdropPath = getImageFullUrl(item.backdrop_path);
+    const posterPath = getImageWithFallback(
+      item.poster_path,
+      'movie_poster',
+      'original',
+    );
+    const backdropPath = getImageFullUrl(item.backdrop_path, 'original');
 
     const [blurhash, primaryColorHex] = await Promise.all([
       this.imagesService.generateRealBlurhash({ imageUrl: posterPath }),

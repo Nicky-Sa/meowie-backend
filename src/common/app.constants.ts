@@ -2,7 +2,12 @@ export const TMDB_BASE_URL = 'https://api.themoviedb.org';
 export const TMDB_MAX_PAGE = 500;
 export const WHATSON_BASE_URL = 'https://whatson-api.onrender.com';
 export const JEV_BASE_URL = 'https://api.typesafe.ai';
-export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original';
+export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
+// 'original' is only for images shown large, like the poster and backdrop on a details screen
+export const TMDB_IMAGE_SIZES = {
+  original: 'original',
+  small: 'w500',
+} as const;
 export const MOVIE_POSTER_FALLBACK_URL =
   'https://meowie-public.s3.eu-central-1.amazonaws.com/movie-poster-fallback.png';
 export const TV_POSTER_FALLBACK_URL =
