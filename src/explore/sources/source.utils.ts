@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { TMDB_BASE_URL } from '@/common/app.constants';
+import { DATE_UNITS, toTmdbDate } from '@/utils/dates';
 
 export type SourcePlaceholderValues = {
   today: DateTime;
@@ -8,27 +9,46 @@ export type SourcePlaceholderValues = {
   language: string;
 };
 
-const SOURCE_PLACEHOLDERS: Record<
-  string,
-  (values: SourcePlaceholderValues) => string
-> = {
-  today: ({ today }) => today.toUTC().toFormat('yyyy-MM-dd'),
-  last_month: ({ today }) =>
-    today.toUTC().minus({ months: 1 }).toFormat('yyyy-MM-dd'),
-  country: ({ country }) => country,
-  language: ({ language }) => language,
-};
+const SOURCE_PLACEHOLDERS: {
+  pattern: RegExp;
+  fill: (match: RegExpExecArray, values: SourcePlaceholderValues) => string;
+}[] = [
+  { pattern: /^today$/, fill: (_match, { today }) => toTmdbDate(today) },
+  {
+    // e.g. {+3months} is 3 months from today, {-2weeks} is 2 weeks ago
+    pattern: new RegExp(
+      `^(?<sign>[+-])(?<amount>\\d+)(?<unit>${DATE_UNITS.join('|')})$`,
+    ),
+    fill: ({ groups }, { today }) => {
+      const { sign, amount, unit } = groups as {
+        sign: '+' | '-';
+        amount: string;
+        unit: (typeof DATE_UNITS)[number];
+      };
+      const distance = { [unit]: Number(amount) };
+      const date = sign === '+' ? today.plus(distance) : today.minus(distance);
+
+      return toTmdbDate(date);
+    },
+  },
+  { pattern: /^country$/, fill: (_match, { country }) => country },
+  { pattern: /^language$/, fill: (_match, { language }) => language },
+];
 
 export const fillSourcePlaceholders = (
   source: string,
   values: SourcePlaceholderValues,
 ): string =>
   source.replace(/\{([^{}]+)}/g, (_placeholder: string, key: string) => {
-    if (!Object.hasOwn(SOURCE_PLACEHOLDERS, key)) {
-      throw new BadRequestException(`Unknown source placeholder: {${key}}`);
+    for (const { pattern, fill } of SOURCE_PLACEHOLDERS) {
+      const match = pattern.exec(key);
+
+      if (match) {
+        return encodeURIComponent(fill(match, values));
+      }
     }
 
-    return encodeURIComponent(SOURCE_PLACEHOLDERS[key](values));
+    throw new BadRequestException(`Unknown source placeholder: {${key}}`);
   });
 
 export const parseSource = (
