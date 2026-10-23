@@ -13,7 +13,7 @@ import { ExploreTab } from '@/explore/entities/explore-tab.entity';
 import { ExploreTabResDto } from '@/explore/dto/explore-tab.dto';
 import { ExploreTabPage } from '@/explore/explore.types';
 import { ExploreSourceService } from '@/explore/sources/source.service';
-import { SourcePlaceholderValues } from '@/explore/sources/source.utils';
+import { SourcePlaceholderValues } from '@/explore/sources/source.types';
 import { MediaType } from '@/types/media-type';
 
 @Injectable()

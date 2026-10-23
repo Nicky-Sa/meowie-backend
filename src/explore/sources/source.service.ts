@@ -5,8 +5,14 @@ import { Duration } from '@/common/app.constants';
 import { PosterResDto } from '@/common/dto/poster.dto';
 import { GENRES } from '@/constants/items/genres.constant';
 import {
-  parseSource,
+  ParsedExtraSourceFilter,
   SourcePlaceholderValues,
+} from '@/explore/sources/source.types';
+import {
+  findLastPage,
+  passesExtraFilters,
+  parseSource,
+  splitSourceParams,
 } from '@/explore/sources/source.utils';
 import { ImagesService } from '@/images/images.service';
 import { getImageWithFallback } from '@/images/images.utils';
@@ -103,20 +109,26 @@ export class ExploreSourceService {
     params: Record<string, string>,
   ): Promise<PosterResDto> {
     let sourcePageData: PosterResDto;
+    const { tmdbParams, parsedExtraSourceFilters } = splitSourceParams(params);
 
     switch (mediaType) {
       case 'movie': {
         const response =
           await this.tmdbService.getList<TMDB_DiscoveredMovieDetail>(
             endpoint,
-            params,
+            tmdbParams,
           );
         sourcePageData = {
           page: response.page,
-          results: this.filterLowQualityTitles(response.results).map((title) =>
-            this.createPoster(title, mediaType, title.title),
+          results: this.filterLowQualityTitles(
+            response.results,
+            parsedExtraSourceFilters,
+          ).map((title) => this.createPoster(title, mediaType, title.title)),
+          total_pages: findLastPage(
+            response,
+            parsedExtraSourceFilters,
+            params.sort_by,
           ),
-          total_pages: response.total_pages,
           total_results: response.total_results,
         };
         break;
@@ -125,25 +137,33 @@ export class ExploreSourceService {
         const response =
           await this.tmdbService.getList<TMDB_DiscoveredSeriesDetail>(
             endpoint,
-            params,
+            tmdbParams,
           );
         sourcePageData = {
           page: response.page,
-          results: this.filterLowQualityTitles(response.results).map((title) =>
-            this.createPoster(title, mediaType, title.name),
+          results: this.filterLowQualityTitles(
+            response.results,
+            parsedExtraSourceFilters,
+          ).map((title) => this.createPoster(title, mediaType, title.name)),
+          total_pages: findLastPage(
+            response,
+            parsedExtraSourceFilters,
+            params.sort_by,
           ),
-          total_pages: response.total_pages,
           total_results: response.total_results,
         };
         break;
       }
     }
 
-    await this.cacheService.sadd(
-      `${getSourceCacheKey(endpoint, mediaType, params)}-pages`,
-      params.page,
-      Duration.ONE_WEEK,
-    );
+    // a page left empty by our filters must never be picked as a random first page
+    if (sourcePageData.results.length > 0) {
+      await this.cacheService.sadd(
+        `${getSourceCacheKey(endpoint, mediaType, params)}-pages`,
+        params.page,
+        Duration.ONE_WEEK,
+      );
+    }
 
     return sourcePageData;
   }
@@ -175,9 +195,28 @@ export class ExploreSourceService {
 
   private filterLowQualityTitles<
     Title extends TMDB_DiscoveredMovieDetail | TMDB_DiscoveredSeriesDetail,
-  >(titles: Title[]): Title[] {
+  >(
+    titles: Title[],
+    parsedExtraSourceFilters: ParsedExtraSourceFilter[],
+  ): Title[] {
     const titlesWithPosters = this.filterTitlesWithPosters(titles);
-    return this.filterTitlesWithNames(titlesWithPosters);
+    const titlesWithNames = this.filterTitlesWithNames(titlesWithPosters);
+    const titlesPassingFilters = this.filterTitlesByExtraSourceFilters(
+      titlesWithNames,
+      parsedExtraSourceFilters,
+    );
+    return titlesPassingFilters;
+  }
+
+  private filterTitlesByExtraSourceFilters<
+    Title extends TMDB_DiscoveredMovieDetail | TMDB_DiscoveredSeriesDetail,
+  >(
+    titles: Title[],
+    parsedExtraSourceFilters: ParsedExtraSourceFilter[],
+  ): Title[] {
+    return titles.filter((title) =>
+      passesExtraFilters(title, parsedExtraSourceFilters),
+    );
   }
 
   private filterTitlesWithPosters<

@@ -1,12 +1,68 @@
 import { BadRequestException } from '@nestjs/common';
-import { DateTime } from 'luxon';
 import { TMDB_BASE_URL } from '@/common/app.constants';
+import { PaginatedResponse } from '@/common/types/paginated-response';
+import {
+  DiscoveredTitle,
+  ExtraSourceFilter,
+  ParsedExtraSourceFilter,
+  SourcePlaceholderValues,
+} from '@/explore/sources/source.types';
 import { DATE_UNITS, toTmdbDate } from '@/utils/dates';
 
-export type SourcePlaceholderValues = {
-  today: DateTime;
-  country: string;
-  language: string;
+// Our own filters for things TMDB can't filter on. TMDB never gets these params.
+const EXTRA_FILTERS: ExtraSourceFilter[] = [
+  {
+    name: 'min_popularity',
+    keepTitle: (title, limit) => title.popularity >= limit,
+    cutsPagesWhenSortedBy: 'popularity.desc',
+  },
+];
+
+export const splitSourceParams = (params: Record<string, string>) => {
+  const tmdbParams: Record<string, string> = {};
+  const parsedExtraSourceFilters: ParsedExtraSourceFilter[] = [];
+
+  for (const [key, value] of Object.entries(params)) {
+    const extraSourceFilter = EXTRA_FILTERS.find(
+      (filter) => filter.name === key,
+    );
+
+    if (extraSourceFilter) {
+      parsedExtraSourceFilters.push({
+        extraSourceFilter,
+        limit: Number(value),
+      });
+    } else {
+      tmdbParams[key] = value;
+    }
+  }
+
+  return { tmdbParams, parsedExtraSourceFilters };
+};
+
+export const passesExtraFilters = (
+  title: DiscoveredTitle,
+  parsedExtraSourceFilters: ParsedExtraSourceFilter[],
+): boolean =>
+  parsedExtraSourceFilters.every(({ extraSourceFilter, limit }) =>
+    extraSourceFilter.keepTitle(title, limit),
+  );
+
+/** Only a filter on the field the list is sorted by can show where the useful pages end */
+export const findLastPage = (
+  response: PaginatedResponse<DiscoveredTitle>,
+  parsedExtraSourceFilters: ParsedExtraSourceFilter[],
+  sortBy: string | undefined,
+): number => {
+  const cuttingFilters = parsedExtraSourceFilters.filter(
+    ({ extraSourceFilter }) =>
+      extraSourceFilter.cutsPagesWhenSortedBy === sortBy,
+  );
+  const reachedLimit = response.results.some(
+    (title) => !passesExtraFilters(title, cuttingFilters),
+  );
+
+  return reachedLimit ? response.page : response.total_pages;
 };
 
 const SOURCE_PLACEHOLDERS: {
