@@ -67,6 +67,10 @@ export const envConfig = z.object({
   JEV_API_KEY: z.string().trim().min(1, { message: 'JEV_API_KEY is required' }),
   JEV_MODEL: z.string().trim().min(1).default('jev-latest'),
   JEV_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  ANTHROPIC_API_KEY: z
+    .string()
+    .trim()
+    .min(1, { message: 'ANTHROPIC_API_KEY is required' }),
 });
 
 export const dbMigratorEnvConfig = z.object({

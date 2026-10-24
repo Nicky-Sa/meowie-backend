@@ -8,4 +8,6 @@ export class SearchReqQueryDto {
 
 export class MultiSearchResDto {
   results: MultiSearchResults[];
+  // Only for debugging; the app doesn't read it.
+  isAiResult: boolean;
 }

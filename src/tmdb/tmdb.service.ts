@@ -6,6 +6,7 @@ import { Duration } from '@/common/app.constants';
 import axios from 'axios';
 import { TMDB_BASE_URL } from '@/common/app.constants';
 import { MediaType } from '@/types/media-type';
+import { appMediaTypeToTmdbMediaType } from '@/utils/media';
 import {
   TMDB_DiscoverMovieQuery,
   TMDB_DiscoverSeriesQuery,
@@ -59,7 +60,7 @@ export class TmdbService {
     id: number,
     page: number = 1,
   ): Promise<T> {
-    const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
+    const tmdbMediaType = appMediaTypeToTmdbMediaType(mediaType);
     return this.get<T>(`${tmdbMediaType}/${id}/recommendations`, { page });
   }
 
@@ -79,7 +80,7 @@ export class TmdbService {
     append_to_response?: K[],
   ): Promise<TMDB_DetailsWithAppends<M, NoInfer<K>>> {
     // NoInfer keeps the caller's return type from adding unrequested append fields.
-    const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
+    const tmdbMediaType = appMediaTypeToTmdbMediaType(mediaType);
     return this.get<TMDB_DetailsWithAppends<M, K>>(`${tmdbMediaType}/${id}`, {
       ...(append_to_response?.length && {
         append_to_response: append_to_response.join(','),
@@ -109,7 +110,7 @@ export class TmdbService {
     T,
     Q extends TMDB_DiscoverMovieQuery | TMDB_DiscoverSeriesQuery,
   >(mediaType: MediaType, params: Q): Promise<T> {
-    const tmdbMediaType = mediaType === 'series' ? 'tv' : mediaType;
+    const tmdbMediaType = appMediaTypeToTmdbMediaType(mediaType);
     return this.get<T, Q>(`discover/${tmdbMediaType}`, params);
   }
 

@@ -156,6 +156,7 @@ jobs:
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           APPLE_BUNDLE_ID=${{ vars.APPLE_BUNDLE_ID }}
           JEV_API_KEY=${{ secrets.JEV_API_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           EOF
 
       - name: Copy .env.local to VPS

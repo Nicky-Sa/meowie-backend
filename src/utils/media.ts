@@ -95,6 +95,10 @@ export const formatCrew = (tmdbCrew: TMDB_Crew[]): CreditInfo[] => {
     }));
 };
 
+export const appMediaTypeToTmdbMediaType = (
+  mediaType: MediaType,
+): TMDB_MediaType => (mediaType === 'series' ? 'tv' : mediaType);
+
 export const tmdbMediaTypeToAppMediaType = (
   tmdbMediaType: TMDB_MediaType,
 ): MediaType => {
