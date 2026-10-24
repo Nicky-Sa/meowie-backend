@@ -3,26 +3,31 @@
  * These are used as deterministic placeholders to avoid heavy image processing for list views.
  */
 export const PLACEHOLDER_BLURHASHES = [
-  'L6PZfS_NoeNS_NofRjof_NofRjof', // Soft Blue/Grey
-  'L9H2uS~qfQ~qfQ~qfQ~qfQ~qfQ~q', // Neutral Grey
-  'LKO2?4%M9F%M%M%M9F%M%M%M9F%M', // Deep Purple
-  'L39G1-0000~q000000~q000000~q', // Light Mist
-  'L~N*fS_NoeNS_NofRjof_NofRjof', // Sky Blue
-  'LPRf?v_N_N_N_N_N_N_N_N_N_N_N', // Rose Pink
-  'L48z.G~qRkxakWofofkCD%RjNGj[', // Warm Sand
-  'L59G1-0000~q000000~q000000~q', // Cool Mint
-  'LBH2uS~qfQ~qfQ~qfQ~qfQ~qfQ~q', // Slate Grey
-  'LCG1-0000~q000000~q000000~q', // Lavender
-  'LDG1-0000~q000000~q000000~q', // Soft Peach
-  'LEG1-0000~q000000~q000000~q', // Pale Gold
-  'LFG1-0000~q000000~q000000~q', // Sage Green
-  'LGG1-0000~q000000~q000000~q', // Dusty Blue
-  'LHG1-0000~q000000~q000000~q', // Mauve
-  'LIG1-0000~q000000~q000000~q', // Steel Blue
-  'LJG1-0000~q000000~q000000~q', // Terracotta
-  'LKG1-0000~q000000~q000000~q', // Forest Green
-  'LLG1-0000~q000000~q000000~q', // Midnight Blue
-  'LMG1-0000~q000000~q000000~q', // Burgundy
+  'L15E,3?dt8xv.9tSj]oft8j]fkj[', // Cool Grey
+  'L15hS#^*xaxu^*xtoLoet6oLjtj[', // Warm Grey
+  'L14.JI%%o#tS%jo$j]kCo#j]fRfk', // Slate Blue
+  'L05E:7~qx[-;~q%fofoyx[ofj[j[', // Pale Green
+  'L15hPx^,xbxu^mxboMoft7oMjuj[', // Mauve Grey
+  'L15E:BI9ogt6?dRifkj@t8axfQfQ', // Cool Grey
+  'L15q@a9aoft7^*NGj@fRxaayfQfQ', // Warm Grey
+  'L14_z-R2kDt6%%V=fRj@o#axfRfQ', // Slate Blue
+  'L05OW%4Ut7xu~qIUj[j[x[WBfjfj', // Pale Green
+  'L15q-Q9roft7^,NFjufjxbayfQfQ', // Mauve Grey
+  'L35hfHozfQoz?wj]fQj]x^j[fQj[', // Cool Grey
+  'L25}gXt7fQt7~poefQoe-oj[fQj[', // Warm Grey
+  'L455UxogfQog%jj]fQj]tTfkfQfk', // Slate Blue
+  'L25r3-t7fQt7~qoffQof%fj[fQj[', // Pale Green
+  'L25}dVt7fQt7~XoMfQoM-qj[fQj[', // Mauve Grey
+  'L15X_g_4tSx]DhM_aeWBozj[fRj[', // Cool Grey
+  'L15;~+~Vxt%L4:IpWCWBt6j[jtj@', // Warm Grey
+  'L255Ro%jo#tSMuV=axaxkDfkfRfR', // Slate Blue
+  'L15hfC_Mxux]9FM{WBWBt7j[fQj[', // Pale Green
+  'L15;]v~Xxb%354InWUWBs;j[juj[', // Mauve Grey
+  'L45#nm?wx^xvofj[j[j[fQfQfQfQ', // Cool Grey
+  'L36Hr;~W-p%2ofj[j[j[fQfQfQfQ', // Warm Grey
+  'L55Od8%jtTt9ofj[fkfRfQfQfQfQ', // Slate Blue
+  'L35=CH_M%fx[ofj[j[j[fQfQfQfQ', // Pale Green
+  'L36Hl#~X-q%3ofj[j[j[fQfQfQfQ', // Mauve Grey
 ];
 
 export const getPlaceholderBlurhash = (id: string | number): string => {
