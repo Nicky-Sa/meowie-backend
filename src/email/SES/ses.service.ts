@@ -47,8 +47,11 @@ export class SesService extends EmailService {
     try {
       await this.sesClient.send(new SendTemplatedEmailCommand(params));
     } catch (error) {
-      this.logger.error('Failed to send email: ', error);
-      throw error;
+      // SES messages can contain the recipient's address, so only the error name is kept
+      const reason = error instanceof Error ? error.name : 'unknown error';
+      const emailError = new Error(`Failed to send email: ${reason}`);
+      this.logger.error(emailError.message, emailError.stack);
+      throw emailError;
     }
   }
 
@@ -77,7 +80,7 @@ export class SesService extends EmailService {
           `✨ Template "${config.templateName}" created in AWS SES.`,
         );
       } else {
-        this.logger.error('❌ Error syncing template to SES:', error);
+        this.logger.error('❌ Error syncing template to SES', error);
       }
     }
   }

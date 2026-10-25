@@ -40,8 +40,18 @@ export class ClsLogger extends ConsoleLogger {
     this.print('log', message, context);
   }
 
-  error(message: unknown, stack?: string, context?: string): void {
-    this.print('error', message, context, stack);
+  /** Takes a stack string or the caught error. An Error's message is added to the text
+   * and its stack is kept as text, because Winston writes an Error object as {}. */
+  error(message: unknown, stack?: unknown, context?: string): void {
+    if (!(stack instanceof Error)) {
+      const stackText = typeof stack === 'string' ? stack : undefined;
+      this.print('error', message, context, stackText);
+      return;
+    }
+
+    const fullMessage =
+      typeof message === 'string' ? `${message}: ${stack.message}` : message;
+    this.print('error', fullMessage, context, stack.stack);
   }
 
   warn(message: unknown, context?: string): void {

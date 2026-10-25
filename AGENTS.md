@@ -126,6 +126,28 @@ Ordering of the global pieces matters; change them deliberately.
 - **Other:** gzip compression for responses >1KB; Swagger at `/docs` in non-production
   with two bearer schemes named `jwt-access-docs` and `jwt-refresh-docs`.
 
+## Error logging
+
+Sentry and the log files keep only an error's message and stack, plus the same two for its
+`cause`. Any other field on the error is lost, so the reason must be in the message.
+
+- **Put the reason in the message.** When you wrap an outside service's error, add its reply
+  to the new message, as `JevScoringService.send()` does with `error.response.data`.
+  `{ cause: error }` alone is not enough, because Sentry shows only the cause's message
+  and stack.
+- **Pass the caught error as the second argument.** Call `logger.error('Could not X', error)`
+  and write the message without the reason. `ClsLogger.error()` adds `: <error.message>`
+  and writes the stack as text. Never pass the error as the only argument, as
+  `logger.error(error)`, because the file then gets neither message nor stack.
+- **Job failures.** The BullMQ worker catches errors thrown in `process()`, so nothing else
+  logs them. Each `@OnWorkerEvent('failed')` handler must take `(job, error)` and pass
+  `error` to `logger.error()`.
+- **No personal data.** Never log email addresses or other personal data. If an outside
+  error's message can contain them, as SES messages can, throw a new error without them.
+  `SesService.sendEmail()` does this.
+- **Debugging a failed job.** Read the queue's failed jobs in Redis first. Each one keeps its
+  data and `failedReason`. Keys use the `BUILD_ENV` prefix, for example `production:feed:*`.
+
 ## Auth
 
 OTP-over-email → JWT. Flow: request OTP (`otp` module, emailed via SES) → exchange for a

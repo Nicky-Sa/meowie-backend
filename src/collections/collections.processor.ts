@@ -34,8 +34,8 @@ export class CollectionsProcessor
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job, err: Error) {
-    this.logger.error(`Collections sync job ${job.id} failed`, err);
+  onFailed(job: Job, error: Error) {
+    this.logger.error(`Collections sync job ${job.id} failed`, error);
   }
 
   async onModuleDestroy() {

@@ -108,7 +108,7 @@ export class JevScoringService extends ScoringService {
         }
         if (error.response) {
           throw new Error(
-            `Jev request failed with status ${error.response.status}.`,
+            `Jev request failed with status ${error.response.status}: ${JSON.stringify(error.response.data)}`,
             { cause: error },
           );
         }

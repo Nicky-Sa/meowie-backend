@@ -90,7 +90,7 @@ export class SearchService {
       }
       return { results: aiResults, isAiResult: true };
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error('AI search failed', error);
       return { results, isAiResult: false };
     }
   }

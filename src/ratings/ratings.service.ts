@@ -34,9 +34,11 @@ export class RatingsService {
         this.getMetacriticRating(item),
         this.getTmdbRating(item, tmdbVoteAverage),
       ];
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+
       this.logger.warn(
-        `Failed to fetch ratings from Whatson for ${mediaType}/${id}`,
+        `Failed to fetch ratings from Whatson for ${mediaType}/${id}: ${message}`,
       );
       // Return N/A for all sources on error
       return [

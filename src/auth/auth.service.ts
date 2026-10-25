@@ -53,7 +53,7 @@ export class AuthService {
       }
       return this.authenticateUser(payload.email);
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error('Google sign-in failed', error);
       throw new ForbiddenException('Invalid Google token');
     }
   }
@@ -69,7 +69,7 @@ export class AuthService {
       }
       return this.authenticateUser(payload.email);
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error('Apple sign-in failed', error);
       throw new ForbiddenException('Invalid Apple token');
     }
   }

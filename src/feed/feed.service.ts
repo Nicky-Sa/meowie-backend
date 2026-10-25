@@ -71,7 +71,7 @@ export class FeedService {
     try {
       await this.feedQueueService.queueFeedPreparationIfNeeded(request);
     } catch (error) {
-      this.logger.error('Could not queue feed preparation.', error);
+      this.logger.error('Could not queue feed preparation', error);
       if (throwOnFailure) {
         throw new ServiceUnavailableException(
           'Could not prepare your feed. Please try again.',

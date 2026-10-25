@@ -150,7 +150,7 @@ export class CollectionsSyncService {
       );
     } catch (error) {
       this.logger.error(
-        `💥 Critical error during ${label} synchronization:`,
+        `💥 Critical error during ${label} synchronization`,
         error,
       );
     }
@@ -242,7 +242,7 @@ export class CollectionsSyncService {
       );
     } catch (error) {
       this.logger.error(
-        `💥 Critical error during ${label} synchronization:`,
+        `💥 Critical error during ${label} synchronization`,
         error,
       );
     }

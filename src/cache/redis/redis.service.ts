@@ -24,7 +24,9 @@ export class RedisService
   onModuleInit() {
     this.client = new Redis(this.env.get('REDIS_ENDPOINT'));
     this.client.on('connect', () => this.logger.log('✅ Connected to Redis'));
-    this.client.on('error', (err) => this.logger.error('❌ Redis Error:', err));
+    this.client.on('error', (error) =>
+      this.logger.error('❌ Redis Error', error),
+    );
   }
 
   async set(

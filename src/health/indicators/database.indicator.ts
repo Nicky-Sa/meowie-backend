@@ -23,9 +23,8 @@ export class DatabaseIndicator extends BaseIndicator {
       return indicator.up();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      const stack = error instanceof Error ? error.stack : undefined;
 
-      this.logger.error(`Database health check failed: ${message}`, stack);
+      this.logger.error('Database health check failed', error);
       return indicator.down({ message });
     }
   }

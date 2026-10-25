@@ -30,8 +30,8 @@ export class EmailProcessor extends WorkerHost implements OnModuleDestroy {
     }
   }
   @OnWorkerEvent('failed')
-  onFailed(job: Job<SendEmailJobData>) {
-    this.logger.error(`Failed to send email to ${job.data.to}`);
+  onFailed(job: Job<SendEmailJobData> | undefined, error: Error) {
+    this.logger.error(`Email job ${job?.id ?? 'unknown'} failed`, error);
   }
   async onModuleDestroy() {
     this.logger.log('Pausing and shutting down email worker...');

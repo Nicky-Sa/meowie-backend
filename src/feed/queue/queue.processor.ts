@@ -33,16 +33,20 @@ export class FeedProcessor extends WorkerHost implements OnModuleDestroy {
 
     try {
       await this.feedQueueService.enqueueBatch(job.data, remainingBatches - 1);
-    } catch {
+    } catch (error) {
       this.logger.error(
-        `Could not continue feed preparation after job ${job.id}.`,
+        `Could not continue feed preparation after job ${job.id}`,
+        error,
       );
     }
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<PrepareBatchJobData> | undefined): void {
-    this.logger.error(`Feed preparation job ${job?.id ?? 'unknown'} failed.`);
+  onFailed(job: Job<PrepareBatchJobData> | undefined, error: Error): void {
+    this.logger.error(
+      `Feed preparation job ${job?.id ?? 'unknown'} failed`,
+      error,
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
