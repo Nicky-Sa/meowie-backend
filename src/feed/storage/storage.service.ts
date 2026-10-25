@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Between,
   DataSource,
   EntityManager,
   FindOptionsWhere,
   In,
+  MoreThanOrEqual,
   Repository,
 } from 'typeorm';
 import { Feed } from '@/feed/entities/feed.entity';
@@ -20,8 +22,14 @@ import {
   FeedState,
   FeedStateRequest,
   FeedStateToSave,
+  TitleToRetry,
 } from '@/feed/storage/storage.types';
-import { FEED_BATCH_SIZE } from '@/feed/constants/feed.constant';
+import {
+  FEED_BATCH_SIZE,
+  MAX_RETRIES_PER_BATCH,
+  MAX_TIMES_SCORED,
+  MIN_RETRY_SCORE,
+} from '@/feed/constants/feed.constant';
 
 export const getOwnerKey = (request: FeedStateRequest): string =>
   request.type === 'guest'
@@ -73,6 +81,34 @@ export class FeedStorageService {
     return processedTitles.map(({ tmdbId }) => tmdbId);
   }
 
+  /** Rejected titles that scored close to passing and still have chances left, closest first. */
+  async findTitlesToRetry(request: FeedStateRequest): Promise<TitleToRetry[]> {
+    const titles = await this.feedProcessedTitleRepository.find({
+      // with a relation filter and `take`, TypeORM wraps the query and needs the keys and the sort column selected
+      select: {
+        feedId: true,
+        tmdbId: true,
+        origins: true,
+        timesScored: true,
+        lastScore: true,
+      },
+      where: {
+        feed: this.getFeedOwnerWhereClause(request),
+        isAccepted: false,
+        timesScored: Between(1, MAX_TIMES_SCORED - 1),
+        lastScore: MoreThanOrEqual(MIN_RETRY_SCORE),
+      },
+      order: { lastScore: 'DESC' },
+      take: MAX_RETRIES_PER_BATCH,
+    });
+    return titles.map(({ tmdbId, origins, timesScored }) => ({
+      id: tmdbId,
+      mediaType: request.mediaType,
+      origins,
+      timesScored,
+    }));
+  }
+
   async saveFeedState(
     request: FeedStateRequest,
     state: FeedStateToSave,
@@ -84,11 +120,13 @@ export class FeedStorageService {
       });
       if (!feed || feed.inputId !== state.inputId) return false;
 
-      const processedTitles = state.newProcessedTitles.map(
-        ({ id: tmdbId, origins }) => ({
+      const processedTitles = state.processedTitles.map(
+        ({ id: tmdbId, origins, isAccepted, timesScored, lastScore }) => ({
           feedId: feed.id,
           tmdbId,
-          isAccepted: state.newAcceptedTitleIds.includes(tmdbId),
+          isAccepted,
+          timesScored,
+          lastScore,
           origins,
         }),
       );

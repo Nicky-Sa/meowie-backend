@@ -9,9 +9,18 @@ export type FeedState = {
   sources: StoredSourceProgress;
 };
 
+export type ProcessedTitleToSave = Candidate & {
+  isAccepted: boolean;
+  timesScored: number;
+  lastScore: number | null;
+};
+
 export type FeedStateToSave = FeedState & {
-  newProcessedTitles: Candidate[];
-  newAcceptedTitleIds: number[];
+  processedTitles: ProcessedTitleToSave[];
+};
+
+export type TitleToRetry = Candidate & {
+  timesScored: number;
 };
 
 export type FeedDelivery = {

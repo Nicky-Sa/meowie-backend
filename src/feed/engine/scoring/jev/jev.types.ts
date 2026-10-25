@@ -4,7 +4,7 @@ import {
   ScoringRequest,
   ScoringResult,
 } from '@/feed/engine/scoring/scoring.types';
-import { FIT_LEVELS } from '@/feed/engine/scoring/scoring.constants';
+import { MAX_FIT_SCORE } from '@/feed/engine/scoring/scoring.constants';
 
 export type JevRequest = ScoringRequest;
 
@@ -49,10 +49,7 @@ export const jevAnswerSchema = z.object({
     z.string(),
     z.object({
       type: z.literal('score'),
-      score: z
-        .number()
-        .min(0)
-        .max(FIT_LEVELS.length - 1),
+      score: z.number().min(0).max(MAX_FIT_SCORE),
     }),
   ),
 });

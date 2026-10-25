@@ -16,7 +16,10 @@ import {
   OrchestratorResult,
 } from '@/feed/engine/orchestrator/orchestrator.types';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
-import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
+import {
+  ScoredTitle,
+  TitleWithContext,
+} from '@/feed/engine/scoring/scoring.types';
 import { FEED_SOURCES } from '@/feed/engine/source/source.service';
 import {
   Candidate,
@@ -25,6 +28,10 @@ import {
 } from '@/feed/engine/source/source.types';
 import { RecommendationsRequest } from '@/feed/engine/source/recommendations/recommendations.types';
 import { FeedStorageService } from '@/feed/storage/storage.service';
+import {
+  ProcessedTitleToSave,
+  TitleToRetry,
+} from '@/feed/storage/storage.types';
 
 @Injectable()
 export class OrchestratorService {
@@ -106,8 +113,14 @@ export class OrchestratorService {
     const uniqueUnprocessedCandidates = candidates.filter(
       ({ id }) => !processedTitleIds.has(id),
     );
+    // near-misses from earlier batches could get another score with a different random set of known titles
+    const titlesToRetry = await this.storageService.findTitlesToRetry(request);
+    const candidatesToProcess = [
+      ...uniqueUnprocessedCandidates,
+      ...titlesToRetry,
+    ];
     const uniqueTitlesToFetchDetails = this.deduplicateTitles([
-      uniqueUnprocessedCandidates,
+      candidatesToProcess,
       allInputTitles,
     ]);
     const titleDetails = await this.detailsService.fetchBatch(
@@ -116,7 +129,7 @@ export class OrchestratorService {
 
     // step 4: filtering out invaluable/unwanted candidates
     let filteredCandidates = this.extractCandidates(
-      uniqueUnprocessedCandidates,
+      candidatesToProcess,
       titleDetails,
     ); // extracting candidates and leaving inputs out
 
@@ -130,16 +143,17 @@ export class OrchestratorService {
     // step 5: preparing scoring requirements, which would be inputs + context for state and candidates with details for questions
     // and skipping scoring if there is no user data
     const titlesWithContext = this.addContextToTitle(inputs, titleDetails);
-    const hasUserData = titlesWithContext.length > 0;
-    const scores = hasUserData
+    const hasUserData = titlesWithContext.length > 0; // library or taste content
+    const scoringResult = hasUserData
       ? await this.scoringService.score({
           candidates: filteredCandidates,
           titlesWithContext,
         })
-      : filteredCandidates.map((candidate) => ({ ...candidate, score: null }));
+      : // if there is no userData, there is no point in scoring, so we take whatever the sources have produces, filter them, and deliver those as feed
+        filteredCandidates.map((candidate) => ({ ...candidate, score: null }));
 
     // step 6: removing low-scored titles
-    const scoredTitles = scores.filter(
+    const scoredTitles = scoringResult.filter(
       ({ score }) => score === null || score >= MIN_FEED_SCORE,
     );
     const next = Object.fromEntries(
@@ -149,11 +163,58 @@ export class OrchestratorService {
     await this.storageService.saveFeedState(request, {
       inputId: state.inputId,
       sources: next,
-      newProcessedTitles: uniqueUnprocessedCandidates,
-      newAcceptedTitleIds: scoredTitles.map(({ id }) => id),
+      processedTitles: this.buildProcessedTitles(
+        candidatesToProcess,
+        scoringResult,
+        titlesToRetry,
+      ),
     });
 
     return { scoredTitles, next };
+  }
+
+  private buildProcessedTitles(
+    candidates: Candidate[],
+    scores: ScoredTitle[],
+    titlesToRetry: TitleToRetry[],
+  ): ProcessedTitleToSave[] {
+    return candidates.map(({ id, mediaType, origins }) => {
+      const timesScored =
+        titlesToRetry.find((title) => title.id === id)?.timesScored ?? 0;
+      const score = scores.find((title) => title.id === id)?.score;
+
+      // removed by a filter before scoring; a null lastScore keeps it out of retries
+      if (score === undefined) {
+        return {
+          id,
+          mediaType,
+          origins,
+          isAccepted: false,
+          timesScored,
+          lastScore: null,
+        };
+      }
+      // the user has no data yet, so nothing was scored
+      if (score === null) {
+        return {
+          id,
+          mediaType,
+          origins,
+          isAccepted: true,
+          timesScored,
+          lastScore: null,
+        };
+      }
+
+      return {
+        id,
+        mediaType,
+        origins,
+        isAccepted: score >= MIN_FEED_SCORE,
+        timesScored: timesScored + 1,
+        lastScore: score,
+      };
+    });
   }
 
   private deduplicateTitles(titleLists: Title[][]): Title[] {

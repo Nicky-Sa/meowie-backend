@@ -27,6 +27,12 @@ export class FeedProcessedTitle {
   @Column({ default: false })
   isDelivered: boolean;
 
+  @Column({ type: 'int', default: 0 })
+  timesScored: number;
+
+  @Column({ type: 'real', nullable: true })
+  lastScore: number | null;
+
   @Column({ type: 'jsonb', default: () => "'[]'" })
   origins: TitleOrigin[];
 
