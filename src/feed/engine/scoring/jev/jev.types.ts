@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Title } from '@/feed/engine/engine.types';
 import {
   ScoringRequest,
   ScoringResult,
@@ -9,14 +10,35 @@ export type JevRequest = ScoringRequest;
 
 export type JevResult = ScoringResult;
 
+export type JevTitleDetails = {
+  title: string;
+  year: number | null;
+  overview: string;
+  genres: string[];
+  keywords: string[];
+};
+
+export type JevKnownTitle = Title & {
+  details: JevTitleDetails | null;
+  context: string[];
+};
+
+export type JevState = {
+  rules: readonly string[];
+  known: JevKnownTitle[];
+};
+
 export type JevBody = {
   model: string;
-  state: string;
+  state: JevState;
   questions: Record<
     string,
     {
       type: 'score';
-      instructions: string;
+      instructions: {
+        question: string;
+        candidate: JevTitleDetails;
+      };
       criteria: readonly string[];
     }
   >;

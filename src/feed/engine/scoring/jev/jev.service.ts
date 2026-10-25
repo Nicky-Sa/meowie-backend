@@ -4,19 +4,19 @@ import { JEV_BASE_URL } from '@/common/app.constants';
 import { EnvService } from '@/env/env.service';
 import { TitleWithDetail } from '@/feed/engine/details/details.types';
 import { ScoringService } from '@/feed/engine/scoring/scoring.service';
+import { TitleWithContext } from '@/feed/engine/scoring/scoring.types';
 import {
-  ScoringInstructions,
-  TitleWithContext,
-} from '@/feed/engine/scoring/scoring.types';
-import {
-  FIT_INSTRUCTIONS,
+  FIT_RULES,
   FIT_LEVELS,
+  FIT_QUESTION,
 } from '@/feed/engine/scoring/scoring.constants';
 import {
   jevAnswerSchema,
   JevBody,
   JevRequest,
   JevResult,
+  JevState,
+  JevTitleDetails,
 } from '@/feed/engine/scoring/jev/jev.types';
 
 @Injectable()
@@ -31,20 +31,13 @@ export class JevScoringService extends ScoringService {
   }: JevRequest): Promise<JevResult> {
     if (candidates.length === 0) return [];
 
-    const scoringInstructions = this.buildScoringInstructions(candidates);
-    const candidateIds = new Set(
-      scoringInstructions.map(({ id }) => String(id)),
-    );
+    const questions = this.buildScoringQuestions(candidates);
+    const candidateIds = new Set(Object.keys(questions));
 
     const data = await this.send({
       model: this.env.get('JEV_MODEL'),
       state: this.buildScoringState(titlesWithContext),
-      questions: Object.fromEntries(
-        scoringInstructions.map(({ id, instructions, criteria }) => [
-          id,
-          { type: 'score', instructions, criteria },
-        ]),
-      ),
+      questions,
     });
     const result = jevAnswerSchema.safeParse(data);
 
@@ -68,22 +61,50 @@ export class JevScoringService extends ScoringService {
     }));
   }
 
-  private buildScoringState(known: TitleWithContext[]): string {
-    return JSON.stringify({ known });
+  private buildScoringState(known: TitleWithContext[]): JevState {
+    return {
+      rules: FIT_RULES,
+      known: known.map(({ id, mediaType, details, context }) => ({
+        id,
+        mediaType,
+        details: details ? this.buildTitleDetails(details) : null,
+        context: context.map(({ description }) => description),
+      })),
+    };
   }
 
-  private buildScoringInstructions(
+  private buildScoringQuestions(
     candidates: TitleWithDetail[],
-  ): ScoringInstructions[] {
-    return candidates.map((candidate) => ({
-      id: candidate.id,
-      mediaType: candidate.mediaType,
-      instructions: [
-        ...FIT_INSTRUCTIONS,
-        `Candidate: ${JSON.stringify(candidate)}`,
-      ].join('\n'),
-      criteria: FIT_LEVELS,
-    }));
+  ): JevBody['questions'] {
+    return Object.fromEntries(
+      candidates.map((candidate) => [
+        candidate.id,
+        {
+          type: 'score',
+          instructions: {
+            question: FIT_QUESTION,
+            candidate: this.buildTitleDetails(candidate),
+          },
+          criteria: FIT_LEVELS,
+        },
+      ]),
+    );
+  }
+
+  private buildTitleDetails({
+    title,
+    year,
+    overview,
+    genres,
+    keywords,
+  }: TitleWithDetail): JevTitleDetails {
+    return {
+      title,
+      year,
+      overview,
+      genres: genres.map(({ name }) => name),
+      keywords: keywords.map(({ name }) => name),
+    };
   }
 
   private async send(body: JevBody): Promise<unknown> {

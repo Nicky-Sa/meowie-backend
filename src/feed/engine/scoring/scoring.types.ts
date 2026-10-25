@@ -13,11 +13,6 @@ export type TitleWithContext = Title & {
   }[];
 };
 
-export type ScoringInstructions = Title & {
-  instructions: string;
-  criteria: readonly string[];
-};
-
 export type ScoredTitle = TitleWithDetail & {
   score: number | null;
 };

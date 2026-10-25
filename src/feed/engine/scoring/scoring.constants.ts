@@ -3,8 +3,10 @@ import {
   LOWEST_RATING,
 } from '@/library/constants/library.constants';
 
-export const FIT_INSTRUCTIONS = [
-  "How well does this candidate match the user's taste, based on the user feedback in state.known?",
+export const FIT_QUESTION =
+  "How well does this candidate match the user's taste, based on the user feedback in state.known? Follow state.rules.";
+
+export const FIT_RULES = [
   'Use all supplied descriptions and every supplied rating.',
   `Ratings run from ${LOWEST_RATING} to ${HIGHEST_RATING}; higher means the user enjoyed the title more.`,
   'When a title has a library rating, use that rating instead of any onboarding like or dislike for the same title.',
