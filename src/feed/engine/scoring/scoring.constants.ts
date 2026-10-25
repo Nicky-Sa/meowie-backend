@@ -23,3 +23,7 @@ export const FIT_LEVELS = [
   'Good fit: clear links to titles the user enjoys, with little evidence against it.',
   "Excellent fit: strong links to the user's favorite titles and few links to disliked titles.",
 ] as const;
+
+// Jev allows 32k tokens for state plus one question. At about 2.9 characters per token,
+// this keeps about 8% free for the question and for error in that estimate.
+export const JEV_MAX_STATE_CHARS = 85_000;

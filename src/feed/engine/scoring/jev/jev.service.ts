@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios, { isAxiosError } from 'axios';
+import _shuffle from 'lodash/shuffle';
 import { JEV_BASE_URL } from '@/common/app.constants';
 import { EnvService } from '@/env/env.service';
 import { TitleWithDetail } from '@/feed/engine/details/details.types';
@@ -9,10 +10,12 @@ import {
   FIT_RULES,
   FIT_LEVELS,
   FIT_QUESTION,
+  JEV_MAX_STATE_CHARS,
 } from '@/feed/engine/scoring/scoring.constants';
 import {
   jevAnswerSchema,
   JevBody,
+  JevKnownTitle,
   JevRequest,
   JevResult,
   JevState,
@@ -61,15 +64,50 @@ export class JevScoringService extends ScoringService {
     }));
   }
 
-  private buildScoringState(known: TitleWithContext[]): JevState {
+  private buildScoringState(titles: TitleWithContext[]): JevState {
     return {
       rules: FIT_RULES,
-      known: known.map(({ id, mediaType, details, context }) => ({
-        id,
-        mediaType,
-        details: details ? this.buildTitleDetails(details) : null,
-        context: context.map(({ description }) => description),
-      })),
+      // a random pick, so each feed batch sends a different part of a big library
+      known: this.takeKnownTitlesUpToMaxChars(
+        _shuffle(titles),
+        JEV_MAX_STATE_CHARS,
+      ),
+    };
+  }
+
+  /** Adds titles in the given order and stops before the state text would pass maxChars. */
+  private takeKnownTitlesUpToMaxChars(
+    titles: TitleWithContext[],
+    maxChars: number,
+  ): JevKnownTitle[] {
+    const known: JevKnownTitle[] = [];
+    let usedChars = JSON.stringify({ rules: FIT_RULES, known }).length;
+
+    for (const title of titles) {
+      const knownTitle = this.buildKnownTitle(title);
+      // + 1 for the comma between titles
+      const titleChars = JSON.stringify(knownTitle).length + 1;
+
+      if (usedChars + titleChars > maxChars) break;
+
+      known.push(knownTitle);
+      usedChars += titleChars;
+    }
+
+    return known;
+  }
+
+  private buildKnownTitle({
+    id,
+    mediaType,
+    details,
+    context,
+  }: TitleWithContext): JevKnownTitle {
+    return {
+      id,
+      mediaType,
+      details: details ? this.buildTitleDetails(details) : null,
+      context: context.map(({ description }) => description),
     };
   }
 
