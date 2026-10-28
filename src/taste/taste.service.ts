@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { Taste } from '@/taste/entities/taste.entity';
-import { SaveTasteReqDto } from '@/taste/dto/save-taste.dto';
+import { SubmitTasteReqDto } from '@/taste/dto/submit-taste.dto';
 import { CacheService } from '@/cache/cache.service';
 import { Duration } from '@/common/app.constants';
 import { TasteForFeed } from '@/taste/types/taste.type';
@@ -24,19 +24,19 @@ export class TasteService {
     private readonly feedService: FeedService,
   ) {}
 
-  async saveTaste(
+  async submitTaste(
     userId: number | null,
-    dto: SaveTasteReqDto,
+    dto: SubmitTasteReqDto,
   ): Promise<boolean> {
     let isNewTaste: boolean;
     if (userId !== null) {
-      isNewTaste = await this.saveAccountTaste(userId, dto);
+      isNewTaste = await this.submitAccountTaste(userId, dto);
     } else {
       const deviceCode = this.cls.deviceCode;
       if (!deviceCode || !isUUID(deviceCode)) {
         throw new BadRequestException('x-device-code must be a UUID');
       }
-      isNewTaste = await this.saveGuestTaste(deviceCode, dto);
+      isNewTaste = await this.submitGuestTaste(deviceCode, dto);
     }
 
     if (isNewTaste) await this.feedService.restartFeedPreparation(userId);
@@ -47,9 +47,9 @@ export class TasteService {
     return this.tasteRepository.existsBy({ userId });
   }
 
-  async saveAccountTaste(
+  async submitAccountTaste(
     userId: number,
-    dto: SaveTasteReqDto,
+    dto: SubmitTasteReqDto,
   ): Promise<boolean> {
     // The global pipe strips unknown fields, so the DTO holds columns only.
     try {
@@ -82,9 +82,9 @@ export class TasteService {
     };
   }
 
-  async saveGuestTaste(
+  async submitGuestTaste(
     deviceCode: string,
-    dto: SaveTasteReqDto,
+    dto: SubmitTasteReqDto,
   ): Promise<boolean> {
     return this.cacheService.set(
       guestTasteCacheKey(deviceCode),

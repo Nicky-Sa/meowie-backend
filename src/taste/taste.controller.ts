@@ -11,7 +11,10 @@ import { Response } from 'express';
 import { TasteService } from '@/taste/taste.service';
 import { OptionallyAuthenticatedRequest } from '@/auth/types/authenticated-request.type';
 import { OptionalAccessGuard } from '@/auth/guards/optional-access.guard';
-import { SaveTasteReqDto, SaveTasteResDto } from '@/taste/dto/save-taste.dto';
+import {
+  SubmitTasteReqDto,
+  SubmitTasteResDto,
+} from '@/taste/dto/submit-taste.dto';
 import { TasteJourneyResDto } from '@/taste/dto/journey.dto';
 import { toJourneyTitle } from '@/taste/utils/journey-title';
 import { shuffledPool } from '@/taste/utils/shuffle-pool';
@@ -37,12 +40,12 @@ export class TasteController {
 
   @OptionalAccessGuard()
   @Post()
-  async saveTaste(
+  async submitTaste(
     @Req() req: OptionallyAuthenticatedRequest,
-    @Body() dto: SaveTasteReqDto,
+    @Body() dto: SubmitTasteReqDto,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<SaveTasteResDto> {
-    const isNewTaste = await this.tasteService.saveTaste(req.user.id, dto);
+  ): Promise<SubmitTasteResDto> {
+    const isNewTaste = await this.tasteService.submitTaste(req.user.id, dto);
     response.status(isNewTaste ? HttpStatus.CREATED : HttpStatus.NO_CONTENT);
     return { successful: isNewTaste };
   }

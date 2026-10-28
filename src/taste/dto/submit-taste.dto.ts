@@ -58,7 +58,7 @@ class EnoughLikes implements ValidatorConstraintInterface {
   }
 }
 
-export class SaveTasteReqDto {
+export class SubmitTasteReqDto {
   // Only ids the deck actually serves are accepted, so replacing the pools with
   // a live source means this check has to follow.
   @Validate(AreTitleRatings, [MOVIE_IDS])
@@ -75,6 +75,6 @@ export class SaveTasteReqDto {
   avoid: AvoidId[];
 }
 
-export class SaveTasteResDto {
+export class SubmitTasteResDto {
   successful: boolean;
 }
