@@ -225,12 +225,13 @@ export class SeriesService extends BaseMediaService {
   ): CreditInfo {
     const creator = createdBy[0];
     if (!creator) {
-      return emptyCredit;
+      return { ...emptyCredit, job: 'creator' };
     }
     return {
       id: creator.id,
       name: creator.name,
       role: 'Creator',
+      job: 'creator',
       creditId: creator.credit_id,
       profilePath: getImageWithFallback(creator.profile_path, 'person'),
     };

@@ -13,7 +13,7 @@ import { getImageWithFallback } from '@/images/images.utils';
 import { GENRES } from '@/constants/items/genres.constant';
 import { MediaType } from '@/types/media-type';
 
-export const emptyCredit: CreditInfo = {
+export const emptyCredit: Omit<CreditInfo, 'job'> = {
   id: -1,
   name: 'N/A',
   role: '',
@@ -77,6 +77,7 @@ export const formatCasts = (tmdbCasts: TMDB_Cast[]): CreditInfo[] => {
       id: cast.id,
       name: cast.name,
       role: cast.character,
+      job: 'cast',
       creditId: cast.credit_id,
       profilePath: getImageWithFallback(cast.profile_path, 'person'),
     }));
@@ -90,6 +91,7 @@ export const formatCrew = (tmdbCrew: TMDB_Crew[]): CreditInfo[] => {
       id: crew.id,
       name: crew.name,
       role: crew.job,
+      job: 'crew',
       creditId: crew.credit_id,
       profilePath: getImageWithFallback(crew.profile_path, 'person'),
     }));

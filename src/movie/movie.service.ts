@@ -181,15 +181,16 @@ export class MovieService extends BaseMediaService {
       .filter((crew) => crew.job === 'Director')
       .sort((a, b) => a.popularity - b.popularity)
       .slice(0, 1)
-      .map((crew) => ({
+      .map((crew): CreditInfo => ({
         id: crew.id,
         name: crew.name,
         role: crew.job,
+        job: 'director',
         creditId: crew.credit_id,
         profilePath: getImageWithFallback(crew.profile_path, 'person'),
       }))[0];
     if (!director) {
-      return emptyCredit;
+      return { ...emptyCredit, job: 'director' };
     }
     return director;
   }
