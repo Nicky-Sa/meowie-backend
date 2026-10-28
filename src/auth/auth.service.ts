@@ -8,18 +8,24 @@ import {
   JwtAccessTokenPayload,
   JwtRefreshTokenPayload,
 } from '@/auth/types/jwt.type';
+import type { IdentityProviderName } from '@/auth/identity-providers/identity-provider.type';
+import { IdentityProvider } from '@/auth/identity-providers/identity-provider.service';
+import { AppleIdentityProvider } from '@/auth/identity-providers/apple.identity-provider';
+import { GoogleIdentityProvider } from '@/auth/identity-providers/google.identity-provider';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
 import { CacheService } from '@/cache/cache.service';
+import { User } from '@/user/entities/users.entity';
 import * as crypto from 'crypto';
 import { Duration } from '@/common/app.constants';
-import { OAuth2Client } from 'google-auth-library';
-import appleSignin from 'apple-signin-auth';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly googleClient = new OAuth2Client();
+  private readonly identityProviders: Record<
+    IdentityProviderName,
+    IdentityProvider
+  >;
 
   constructor(
     private usersService: UserService,
@@ -27,7 +33,14 @@ export class AuthService {
     private jwtService: JwtService,
     private env: EnvService,
     private cacheService: CacheService,
-  ) {}
+    appleIdentityProvider: AppleIdentityProvider,
+    googleIdentityProvider: GoogleIdentityProvider,
+  ) {
+    this.identityProviders = {
+      apple: appleIdentityProvider,
+      google: googleIdentityProvider,
+    };
+  }
 
   async requestOtp(dto: RequestOtpReqDto) {
     return this.otpService.generateOtp(dto.email);
@@ -36,45 +49,62 @@ export class AuthService {
   async verifyOtp(dto: VerifyOtpReqDto) {
     const isValid = await this.otpService.verifyOtp(dto.email, dto.otp);
     if (isValid) {
-      return this.authenticateUser(dto.email);
+      return this.authenticateUserByEmail(dto.email);
     }
     throw new ForbiddenException('Invalid OTP');
   }
 
   async verifyGoogleToken(token: string) {
-    try {
-      const ticket = await this.googleClient.verifyIdToken({
-        idToken: token,
-        audience: this.env.get('GOOGLE_CLIENT_ID'),
-      });
-      const payload = ticket.getPayload();
-      if (!payload?.email) {
-        throw new ForbiddenException('No email provided by Google');
-      }
-      return this.authenticateUser(payload.email);
-    } catch (error) {
-      this.logger.error('Google sign-in failed', error);
-      throw new ForbiddenException('Invalid Google token');
-    }
+    return this.authenticateUserFromIdentityProviderToken('google', token);
   }
 
   async verifyAppleToken(token: string) {
-    try {
-      const payload = await appleSignin.verifyIdToken(token, {
-        audience: this.env.get('APPLE_BUNDLE_ID'),
-        ignoreExpiration: false,
-      });
-      if (!payload?.email) {
-        throw new ForbiddenException('No email provided by Apple');
-      }
-      return this.authenticateUser(payload.email);
-    } catch (error) {
-      this.logger.error('Apple sign-in failed', error);
-      throw new ForbiddenException('Invalid Apple token');
-    }
+    return this.authenticateUserFromIdentityProviderToken('apple', token);
   }
 
-  private async authenticateUser(email: string) {
+  private async authenticateUserFromIdentityProviderToken(
+    identityProviderName: IdentityProviderName,
+    token: string,
+  ) {
+    let identityProviderUserId: string;
+    let email: string | null;
+    const identityProvider = this.identityProviders[identityProviderName];
+
+    try {
+      const payload = await identityProvider.verifyToken(token);
+      if (!payload?.sub) {
+        throw new ForbiddenException(
+          `No user ID provided by ${identityProvider.displayName}`,
+        );
+      }
+
+      identityProviderUserId = payload.sub;
+      const emailIsVerified =
+        payload.email_verified === true || payload.email_verified === 'true';
+      email = emailIsVerified ? (payload.email ?? null) : null;
+    } catch (error) {
+      this.logger.error(
+        `${identityProvider.displayName} sign-in failed`,
+        error,
+      );
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new ForbiddenException(
+        `Invalid ${identityProvider.displayName} token`,
+      );
+    }
+
+    const { user, isNewUser } =
+      await this.usersService.findOrCreateUserByIdentityProvider(
+        identityProviderName,
+        identityProviderUserId,
+        email,
+      );
+    return this.createAuthResponse(user, isNewUser);
+  }
+
+  private async authenticateUserByEmail(email: string) {
     let user = await this.usersService.findOneBy({
       key: 'email',
       value: email,
@@ -84,7 +114,10 @@ export class AuthService {
       user = await this.usersService.create({ email });
       isNewUser = true;
     }
-    // jwt
+    return this.createAuthResponse(user, isNewUser);
+  }
+
+  private async createAuthResponse(user: User, isNewUser: boolean) {
     const { accessToken, refreshToken } = await this.generateTokens(user.id);
     await this.updateRefreshTokenInDB(user.id, refreshToken);
 

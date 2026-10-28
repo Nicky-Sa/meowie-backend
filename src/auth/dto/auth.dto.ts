@@ -1,14 +1,20 @@
 import { User } from '@/user/entities/users.entity';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform, TransformFnParams } from 'class-transformer';
+
+export const lowercaseEmail = ({ value }: TransformFnParams): unknown =>
+  typeof value === 'string' ? value.trim().toLowerCase() : value;
 
 export class RequestOtpReqDto {
   @IsEmail()
+  @Transform(lowercaseEmail)
   email: string;
 }
 
 export class VerifyOtpReqDto {
   @IsEmail()
+  @Transform(lowercaseEmail)
   email: string;
 
   @IsNotEmpty()

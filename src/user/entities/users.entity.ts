@@ -17,6 +17,12 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column({ unique: true, nullable: true, type: String })
+  appleUserId: string | null;
+
+  @Column({ unique: true, nullable: true, type: String })
+  googleUserId: string | null;
+
   @Column({ default: true })
   isActive: boolean;
 

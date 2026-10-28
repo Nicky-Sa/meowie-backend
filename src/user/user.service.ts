@@ -2,9 +2,10 @@ import {
   Injectable,
   InternalServerErrorException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsSelect, Repository, UpdateResult } from 'typeorm';
+import { FindOptionsSelect, IsNull, Repository, UpdateResult } from 'typeorm';
 import { User } from '@/user/entities/users.entity';
 import { RequestOtpReqDto } from '@/auth/dto/auth.dto';
 import { DeleteUserReqDto } from '@/user/dto/delete-user.dto';
@@ -12,6 +13,10 @@ import { CurrentUser } from '@/user/dto/current-user.dto';
 import { ChurnLog } from '@/user/entities/churn-log.entity';
 import { DataSource } from 'typeorm';
 import { TasteService } from '@/taste/taste.service';
+import {
+  IdentityProviderName,
+  identityProviderUserIdColumns,
+} from '@/auth/identity-providers/identity-provider.type';
 
 type FindOneBy =
   { key: 'email'; value: string | null } | { key: 'id'; value: number | null };
@@ -69,6 +74,89 @@ export class UserService {
         {
           cause: error,
         },
+      );
+    }
+  }
+
+  async findOrCreateUserByIdentityProvider(
+    identityProviderName: IdentityProviderName,
+    identityProviderUserId: string,
+    email: string | null,
+  ): Promise<{ user: User; isNewUser: boolean }> {
+    const userIdColumn = identityProviderUserIdColumns[identityProviderName];
+    const user = await this.usersRepository.findOneBy({
+      [userIdColumn]: identityProviderUserId,
+    });
+
+    if (user) {
+      return { user, isNewUser: false };
+    }
+
+    if (!email) {
+      throw new ForbiddenException(
+        'This sign-in needs a verified email address',
+      );
+    }
+
+    const emailAddress = email.toLowerCase();
+    const userWithEmail = await this.findOneBy({
+      key: 'email',
+      value: emailAddress,
+    });
+
+    if (userWithEmail) {
+      const existingIdentityProviderUserId = userWithEmail[userIdColumn];
+
+      if (
+        existingIdentityProviderUserId &&
+        existingIdentityProviderUserId !== identityProviderUserId
+      ) {
+        throw new ConflictException(
+          'A different account is linked to this email',
+        );
+      }
+
+      if (!existingIdentityProviderUserId) {
+        const updateResult = await this.usersRepository.update(
+          { id: userWithEmail.id, [userIdColumn]: IsNull() },
+          { [userIdColumn]: identityProviderUserId },
+        );
+
+        if (updateResult.affected !== 1) {
+          throw new ConflictException(
+            'Could not link this sign-in. Please try again.',
+          );
+        }
+
+        // refetch the user from db
+        const updatedUser = await this.usersRepository.findOneBy({
+          id: userWithEmail.id,
+        });
+
+        if (!updatedUser) {
+          throw new InternalServerErrorException(
+            'Could not load the user after linking the sign-in',
+          );
+        }
+
+        return { user: updatedUser, isNewUser: false };
+      }
+
+      return { user: userWithEmail, isNewUser: false };
+    }
+
+    const newUser = new User();
+    newUser.email = emailAddress;
+    newUser[userIdColumn] = identityProviderUserId;
+
+    try {
+      await this.usersRepository.save(newUser);
+      return { user: newUser, isNewUser: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(
+        `Error creating user: ${message}`,
+        { cause: error },
       );
     }
   }
